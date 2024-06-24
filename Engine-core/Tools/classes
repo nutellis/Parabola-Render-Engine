@@ -1,0 +1,53 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+Actor	Depedencies/Includes/Public/Event.h	/^class Actor : public Pawn $/;"	inherits:Pawn
+Actor	Depedencies/Includes/Public/GameWorld\Actor.h	/^class Actor : public PObject$/;"	inherits:PObject
+Camera	Depedencies/Includes/Public/camera.h	/^class Camera$/
+Channel	Depedencies/Includes/Public/Render\Material.h	/^class Channel$/
+Engine	Depedencies/Includes/Public/Engine.h	/^class Engine $/
+Engine	Depedencies/Includes/Public/Engine_Helper.h	/^class Engine $/
+FBXImporter	Depedencies/Includes/Public/Render\FBXImporter.h	/^class FBXImporter {$/
+FileUtilities	Depedencies/Includes/Public/FileUtilities.h	/^class FileUtilities$/
+Material	Depedencies/Includes/Public/Render\Material.h	/^class Material$/
+ObjectInitializer	Depedencies/Includes/Public/ObjectInitializer.h	/^class ObjectInitializer$/
+PCameraComponent	Depedencies/Includes/Public/GameWorld\Components.h	/^class PCameraComponent : public PSceneComponent$/;"	inherits:PSceneComponent
+PClass	Depedencies/Includes/Public/Reflection\Class.h	/^class PClass : public PObject $/;"	inherits:PObject
+PClassCreator	Depedencies/Includes/Public/Reflection\Class.h	/^class PClassCreator$/
+PClassManager	Depedencies/Includes/Public/Reflection\Class.h	/^class PClassManager$/
+PComponent	Depedencies/Includes/Public/GameWorld\Components.h	/^class PComponent : public PObject $/;"	inherits:PObject
+PObject	Depedencies/Includes/Public/Object.h	/^class PObject {$/
+PObjectRegister	Depedencies/Includes/Public/Globals\ObjectRegister.h	/^class PObjectRegister$/
+PPointLightComponent	Depedencies/Includes/Public/GameWorld\Components.h	/^class PPointLightComponent : public PSceneComponent$/;"	inherits:PSceneComponent
+PPrimitiveComponent	Depedencies/Includes/Public/GameWorld\Components.h	/^class PPrimitiveComponent : public PSceneComponent {$/;"	inherits:PSceneComponent
+PSceneComponent	Depedencies/Includes/Public/GameWorld\Components.h	/^class PSceneComponent : public PComponent {$/;"	inherits:PComponent
+PShapeComponent	Depedencies/Includes/Public/GameWorld\Components.h	/^class PShapeComponent : public PPrimitiveComponent {$/;"	inherits:PPrimitiveComponent
+PStaticMeshComponent	Depedencies/Includes/Public/GameWorld\Components.h	/^class PStaticMeshComponent : public PPrimitiveComponent {$/;"	inherits:PPrimitiveComponent
+PWorld	Depedencies/Includes/Public/GameWorld\World.h	/^class PWorld: public PObject$/;"	inherits:PObject
+Pawn	Depedencies/Includes/Public/GameWorld\Pawn.h	/^class Pawn : public Actor$/;"	inherits:Actor
+PointLightAttributes	Depedencies/Includes/Public/Render\lights.h	/^class PointLightAttributes$/
+RClass	Depedencies/Includes/Public/Reflection\Types.h	/^class RClass : public RType$/;"	inherits:RType
+REnum	Depedencies/Includes/Public/Reflection\Types.h	/^class REnum : public RType$/;"	inherits:RType
+REnumConstant	Depedencies/Includes/Public/Reflection\Types.h	/^class REnumConstant : public RPrimitive$/;"	inherits:RPrimitive
+RField	Depedencies/Includes/Public/Reflection\Types.h	/^class RField : public RPrimitive$/;"	inherits:RPrimitive
+RFunction	Depedencies/Includes/Public/Reflection\Types.h	/^class RFunction : public RPrimitive$/;"	inherits:RPrimitive
+RNamespace	Depedencies/Includes/Public/Reflection\Types.h	/^class RNamespace : public RPrimitive$/;"	inherits:RPrimitive
+RPrimitive	Depedencies/Includes/Public/Reflection\Types.h	/^class RPrimitive$/
+RType	Depedencies/Includes/Public/Reflection\Types.h	/^class RType : public RPrimitive$/;"	inherits:RPrimitive
+RTypeRegister	Depedencies/Includes/Public/Globals\TypeRegister.h	/^class RTypeRegister$/
+RTypeRegister	Depedencies/Includes/Public/Reflection\TypeRegister.h	/^class RTypeRegister$/
+Renderer	Depedencies/Includes/Public/Render\Renderer.h	/^class Renderer$/
+Scene	Depedencies/Includes/Public/GameWorld\Scene.h	/^class Scene : public PObject{$/;"	inherits:PObject
+Shader	Depedencies/Includes/Public/Render\Shader.h	/^class Shader$/
+Shader	Depedencies/Includes/Public/Render\Shader_.h	/^class Shader$/
+Shader	Depedencies/Includes/Public/Render\Shader__.h	/^class Shader$/
+ShaderManager	Depedencies/Includes/Public/Render\ShaderManager.h	/^class ShaderManager$/
+StaticMesh	Depedencies/Includes/Public/Render\StaticMesh.h	/^class StaticMesh : public PObject{$/;"	inherits:PObject
+Text	Depedencies/Includes/Public/Render\Text.h	/^class Text$/
+UArchive	Depedencies/Includes/Public/Archive.h	/^class UArchive {$/
+Utility	Depedencies/Includes/Public/Engine.h	/^class Utility $/
+Utility	Depedencies/Includes/Public/Engine_Helper.h	/^class Utility $/
+Window	Depedencies/Includes/Public/Window.h	/^class Window {$/

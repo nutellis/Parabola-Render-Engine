@@ -1,0 +1,54 @@
+#pragma once
+
+#ifndef TYPE_REGISTER_H
+#define TYPE_REGISTER_H
+
+
+#include <Reflection\Types.h>
+#include <map>
+#include <iostream>
+
+typedef std::map<uint32, RType*> TypeMap;
+
+class RTypeRegister
+{
+
+private:
+	RTypeRegister() {}
+
+	TypeMap Registry;
+
+public:
+
+	RTypeRegister(RTypeRegister const&) = delete;
+	void operator=(RTypeRegister const&) = delete;
+
+
+	static RTypeRegister& getInstance()
+	{
+		static RTypeRegister instance; // Guaranteed to be destroyed.
+									   // Instantiated on first use.
+		return instance;
+	}
+
+
+	template <typename TYPE>
+	RType* GetType()
+	{
+		return GetType(RTypeInfo::Create<TYPE>());
+	}
+
+	template <typename TYPE>
+	const RType* GetType() const
+	{
+		return GetType(RTypeInfo::Create<TYPE>());
+	}
+
+
+	RType* GetType(const RTypeInfo& TypeInfo);
+	const RType* GetType(const RTypeInfo& TypeInfo) const;
+
+	void ReflectPODTypes();
+
+};
+#endif //!TYPE_REGISTER_H

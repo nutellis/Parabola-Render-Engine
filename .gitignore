@@ -284,3 +284,5 @@ ModelManifest.xml
 /AlkyoneRenderEngine/Source/Win32
 /AlkyoneRenderEngine/imgui.ini
 /Engine-core/Tools/glfw-3.3.2
+/Engine-core/Resources
+/Tools

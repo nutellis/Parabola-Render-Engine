@@ -1,0 +1,26 @@
+#pragma once
+
+#ifndef CLASSNAME_GENERATED_H
+//#error "Already defined, missing #pragma once in CLASSNAME.h"
+
+#endif // !CLASSNAME_GENERATED_H
+
+#define CLASSNAME_GENERATED_H
+
+#define CLASSNAME_INCLASS \
+public:\
+DECLARE_CLASS(CLASSNAME,PARENT) 
+
+//\
+//DECLARE_SERIALIZER(CLASSNAME)
+
+#define CLASSNAME_h_GENERATED_BODY \
+CLASSNAME_INCLASS
+
+
+#undef CURRENT_FILE_ID
+#define CURRENT_FILE_ID CLASSNAME_h
+
+
+
+
