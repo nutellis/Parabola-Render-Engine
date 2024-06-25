@@ -28,25 +28,25 @@ void Light::Draw(Shader shader)
 */
 PointLightAttributes::PointLightAttributes()
 {
-	color = Vector3f(1.0f);
-	intensity = 1.0f;
+	Diffuse = Vector3f(1.0f);
+	Intensity = 1.0f;
 
-	constant = 1.0f;
-	linear = 0.09f;
-	quadratic = 0.032f;
+	Constant = 1.0f;
+	Linear = 0.09f;
+	Quadratic = 0.032f;
 
-	emmitsDiffuse = true;
-	emmitsSpecular = true;
+	EmmitsDiffuse = true;
+	EmmitsSpecular = true;
 }
 
 PointLightAttributes::PointLightAttributes(Vector3f pos, float cons, float lin, float quad,float inten)
 {
-	constant = cons;
-	linear = lin;
-	quadratic = quad;
+	Constant = cons;
+	Linear = lin;
+	Quadratic = quad;
 
-	emmitsDiffuse = true;
-	emmitsSpecular = true;
+	EmmitsDiffuse = true;
+	EmmitsSpecular = true;
 
 }
 

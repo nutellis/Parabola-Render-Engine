@@ -39,9 +39,9 @@ public:
 	//render scene
 
 public:
-	TArray<RenderActor> SceneMeshes;
-	TArray<RenderActor> SceneLights;
-	TArray<RenderActor> SceneCameras;
+	TArray<RenderActor *> SceneMeshes;
+	TArray<RenderActor *> SceneLights;
+	TArray<RenderActor *> SceneCameras;
 private:
 	// SceneManager which created this node
 	GSceneManager* Creator;

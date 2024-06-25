@@ -21,10 +21,6 @@ GSceneManager * GSceneManager::getInstancePtr()
 	return instance;
 }
 
-
-//GSceneManager::GSceneManager() : Root(NULL), MaxDepth(0)
-//{}
-
 GSceneManager::GSceneManager()
 {
 	ActiveScene = new Scene(this);
@@ -53,6 +49,144 @@ Scene* GSceneManager::GetActiveScene()
 //
 //	return nullptr;
 //}
+
+
+
+void GSceneManager::Init()
+{
+	LOG(DEBUG, "Initiating SCENE_MANAGER\n");
+
+
+	ActiveScene->InitScene();
+
+	//Root = new Octree(NULL);
+	//MaxDepth = 6;
+
+	//LOG(DEBUG, "Min:%f \n Max:%f",Root->Box.GetMinimum(), Root->Box.GetMaximum());
+
+
+	//OctreeNode * temp = new OctreeNode();
+
+	//LOG(DEBUG, "Min:%f \n Max:%f", temp->GetBoundingBox().GetMinimum(), temp->GetBoundingBox().GetMaximum());
+
+	//AddOctreeNode(temp, Root);
+
+
+	//OctreeNode * temp2 = new OctreeNode();
+
+	//temp2->GetBoundingBox().SetExtents(Point(1.0f, 1.0f, 1.0f), Point(2.0f, 2.0f, 2.0f));
+
+	//LOG(DEBUG, "Min:%f \n Max:%f", temp2->GetBoundingBox().GetMinimum(), temp2->GetBoundingBox().GetMaximum());
+
+	//AddOctreeNode(temp2, Root);
+
+
+	//OctreeNode * temp3 = new OctreeNode();
+
+	//temp3->GetBoundingBox().SetExtents(Point(1.0f, 1.0f, 1.0f), Point(9.0f, 9.0f,9.0f));
+
+	//LOG(DEBUG, "Min:%f \n Max:%f", temp3->GetBoundingBox().GetMinimum(), temp3->GetBoundingBox().GetMaximum());
+
+	//AddOctreeNode(temp3, Root);
+
+
+	LOG(DEBUG, "SCENE_MANAGER INITIATED!!!\n");
+}
+
+void GSceneManager::Terminate()
+{
+}
+
+void GSceneManager::DrawSceneGraph()
+{
+	ImGui::SetNextWindowSize(ImVec2(512, 720));
+	ImGui::SetNextWindowPos(ImVec2(1290, 0));
+	ImGuiWindowFlags window_flags = 0;
+	window_flags |= ImGuiWindowFlags_NoMove;
+	window_flags |= ImGuiWindowFlags_NoCollapse;
+	window_flags |= ImGuiWindowFlags_NoResize;
+	window_flags |= ImGuiWindowFlags_NoScrollbar;
+
+	static RenderActor* selectedIndex = nullptr;
+	ImGui::Begin("SceneGraph", 0, window_flags);
+	{
+		Scene* ActiveScene = GetActiveScene();
+		if (ActiveScene != nullptr) {
+			RenderActor* Root = ActiveScene->GetRoot();
+			ImGui::BeginChild("Graph", ImVec2(ImGui::GetContentRegionAvail().x, 0), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY);
+
+			RenderActor* ReturnedValue = RecurseSceneChildren(Root);
+			if (ReturnedValue != nullptr) {
+				selectedIndex = ReturnedValue;
+			}
+			ImGui::EndChild();
+
+			// Selected Details
+			if (selectedIndex != nullptr) {
+				ImGui::BeginGroup();
+				ImGui::BeginChild("Node Details", ImVec2(ImGui::GetContentRegionAvail().x, 360), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY, ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 line below us
+				ImGui::Text("MyObject: %s", selectedIndex->ObjectName);
+				ImGui::Separator();
+				if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None))
+				{
+					/*if (ImGui::BeginTabItem("Description"))
+					{
+						ImGui::TextWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ");
+						ImGui::EndTabItem();
+					}*/
+					if (ImGui::BeginTabItem("Details"))
+					{
+						if (ImGui::InputFloat3("Translation", &selectedIndex->ObjectPosition.X)) {
+							selectedIndex->SetPosition(selectedIndex->ObjectPosition);
+						}
+						ImGui::EndTabItem();
+					}
+					ImGui::EndTabBar();
+				}
+				ImGui::EndChild();
+				/*	if (ImGui::Button("Revert")) {}
+					ImGui::SameLine();
+					if (ImGui::Button("Save")) {}*/
+				ImGui::EndGroup();
+			}
+		}
+	}
+	ImGui::End();
+}
+
+
+RenderActor* GSceneManager::RecurseSceneChildren(RenderActor* Root) {
+	RenderActor* SelectedNode = nullptr;
+
+	ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+	if (ImGui::TreeNodeEx((void*)(intptr_t)0, node_flags | ImGuiTreeNodeFlags_DefaultOpen, Root->ObjectName))
+	{
+		for (int i = 0; i < Root->Children.Size(); i++)
+		{
+			if (Root->Children[i]->Children.IsNotEmpty()) {
+				RenderActor* ReturnedValue = RecurseSceneChildren(Root->Children[i]);
+				if (ReturnedValue != nullptr) {
+					SelectedNode = ReturnedValue;
+				}
+			}
+			else {
+				node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
+				if (ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags, Root->Children[i]->ObjectName))
+				{
+					if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+						// callback for selection
+						SelectedNode = Root->Children[i];
+					}
+				}
+			}
+		}
+		ImGui::TreePop();
+	}
+
+	return SelectedNode;
+}
+
 
 
 //
@@ -144,50 +278,6 @@ Scene* GSceneManager::GetActiveScene()
 //	}
 //}
 
-void GSceneManager::Init()
-{
-	LOG(DEBUG, "Initiating SCENE_MANAGER\n");
-
-
-	ActiveScene->InitScene();
-
-	//Root = new Octree(NULL);
-	//MaxDepth = 6;
-
-	//LOG(DEBUG, "Min:%f \n Max:%f",Root->Box.GetMinimum(), Root->Box.GetMaximum());
-
-
-	//OctreeNode * temp = new OctreeNode();
-
-	//LOG(DEBUG, "Min:%f \n Max:%f", temp->GetBoundingBox().GetMinimum(), temp->GetBoundingBox().GetMaximum());
-
-	//AddOctreeNode(temp, Root);
-
-
-	//OctreeNode * temp2 = new OctreeNode();
-
-	//temp2->GetBoundingBox().SetExtents(Point(1.0f, 1.0f, 1.0f), Point(2.0f, 2.0f, 2.0f));
-
-	//LOG(DEBUG, "Min:%f \n Max:%f", temp2->GetBoundingBox().GetMinimum(), temp2->GetBoundingBox().GetMaximum());
-
-	//AddOctreeNode(temp2, Root);
-
-
-	//OctreeNode * temp3 = new OctreeNode();
-
-	//temp3->GetBoundingBox().SetExtents(Point(1.0f, 1.0f, 1.0f), Point(9.0f, 9.0f,9.0f));
-
-	//LOG(DEBUG, "Min:%f \n Max:%f", temp3->GetBoundingBox().GetMinimum(), temp3->GetBoundingBox().GetMaximum());
-
-	//AddOctreeNode(temp3, Root);
-
-
-	LOG(DEBUG, "SCENE_MANAGER INITIATED!!!\n");
-}
-
-void GSceneManager::Terminate()
-{
-}
 
 //void Scene::Draw(Shader shader,Shader light)
 //{
@@ -239,92 +329,3 @@ void GSceneManager::Terminate()
 //	//std::cout <<"The MAP has SPOKEN:"<< ActorMap.count(ActorType::LIGHT) << std::endl;
 //	return ActorAdded;
 //}
-
-void GSceneManager::DrawSceneGraph()
-{
-	ImGui::SetNextWindowSize(ImVec2(512, 720));
-	ImGui::SetNextWindowPos(ImVec2(1290, 0));
-	ImGuiWindowFlags window_flags = 0;
-	window_flags |= ImGuiWindowFlags_NoMove;
-	window_flags |= ImGuiWindowFlags_NoCollapse;
-	window_flags |= ImGuiWindowFlags_NoResize;
-	window_flags |= ImGuiWindowFlags_NoScrollbar;
-
-	static RenderActor* selectedIndex = nullptr;
-	ImGui::Begin("SceneGraph", 0, window_flags);
-	{
-		Scene* ActiveScene = GetActiveScene();
-		if (ActiveScene != nullptr) {
-			RenderActor* Root = ActiveScene->GetRoot();
-			ImGui::BeginChild("Graph", ImVec2(ImGui::GetContentRegionAvail().x, 0), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY);
-
-			RenderActor* ReturnedValue = RecurseSceneChildren(Root);
-			if (ReturnedValue != nullptr) {
-				selectedIndex = ReturnedValue;
-			}
-			ImGui::EndChild();
-
-			// Selected Details
-			if (selectedIndex != nullptr) {
-				ImGui::BeginGroup();
-				ImGui::BeginChild("Node Details", ImVec2(ImGui::GetContentRegionAvail().x, 360), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY, ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 line below us
-				ImGui::Text("MyObject: %s", selectedIndex->ObjectName);
-				ImGui::Separator();
-				if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None))
-				{
-					/*if (ImGui::BeginTabItem("Description"))
-					{
-						ImGui::TextWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ");
-						ImGui::EndTabItem();
-					}*/
-					if (ImGui::BeginTabItem("Details"))
-					{
-						if(ImGui::InputFloat3("Translation", &selectedIndex->ObjectPosition.X)) {
-							selectedIndex->SetPosition(selectedIndex->ObjectPosition);
-						}
-						ImGui::EndTabItem();
-					}
-					ImGui::EndTabBar();
-				}
-				ImGui::EndChild();
-			/*	if (ImGui::Button("Revert")) {}
-				ImGui::SameLine();
-				if (ImGui::Button("Save")) {}*/
-				ImGui::EndGroup();
-			}
-		}
-	}
-	ImGui::End();
-}
-
-RenderActor* GSceneManager::RecurseSceneChildren(RenderActor* Root) {
-	RenderActor* SelectedNode = nullptr;
-
-	ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
-	if (ImGui::TreeNodeEx((void*)(intptr_t)0, node_flags | ImGuiTreeNodeFlags_DefaultOpen, Root->ObjectName))
-	{
-		for (int i = 0; i < Root->Children.Size(); i++)
-		{
-			if (Root->Children[i]->Children.IsNotEmpty()) {
-				RenderActor* ReturnedValue = RecurseSceneChildren(Root->Children[i]);
-				if (ReturnedValue != nullptr) {
-					SelectedNode = ReturnedValue;
-				}
-			}
-			else {
-				node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
-
-				if (ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags, Root->Children[i]->ObjectName))
-				{
-					if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
-						// callback for selection
-						SelectedNode = Root->Children[i];
-					}
-				}
-			}
-		}
-		ImGui::TreePop();
-	}
-
-	return SelectedNode;
-}

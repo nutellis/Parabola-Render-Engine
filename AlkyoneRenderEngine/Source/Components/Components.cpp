@@ -25,6 +25,16 @@ void PSceneComponent::SetAbsolute(bool bNewAbsoluteLocation, bool bNewAbsoluteRo
 	bAbsoluteScale = bNewAbsoluteScale;
 }
 
+Vector3f PSceneComponent::GetPosition() const
+{
+	return Parent->ObjectPosition;
+}
+
+Vector3f PSceneComponent::GetScale() const
+{
+	return Parent->ObjectScale;
+}
+
 //----------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------
 //								STATIC MESH COMPONENT
@@ -34,7 +44,7 @@ PStaticMeshComponent::PStaticMeshComponent()
 }
 
 
-PStaticMeshComponent::PStaticMeshComponent(const char* path)//const char* path,PSceneComponent *Default,bool isAbsolute)
+PStaticMeshComponent::PStaticMeshComponent(RenderActor* Parent, const char* path)//const char* path,PSceneComponent *Default,bool isAbsolute)
 {
 	std::cout << "This is a StaticMeshComponent\n";
 //	ComponentArchive->Load(path);
@@ -57,6 +67,8 @@ PStaticMeshComponent::PStaticMeshComponent(const char* path)//const char* path,P
 
 	Mesh->SetupBuffers();
 
+	this->Parent = Parent;
+
 }
 void PStaticMeshComponent::SetShaderMaterial(Shader * ActiveShader) const
 {
@@ -70,8 +82,17 @@ void PStaticMeshComponent::DrawComponent(Shader* ActiveShader) {
 	
 	SetShaderMaterial(ActiveShader);
 
+	Model = Matrix4f::IDENTITY;
+
+	Model = Scale(GetScale(), Model);
+
+	// fix angle parameter (StaticMesh->angle)
+	// Model = Rotate(this->ObjectRotation, StaticMesh->angle, Model);
+
+	Model = Translate(GetPosition(), Model);
+
 	//ActiveShader->Uniforms.ModelLocation
-	ActiveShader->SetMat4("model", true, Model);
+	ActiveShader->SetMat4(ActiveShader->Uniforms.ModelLocation, true, Model);
 	
 	Mesh->VAO.Bind();
 	glDrawElements(GL_TRIANGLES, Mesh->Indices.Size(), GL_UNSIGNED_INT, 0);
@@ -98,17 +119,42 @@ void PStaticMeshComponent::DrawComponent(Shader* ActiveShader) {
 //									POINT LIGHT COMPONENT
 //----------------------------------------------------------------------------------------
 
-PPointLightComponent::PPointLightComponent()
+PPointLightComponent::PPointLightComponent(RenderActor* Parent)
 {
-	//glm::vec3(1.2f, 1.0f, 2.0f);
 	std::cout << "This is a PointLightComponent\n";
 	Attributes = new PointLightAttributes();
+
+	Attributes->Diffuse = Vector3f(1.0f, 1.0f, 1.0f);
+	Attributes->Specular = Vector3f(1.0f, 1.0f, 1.0f);
+	Attributes->Ambient = Vector3f(0.1f, 0.1f, 0.1f);
+
+	Attributes->CutOff = 12.5f;
+	Attributes->OuterCutOff = 17.5f;
+
+
+	Attributes->Constant = 1.0f;
+	Attributes->Linear = 0.09f;
+	Attributes->Quadratic = 0.032f;
+
+	this->Parent = Parent;
 }
 
 PPointLightComponent::PPointLightComponent(PSceneComponent * Default)
 {
 	std::cout << "This is a PointLightComponent\n";
 	Attributes = new PointLightAttributes();
+
+	Attributes->Diffuse = Vector3f(1.0f, 1.0f, 1.0f);
+	Attributes->Specular = Vector3f(1.0f, 1.0f, 1.0f);
+	Attributes->Ambient = Vector3f(0.1f, 0.1f, 0.1f);
+
+	Attributes->CutOff = 12.5f;
+	Attributes->OuterCutOff = 17.5f;
+	
+	
+	Attributes->Constant = 1.0f;
+	Attributes->Linear = 0.09f;
+	Attributes->Quadratic = 0.032f;
 
 }
 
@@ -117,24 +163,23 @@ PPointLightComponent::~PPointLightComponent()
 	delete[] Attributes;
 }
 
-void PPointLightComponent::SetupShaderLight() {
-	glUseProgram(SHADERMANAGER.GetShader("SimpleShader")->ID);
-	//
+void PPointLightComponent::SetupShaderLight(Shader * ActiveShader) {
+	
 	// be sure to activate shader when setting uniforms/drawing objects
-	SHADERMANAGER.GetShader("SimpleShader")->setVec3("light.position", Vector3f(0, 1.5f, 2));
+	ActiveShader->setVec3("light.position", Parent->ObjectPosition);
 	//SHADERMANAGER.GetShader("SimpleShader")->setVec3("light.position", Vector3f(lightX, 1.5f, lightZ));
 
-	SHADERMANAGER.GetShader("SimpleShader")->setFloat("light.cutOff", SMath::Cos(DegreesToRadians(12.5f)));
-	SHADERMANAGER.GetShader("SimpleShader")->setFloat("light.outerCutOff", SMath::Cos(DegreesToRadians(17.5f)));
+	ActiveShader->setFloat("light.cutOff", SMath::Cos(DegreesToRadians(Attributes->CutOff)));
+	ActiveShader->setFloat("light.outerCutOff", SMath::Cos(DegreesToRadians(Attributes->OuterCutOff)));
 	// light properties
-	SHADERMANAGER.GetShader("SimpleShader")->setVec3("light.ambient", 0.1f, 0.1f, 0.1f);
+	ActiveShader->setVec3("light.ambient", Attributes->Ambient);
 	// we configure the diffuse intensity slightly higher; the right lighting conditions differ with each lighting method and environment.
 	// each environment and lighting type requires some tweaking to get the best out of your environment.
-	SHADERMANAGER.GetShader("SimpleShader")->setVec3("light.diffuse", 1.0f, 1.0f, 1.0f);
-	SHADERMANAGER.GetShader("SimpleShader")->setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-	SHADERMANAGER.GetShader("SimpleShader")->setFloat("light.constant", 1.0f);
-	SHADERMANAGER.GetShader("SimpleShader")->setFloat("light.linear", 0.09f);
-	SHADERMANAGER.GetShader("SimpleShader")->setFloat("light.quadratic", 0.032f);
+	ActiveShader->setVec3("light.diffuse", Attributes->Diffuse);
+	ActiveShader->setVec3("light.specular", Attributes->Specular); // add to attributes
+	ActiveShader->setFloat("light.constant", Attributes->Constant);
+	ActiveShader->setFloat("light.linear", Attributes->Linear);
+	ActiveShader->setFloat("light.quadratic",Attributes->Quadratic);
 }
 
 //----------------------------------------------------------------------------------------
@@ -146,6 +191,8 @@ PCameraComponent::PCameraComponent(RenderActor * Parent, Vector3f up, float yaw,
 	IsActiveCamera = true;
 
 	Up = up;
+	WorldUp = Vector3f(Up);
+
 	Yaw = yaw;
 	Pitch = pitch;
 
@@ -155,7 +202,6 @@ PCameraComponent::PCameraComponent(RenderActor * Parent, Vector3f up, float yaw,
 
 	UpdateCameraVectors();
 
-	ProcessMouseMovement(0, 0);
 }
 
 PCameraComponent::PCameraComponent(float upX, float upY, float upZ, float yaw, float pitch)
@@ -173,12 +219,12 @@ PCameraComponent::PCameraComponent(float upX, float upY, float upZ, float yaw, f
 void PCameraComponent::LookAt(const Vector4f& Eye, const Vector4f& At, const Vector4f& Up)
 {
 	Vector4f F = Normalize(At - Eye);
-	Vector4f S = Normalize(F.Cross(Up));
-	Vector4f U = S.Cross(F);
+	Vector4f R = Normalize(F.Cross(Up));
+	Vector4f U = R.Cross(F);
 
 	Vector4f T = Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
 
-	Matrix4f Result = Matrix4f(S, U, -F, T);
+	Matrix4f Result = Matrix4f(R, U, -F, T);
 
 	Matrix4f Translation;
 	Translation = Matrix4f::IDENTITY;
@@ -294,7 +340,7 @@ void PCameraComponent::UpdateCameraVectors()
 	Front.Y = SMath::Sin(DegreesToRadians(Pitch));
 	Front.Z = SMath::Sin(DegreesToRadians(Yaw)) * SMath::Cos(DegreesToRadians(Pitch));
 	Front = Normalize(Front);
-	Right = Normalize((Front.Cross(Up)));  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+	Right = Normalize((Front.Cross(WorldUp)));  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
 	Up = Normalize((Right.Cross(Front)));
 }
 
@@ -309,51 +355,31 @@ void PCameraComponent::ProcessKeyboard(CameraMovement direction, float deltaTime
 		Parent->ObjectPosition -= (Right * velocity);
 	if (direction == RIGHT)
 		Parent->ObjectPosition += (Right * velocity);
+	if (direction == UP)
+		Parent->ObjectPosition += (Up * velocity);
+	if (direction == DOWN)
+		Parent->ObjectPosition -= (Up * velocity);
 }
 
 void PCameraComponent::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch)
 {
-	//xoffset *= MouseSensitivity;
-	//yoffset *= MouseSensitivity;
+	xoffset *= MouseSensitivity;
+	yoffset *= MouseSensitivity;
 
-	//Yaw += xoffset;
-	//Pitch += yoffset;
+	Yaw += xoffset;
+	Pitch += yoffset;
 
-	//// Make sure that when pitch is out of bounds, screen doesn't get flipped
-	//if (constrainPitch)
-	//{
-	//	if (Pitch > 89.0f)
-	//		Pitch = 89.0f;
-	//	if (Pitch < -89.0f)
-	//		Pitch = -89.0f;
-	//}
+	// make sure that when pitch is out of bounds, screen doesn't get flipped
+	if (constrainPitch)
+	{
+		if (Pitch > 89.0f)
+			Pitch = 89.0f;
+		if (Pitch < -89.0f)
+			Pitch = -89.0f;
+	}
 
-	// Update Front, Right and Up Vectors using the updated Eular angles
-	//UpdateCameraVectors();
-
-	//xoffset *= MouseSensitivity;
-	//yoffset *= MouseSensitivity;
-
-	//Yaw += xoffset;
-	//Pitch += yoffset;
-	//float camX;// = SMath::Sin(xoffset);
-
-	//float radius = 5;
-	//camX = SMath::Cos(DegreesToRadians(Yaw)) * SMath::Cos(DegreesToRadians(Pitch));
-
-	//float camZ;
-
-	//camZ = SMath::Sin(DegreesToRadians(Yaw)) * SMath::Cos(DegreesToRadians(Pitch));
-
-	//if (Pitch > 89.0f)
-	//{
-	//	Pitch = 89.0f;
-	//}
-	//if (Pitch < -89.0f)
-	//{
-	//	Pitch = -89.0f;
-	//}
-	//Parent->ObjectPosition = Vector3f(camX, SMath::Sin(DegreesToRadians(Pitch)), camZ) * radius;
+	// update Front, Right and Up Vectors using the updated Euler angles
+	UpdateCameraVectors();
 }
 
 void PCameraComponent::ProcessMouseScroll(float yoffset)
@@ -363,6 +389,15 @@ void PCameraComponent::ProcessMouseScroll(float yoffset)
 		Zoom = 1.0f;
 	if (Zoom > 45.0f)
 		Zoom = 45.0f;
+}
+
+void PCameraComponent::SetupShaderCamera(Shader* ActiveShader) {
+	//view
+	ActiveShader->SetMat4(ActiveShader->Uniforms.ViewLocation, true, View);
+	//projection
+	ActiveShader->SetMat4(ActiveShader->Uniforms.ProjectionLocation, false, Projection);
+
+	ActiveShader->setVec3("viewPos", GetPosition());
 }
 
 void PCameraComponent::SetDefaults()

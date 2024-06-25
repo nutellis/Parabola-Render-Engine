@@ -27,7 +27,7 @@ void RenderActor::AddLight()
 
    // SetPosition(Vector3f(0.0, 0.5, 1.0));
 
-    Light = new PPointLightComponent();
+    Light = new PPointLightComponent(this);
 
     ActorType = EntityType::LIGHT;
 
@@ -42,7 +42,7 @@ void RenderActor::AddLight()
 
 void RenderActor::AddMesh(const char* path)
 {
-    StaticMesh = new PStaticMeshComponent(path);
+    StaticMesh = new PStaticMeshComponent(this, path);
 
     ActorType = EntityType::MODEL;
 }
@@ -154,7 +154,7 @@ void RenderActor::DrawMeshChildren(Shader * ActiveShader) {
 
 void RenderActor::ControlCamera() {
 
-    Camera->LookAt(ObjectPosition, Vector3f(0.0f, 0.0f, 0.0f), Camera->Up);
+    Camera->LookAt(ObjectPosition, ObjectPosition + Camera->Front, Camera->Up);
 
     Camera->Perspective(Camera->Zoom, (float)1280 / (float)720, 0.1f, 100.0f);
 }

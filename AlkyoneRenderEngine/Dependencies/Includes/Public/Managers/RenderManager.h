@@ -265,16 +265,14 @@ public:
 	Vector3f lightPos;
 
 
+	void DrawScene();
+
 	void tempFunction();
 
 	// Inherited via ManagerBase
 	virtual void Init() override;
 
 	virtual void Terminate() override;
-
-private:
-	int test;
-
 
 	//temp
 public:

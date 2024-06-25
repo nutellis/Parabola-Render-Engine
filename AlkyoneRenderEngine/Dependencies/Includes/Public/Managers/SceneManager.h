@@ -37,6 +37,8 @@ public:
 
 	void DrawSceneGraph();
 
+	void DrawScene();
+
 	void FrustrumCull();
 
 	RenderActor* RecurseSceneChildren(RenderActor* Root);

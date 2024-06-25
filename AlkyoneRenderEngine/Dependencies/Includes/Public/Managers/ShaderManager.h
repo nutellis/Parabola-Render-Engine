@@ -36,6 +36,8 @@ public:
 
 
 	Shader* GetShader(const char* Name);
+
+	Shader* GetShader(const uint32 Id);
 	
 	
 	void Clean();

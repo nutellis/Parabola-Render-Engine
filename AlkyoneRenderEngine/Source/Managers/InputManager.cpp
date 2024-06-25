@@ -29,6 +29,9 @@ GInputManager * GInputManager::getInstancePtr()
 
 GInputManager::GInputManager()
 {
+	lastX = 1280 / 2.0f;
+	lastY = 720 / 2.0f;
+	firstMouse = true;
 }
 
 GInputManager::~GInputManager()
@@ -65,8 +68,18 @@ void GInputManager::KeyPressCallback(GLFWwindow* Window, int key, int scancode, 
 		//Vector3f Right = Right.Cross(cmr->Front, cmr->Up);
 		//cmr->Position = cmr->Position + (Normalize(Right) * cameraSpeed);
 	}
+	if (glfwGetKey(Window, GLFW_KEY_R) == GLFW_PRESS) {
+		cmr->Camera->ProcessKeyboard(UP, 0.3f);
+		//Vector3f Right = Right.Cross(cmr->Front, cmr->Up);
+		//cmr->Position = cmr->Position + (Normalize(Right) * cameraSpeed);
+	}
 	if (glfwGetKey(Window, GLFW_KEY_F) == GLFW_PRESS) {
-		cmr->ObjectPosition = Vector3f(0.0f, 0.0f, 5.0f);
+		cmr->Camera->ProcessKeyboard(DOWN, 0.3f);
+		//Vector3f Right = Right.Cross(cmr->Front, cmr->Up);
+		//cmr->Position = cmr->Position + (Normalize(Right) * cameraSpeed);
+	}
+	if (glfwGetKey(Window, GLFW_KEY_K) == GLFW_PRESS) {
+		cmr->ObjectPosition = Vector3f(-0.0f, 2.0f, -5.0f);
 		//Vector3f Right = Right.Cross(cmr->Front, cmr->Up);
 		//cmr->Position = cmr->Position + (Normalize(Right) * cameraSpeed);
 	}
@@ -78,7 +91,8 @@ void GInputManager::KeyPressCallback(GLFWwindow* Window, int key, int scancode, 
 void GInputManager::MouseCallback(GLFWwindow * Window, double xpos, double ypos)
 {
 	RenderWindow *win = WINDOWMANAGER.GetRenderWindow();
-	//if (glfwGetKey(Window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
+	RenderActor* cmr = SCENEMANAGER.GetActiveScene()->GetActiveCameraActor();
+	if (glfwGetKey(Window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
 		if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && xpos > 375) {
 			RenderActor* cmr = SCENEMANAGER.GetActiveScene()->GetActiveCameraActor();
 			
@@ -88,9 +102,10 @@ void GInputManager::MouseCallback(GLFWwindow * Window, double xpos, double ypos)
 			/*cmr->Camera->ProcessMouseMovement(xoffset, yoffset);*/
 			
 		}
-	//		}
+			}
 	win->MouseLastY = ypos;
 	win->MouseLastX = xpos;
+
 }
 
 void GInputManager::MouseButtonCallback(GLFWwindow * Window, int button, int action, int mods)

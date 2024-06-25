@@ -35,6 +35,8 @@ public:
 
 	void SetAbsolute(bool bNewAbsoluteLocation, bool bNewAbsoluteRotation, bool bNewAbsoluteScale);
 
+	Vector3f GetPosition() const;
+	Vector3f GetScale() const;
 };
 
 //Components that have geometry and can be renderd.
@@ -57,7 +59,7 @@ class PStaticMeshComponent : public PPrimitiveComponent {
 public:
 	float angle;
 	PStaticMeshComponent();
-	PStaticMeshComponent(const char* path);
+	PStaticMeshComponent(RenderActor* Parent, const char* path);
 
 	void SetShaderMaterial(Shader* ActiveShader) const;
 
@@ -82,13 +84,13 @@ private:
 class PPointLightComponent : public PSceneComponent
 {
 public:
-	PPointLightComponent();
+	PPointLightComponent(RenderActor* Parent);
 
 	PPointLightComponent(PSceneComponent *Default);
 
 	~PPointLightComponent();
 
-	void SetupShaderLight();
+	void SetupShaderLight(Shader* ActiveShader);
 
 	PointLightAttributes *Attributes;																			//EEEEEEEEEEEEEE OPOINTLIGHTATTRIBUTES
 };
@@ -98,7 +100,9 @@ enum CameraMovement {
 	FORWARD,
 	BACKWARD,
 	LEFT,
-	RIGHT
+	RIGHT,
+	UP,
+	DOWN
 };
 
 enum ProjectionType {
@@ -206,6 +210,8 @@ public:
 
 	// Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
 	void ProcessMouseScroll(float yoffset);
+
+	void SetupShaderCamera(Shader* ActiveShader);
 
 };
 #endif // !_COMPONENTS_H

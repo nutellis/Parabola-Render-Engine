@@ -52,6 +52,9 @@ private:
 	//Camera * cmr;
 
 	//TVector2<int32> MouseDrag;
+	float lastX;
+	float lastY;
+	bool firstMouse = true;
 };
 
 

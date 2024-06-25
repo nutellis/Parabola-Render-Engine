@@ -39,15 +39,21 @@ class PointLightAttributes
 {
 public:
 
-	Vector3f color;
-	float intensity;
+	Vector3f Diffuse;
+	Vector3f Specular;
+	Vector3f Ambient;
 
-	float constant;
-	float linear;
-	float quadratic;
+	float Intensity;
 
-	bool emmitsDiffuse;
-	bool emmitsSpecular;
+	float CutOff;
+	float OuterCutOff;
+
+	float Constant;
+	float Linear;
+	float Quadratic;
+
+	bool EmmitsDiffuse;
+	bool EmmitsSpecular;
 
 	//visual aspect
 

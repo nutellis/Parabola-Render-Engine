@@ -11,6 +11,8 @@
 
 #include<Core/Time.h>
 
+#include <unordered_map>
+
 
 #include <glm/glm.hpp>
 
@@ -88,6 +90,22 @@ RenderSystem * GRenderManager::GetContext()
 //	tempActiveShader->SetMat4(tempActiveShader->Uniforms.ProjectionLocation, ProjectionMatrix);
 //}
 
+
+//Per Frame Rendering :
+//
+//Fetch Scene Data :
+//Query the SceneManager for visible meshes, active camera, and lights.
+//Set Uniforms :
+//For each visible mesh :
+//Bind the appropriate shader.
+//Set shader uniforms using data from the SceneManager :
+//Transformation Matrices : Model, View, Projection matrices.
+//Lighting Information : Positions, colors, intensities of lights.
+//Camera Information : Camera position and orientation.
+//Issue the draw call.
+
+float lightX;
+float lightZ;
 void GRenderManager::Render(double DeltaTime)
 {
 	glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
@@ -109,8 +127,8 @@ void GRenderManager::Render(double DeltaTime)
 
 	//camera first
 	const float radius = 2.0f;
-	float lightX = SMath::Sin(glfwGetTime()) * radius;
-	float lightZ = SMath::Cos(glfwGetTime()) * radius;
+	lightX = SMath::Sin(glfwGetTime()) * radius;
+	lightZ = SMath::Cos(glfwGetTime()) * radius;
 
 	auto activeCamera = SCENEMANAGER.GetActiveScene()->GetActiveCameraActor();
 		
@@ -132,7 +150,6 @@ void GRenderManager::Render(double DeltaTime)
 	modelLoc = glGetUniformLocation(SHADERMANAGER.GetShader("Light")->ID, "model");
 	viewLoc = glGetUniformLocation(SHADERMANAGER.GetShader("Light")->ID, "view");
 
-	// TODO: create a getActiveShader function
 	SHADERMANAGER.GetShader("Light")->SetMat4("projection", false, activeCamera->Camera->Projection);
 
 	glUniformMatrix4fv(modelLoc, 1, GL_TRUE, model[0]);
@@ -143,34 +160,7 @@ void GRenderManager::Render(double DeltaTime)
 // ---------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------
-	auto simpleShader = SHADERMANAGER.GetShader("SimpleShader");
-	simpleShader->Enable();
-	//
-	// be sure to activate shader when setting uniforms/drawing objects
-	simpleShader->setVec3("light.position", Vector3f(lightX, 1.5f, lightZ));
-	//SHADERMANAGER.GetShader("SimpleShader")->setVec3("light.position", Vector3f(lightX, 1.5f, lightZ));
-
-	simpleShader->setFloat("light.cutOff", SMath::Cos(DegreesToRadians(12.5f)));
-	simpleShader->setFloat("light.outerCutOff", SMath::Cos(DegreesToRadians(17.5f)));
-	// light properties
-	simpleShader->setVec3("light.ambient", 0.1f, 0.1f, 0.1f);
-	// we configure the diffuse intensity slightly higher; the right lighting conditions differ with each lighting method and environment.
-	// each environment and lighting type requires some tweaking to get the best out of your environment.
-	simpleShader->setVec3("light.diffuse", 1.0f, 1.0f, 1.0f);
-	simpleShader->setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-	simpleShader->setFloat("light.constant", 1.0f);
-	simpleShader->setFloat("light.linear", 0.09f);
-	simpleShader->setFloat("light.quadratic", 0.032f);
-
-	simpleShader->setVec3("viewPos", activeCamera->ObjectPosition); // Vector3f(0.0f, 1.5f, 4.0f));
-
-	//view
-	simpleShader->SetMat4("view", true, activeCamera->Camera->View);
-
-	//projection
-	simpleShader->SetMat4("projection", false, activeCamera->Camera->Projection);
-
-	SCENEMANAGER.GetActiveScene()->GetRoot()->DrawMeshChildren(simpleShader);
+	DrawScene();
 
 	std::string fps;
 	fps = "Delta Time: "+ std::to_string(glfwGetTime());
@@ -188,6 +178,50 @@ void GRenderManager::Render(double DeltaTime)
 	
 }
 
+
+void GRenderManager::DrawScene()
+{
+	std::unordered_map<uint32, TArray<PStaticMeshComponent*>> ShaderPerMeshMap;
+
+	Scene* ActiveScene = SCENEMANAGER.GetActiveScene();
+
+	if (ActiveScene != nullptr) {
+
+		//get Camera
+		PCameraComponent* Camera = ActiveScene->GetActiveCameraActor()->Camera;
+
+		//for now get light but later we will need lights!
+		TArray<RenderActor*> Lights = ActiveScene->SceneLights;
+
+		//get visible meshes. For now just get all meshes.
+		TArray<RenderActor *> VisibleMeshes = ActiveScene->SceneMeshes;
+		for (int i = 0; i < VisibleMeshes.Size(); i++) {
+			PStaticMeshComponent * MeshToRender = VisibleMeshes[i]->StaticMesh;
+			
+			if (MeshToRender != nullptr) {
+				uint32 ShaderUsed = MeshToRender->GetMaterial()->ShaderID;
+				ShaderPerMeshMap[ShaderUsed].PushBack(MeshToRender);
+			}
+		}
+
+		for (const auto& Pair : ShaderPerMeshMap) {
+			Shader* ShaderToUse = SHADERMANAGER.GetShader(Pair.first);
+			TArray <PStaticMeshComponent*> MeshesToRender = Pair.second;
+			
+			ShaderToUse->Enable();
+			//camera
+			Camera->SetupShaderCamera(ShaderToUse);
+
+			// set lights
+			Lights.Front()->SetPosition(Vector3f(lightX, 1.5, lightZ));
+			Lights.Front()->Light->SetupShaderLight(ShaderToUse);
+
+			for (int i = 0; i < MeshesToRender.Size(); i++) {
+				MeshesToRender[i]->DrawComponent(ShaderToUse);
+			}
+		}
+	}
+}
 
 void GRenderManager::tempFunction()
 {

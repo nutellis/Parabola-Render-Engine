@@ -96,17 +96,18 @@ uint32 GShaderManager::CreateShader(const char* Name, const char* VertexPath, co
 
 Shader* GShaderManager::GetShader(const char* Name)
 {
-	
-	/*for (ShaderMap::iterator it = s_Shaders.begin(); it != s_Shaders.end(); ++it)
-	{
-		if (std::strcmp(it->first, Name) == 0)
-		{
-			return it->second;
-		}
-			
-	}*/
 	Shader * FoundShader = Shaders.FindFirst([Name](const Shader* At) {
 		return strcmp(At->Name, Name) == 0;
+		});
+
+	return FoundShader;
+}
+
+Shader* GShaderManager::GetShader(const uint32 Id)
+{
+
+	Shader* FoundShader = Shaders.FindFirst([Id](const Shader* At) {
+		return At->ID == Id;
 		});
 
 	return FoundShader;
