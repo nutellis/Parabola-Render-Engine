@@ -1,2 +1,1 @@
-[![cpp-linter](https://github.com/cpp-linter/cpp-linter-action/actions/workflows/cpp-linter.yml/badge.svg)](https://github.com/nutellis/Parabola-Render-Engine/actions/workflows/main.yml)
 [![CodeFactor](https://www.codefactor.io/repository/github/nutellis/parabola-render-engine/badge?s=bc43b89133f41d7ae575acbdc704957347708b97)](https://www.codefactor.io/repository/github/nutellis/parabola-render-engine)
