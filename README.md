@@ -1,1 +1,1 @@
-[![CodeFactor](https://www.codefactor.io/repository/github/nutellis/parabola-render-engine/badge?s=bc43b89133f41d7ae575acbdc704957347708b97)](https://www.codefactor.io/repository/github/nutellis/parabola-render-engine)
+
