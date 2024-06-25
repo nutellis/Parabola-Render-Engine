@@ -71,7 +71,7 @@ void Scene::InitScene() {
 	lightMesh->SetScale(Vector3f(0.3));
 
 
-	RenderActor* aMesh = new RenderActor("torusMesh");
+	RenderActor* aMesh = new RenderActor("torusMeshActor");
 	this->AddChild(aMesh);
 
 	aMesh->SetPosition(Vector3f(-3.0, 1.5, 1.0));
