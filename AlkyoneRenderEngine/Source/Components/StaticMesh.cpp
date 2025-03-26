@@ -76,19 +76,19 @@ void PStaticMesh::SetupBuffers()
 	VAO.CreateArray();
 	VBO.CreateBuffer(Vertices.SizeOf(), Vertices.Begin());
 
-	if(MaterialIndexMapping.size() != 0) {
-		for (auto& Material : MaterialIndexMapping) {
-			VertexBufferObject* EBO = new VertexBufferObject();
-			EBO->CreateBuffer(Material.second.SizeOf(), Material.second.Begin());
-			EBOs.PushBack(EBO);
-		}
-	}
-	else {
+	//if(MaterialIndexMapping.size() != 0) {
+	//	for (auto& Material : MaterialIndexMapping) {
+	//		VertexBufferObject* EBO = new VertexBufferObject();
+	//		EBO->CreateBuffer(Material.second.SizeOf(), Material.second.Begin());
+	//		//EBOs.PushBack(EBO);
+	//	}
+	//}
+	//else {
 		VertexBufferObject* EBO = new VertexBufferObject();
 		EBO->CreateBuffer(Indices.SizeOf(), Indices.Begin());
-		EBOs.PushBack(EBO);
+		//EBOs.PushBack(EBO);
 		VAO.AttachElementBuffer(EBO->GetID());
-	}
+	//}
 	
 	
 

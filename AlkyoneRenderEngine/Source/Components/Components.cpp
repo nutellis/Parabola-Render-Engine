@@ -127,19 +127,19 @@ void PStaticMeshComponent::DrawComponent(Shader* ActiveShader) {
 
 		SetShaderMaterial(ActiveShader,Materials[i]);
 		
-		if (Mesh->MaterialIndexMapping.size() == 0) {
-			glDrawElements(GL_TRIANGLES, Mesh->Indices.Size(), GL_UNSIGNED_INT, 0);
-		}
-		else {
-			glVertexArrayElementBuffer(Mesh->VAO.GetID(), Mesh->EBOs[i]->GetID());
-			//std::cout << "MaterialIndexMapping[" << i << "]:\n";
-			//for (int j = 0; j < Mesh->MaterialIndexMapping[i].Size(); j++) {
-			//	std::cout << Mesh->MaterialIndexMapping[i][j] << "\t";
-			//}
-			//std::cout << "\n";
+		//if (Mesh->MaterialIndexMapping.size() == 0) {
+		glDrawElements(GL_TRIANGLES, Mesh->Indices.Size(), GL_UNSIGNED_INT, 0);
+		//}
+		//else {
+		//	glVertexArrayElementBuffer(Mesh->VAO.GetID(), Mesh->EBO.GetID());
+		//	//std::cout << "MaterialIndexMapping[" << i << "]:\n";
+		//	//for (int j = 0; j < Mesh->MaterialIndexMapping[i].Size(); j++) {
+		//	//	std::cout << Mesh->MaterialIndexMapping[i][j] << "\t";
+		//	//}
+		//	//std::cout << "\n";
 
-			glDrawElements(GL_TRIANGLES, Mesh->MaterialIndexMapping[i].Size(), GL_UNSIGNED_INT, 0);
-		}
+		//	glDrawElements(GL_TRIANGLES, Mesh->MaterialIndexMapping[i].Size(), GL_UNSIGNED_INT, 0);
+		//}
 	}
 }
 
