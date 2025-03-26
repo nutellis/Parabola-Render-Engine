@@ -11,6 +11,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <Components/Lights.h>
+#include <Utilities/Containers/Array.h>
 
 // #include <ObjectInitializer.h>
 
@@ -61,12 +62,12 @@ public:
 	PStaticMeshComponent();
 	PStaticMeshComponent(RenderActor* Parent, const char* path);
 
-	void SetShaderMaterial(Shader* ActiveShader) const;
+	void SetShaderMaterial(Shader* ActiveShader, PMaterial* Material) const;
 
 	void DrawComponent(Shader* ActiveShader);
 
 	inline PStaticMesh * GetMesh() const { return Mesh; }
-	inline PMaterial * GetMaterial() const { return Material; }
+	inline PMaterial * GetMaterial(uint32 Index) const { return Materials[Index]; }
 
 	
 	/*void Deserialize(UArchive& Ar);
@@ -76,7 +77,7 @@ public:
 
 private:
 	PStaticMesh *Mesh;
-	PMaterial *Material;
+	TArray<PMaterial *> Materials;
 
 	
 };

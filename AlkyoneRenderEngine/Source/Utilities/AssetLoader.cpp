@@ -1,8 +1,9 @@
 #include <Utilities/AssetLoader.h>
 
-#include <Components/Texture.h>
-
 #include <Managers/LogManager.h>
+
+#include <Components/Material.h>
+
 
 
 
@@ -152,7 +153,6 @@ Asset * FbxLoader::Read(const char* Filepath)
 	//std::cout << "\n\nFetching Mesh\n" << std::endl;
 	//path = splitPath(Filepath); 
 
-
 	return Build(aScene->GetRootNode());
 
 }
@@ -187,15 +187,14 @@ Asset * FbxLoader::Build(FbxNode *node)
 	FbxNodeAttribute *attribute = node->GetNodeAttribute();
 	if (attribute)
 	{
-
-
 		if (attribute->GetAttributeType() == FbxNodeAttribute::eMesh)
 		{
 			FbxMesh *Mesh = node->GetMesh();
 
 
+			//Testing materials
+			format->Materials = FetchMaterial(node);
 
-			//FetchMaterial(node);
 			int32 PolygonCount = Mesh->GetPolygonCount();
 
 
@@ -230,6 +229,16 @@ Asset * FbxLoader::Build(FbxNode *node)
 
 			FbxLayer* BaseLayer = Mesh->GetLayer(0);
 
+			FbxLayerElementMaterial* LayerElementMaterial = BaseLayer->GetMaterials();
+			FbxLayerElement::EReferenceMode MaterialReferenceMode(FbxLayerElement::eIndexToDirect);
+			FbxLayerElement::EMappingMode MaterialMappingMode(FbxLayerElement::eByPolygon);
+			if (LayerElementMaterial)
+			{
+				hasMaterials = true;
+				MaterialReferenceMode = LayerElementMaterial->GetReferenceMode();
+				MaterialMappingMode = LayerElementMaterial->GetMappingMode();
+			}
+
 			FbxLayerElementNormal * LayerElementNormal = BaseLayer->GetNormals();
 
 			FbxLayerElement::EReferenceMode NormalReferenceMode(FbxLayerElement::eDirect);
@@ -240,10 +249,6 @@ Asset * FbxLoader::Build(FbxNode *node)
 				NormalReferenceMode = LayerElementNormal->GetReferenceMode();
 				NormalMappingMode = LayerElementNormal->GetMappingMode();
 			}
-
-
-
-
 
 			//Fetch Position
 			int32 VertexCount = Mesh->GetControlPointsCount();
@@ -260,10 +265,12 @@ Asset * FbxLoader::Build(FbxNode *node)
 				RawPositions.PushBack(VertexPosition);
 			}
 
-			int32	RealFbxVertexIndex = 0,
-				ControlPointIndex = 0;
+			int32 RealFbxVertexIndex = 0, ControlPointIndex = 0;
 
-			//number of polugons(triangles for us)
+			/*result.X = static_cast<float>(LayerElementMaterial->GetDirectArray().GetAt(inTextureUVIndex).mData[0]);
+			result.Y = static_cast<float>(gVertexUV->GetDirectArray().GetAt(inTextureUVIndex).mData[1]);*/
+
+			//number of polugons(triangles for us) For each polygon
 			for (int32 PolygonIndex = 0; PolygonIndex < PolygonCount; PolygonIndex++)
 			{
 
@@ -273,17 +280,31 @@ Asset * FbxLoader::Build(FbxNode *node)
 				Vector3f normal(0.0f);
 				Vector2f uv(0.0f);
 
+				MaterialPerPolygon.PushBack(LayerElementMaterial->GetIndexArray()[PolygonIndex]);
+				// MaterialIndexMapping[LayerElementMaterial->GetIndexArray()[PolygonIndex]] = TArray<uint32>();
 
 				//Vector3f binormal(0.0f);
 				//Vector3f tangent(0.0f);
-				//indexes(corners) per polygon (triangles for us, actually vertices)
+				//indexes(corners) per polygon (triangles for us, actually vertices). For each vertex per polygon
 				for (int32 CornerIndex = 0; CornerIndex < PolygonVertexCount; CornerIndex++, RealFbxVertexIndex++)
 				{
 					ControlPointIndex = Mesh->GetPolygonVertex(PolygonIndex, CornerIndex);
 
 					Positions.PushBack(RawPositions[ControlPointIndex]);
 
-					//position = RawPositions[ControlPointIndex];
+					if (LayerElementMaterial) {
+						switch (MaterialMappingMode) {
+						case FbxLayerElement::eAllSame: {
+							MaterialIndexMapping[LayerElementMaterial->GetIndexArray().GetAt(0)].PushBack(ControlPointIndex);
+						}
+						break;
+						case FbxLayerElement::eByPolygon: {
+							MaterialIndexMapping[LayerElementMaterial->GetIndexArray().GetAt(PolygonIndex)].PushBack(ControlPointIndex);
+						}
+						break;
+						}
+					}
+					
 
 					//Fetching Normals
 					if (LayerElementNormal)
@@ -306,14 +327,13 @@ Asset * FbxLoader::Build(FbxNode *node)
 						}
 						else
 						{
-							NormalValueIndex = LayerElementNormal->GetIndexArray().GetAt(NormalMapIndex);;
+							NormalValueIndex = LayerElementNormal->GetIndexArray().GetAt(NormalMapIndex);
 						}
 						FbxVector4 FbxNormal = LayerElementNormal->GetDirectArray().GetAt(NormalValueIndex);
 
 						Normals.PushBack(Vector3f(FbxNormal.mData[0], FbxNormal.mData[1], FbxNormal.mData[2]));
 
 					}
-
 
 					UVs.PushBack(FetchUVs(Mesh, ControlPointIndex, Mesh->GetTextureUVIndex(PolygonIndex, CornerIndex), 0));
 
@@ -325,15 +345,21 @@ Asset * FbxLoader::Build(FbxNode *node)
 
 				}
 			}
-			InsertVertex(hasUVs, hasNormals);
+  			InsertVertex(hasUVs, hasNormals, false);
 			//actually use this data
 
 
 			format->Vertex = Vertices;
 			format->indices = Indices;
+			format->MaterialIndexMapping = MaterialIndexMapping;
 			//format->BoundingBox.SetExtents(Min, Max);
 
 			//format.material = mat;
+
+			std::cout << MaterialIndexMapping[1].Size() << "\n";
+			for (auto i = 0; i < MaterialIndexMapping[1].Size(); i++) {
+				std::cout << MaterialIndexMapping[1][i] << "\t";
+			}
 
 			//Serialize(*AssetArchive);
 			//AssetArchive->Finalize(path);
@@ -622,20 +648,77 @@ Vector2f FbxLoader::FetchUVs(FbxMesh * mesh, int inCtrlPointIndex, int inTexture
 //	return result;
 //}
 
-
-
-/*void FbxLoader::FetchMaterial(FbxNode *node)
+TArray<PMaterial> FbxLoader::FetchMaterial(FbxNode *node)
 {
-	mat = new PMaterial();
-	int materialCount = node->GetMaterialCount();
-	for (int i = 0; i < materialCount; i++)
+	TArray<PMaterial> Materials = TArray<PMaterial>();
+	int MaterialCount = node->GetMaterialCount();
+	for (int i = 0; i < MaterialCount; i++)
 	{
-		FbxSurfaceMaterial* material = node->GetMaterial(i);
-		mat = mat->Initialize(material);
+		PMaterial NewMaterial = PMaterial();
+		FbxSurfaceMaterial* FbxMaterial = node->GetMaterial(i);
+
+		NewMaterial.MaterialID = FbxMaterial->GetUniqueID();
+
+		NewMaterial.Emissive = *GetMaterialProperty(FbxMaterial,
+			FbxSurfaceMaterial::sEmissive, FbxSurfaceMaterial::sEmissiveFactor);
+
+		NewMaterial.Ambient = *GetMaterialProperty(FbxMaterial,
+			FbxSurfaceMaterial::sAmbient, FbxSurfaceMaterial::sAmbientFactor);
+
+		NewMaterial.Diffuse = *GetMaterialProperty(FbxMaterial,
+			FbxSurfaceMaterial::sDiffuse, FbxSurfaceMaterial::sDiffuseFactor);
+
+		NewMaterial.Specular = *GetMaterialProperty(FbxMaterial,
+			FbxSurfaceMaterial::sSpecular, FbxSurfaceMaterial::sSpecularFactor);
+
+		FbxProperty lShininessProperty = FbxMaterial->FindProperty(FbxSurfaceMaterial::sShininess);
+		if (lShininessProperty.IsValid())
+		{
+			double lShininess = lShininessProperty.Get<FbxDouble>();
+			NewMaterial.Shinness = static_cast<float>(lShininess);
+		}
+
+		Materials.PushBack(NewMaterial);
+	}
+	return Materials;
+}
+// 
+
+PChannel* FbxLoader::GetMaterialProperty(const FbxSurfaceMaterial* pMaterial,
+	const char* pPropertyName,
+	const char* pFactorPropertyName)
+{
+	PChannel* lResult = new PChannel();
+	const FbxProperty lProperty = pMaterial->FindProperty(pPropertyName);
+	const FbxProperty lFactorProperty = pMaterial->FindProperty(pFactorPropertyName);
+	if (lProperty.IsValid() && lFactorProperty.IsValid())
+	{
+		lResult->Name = pPropertyName;
+		FbxDouble3 lColour = lProperty.Get<FbxDouble3>();
+		double lFactor = lFactorProperty.Get<FbxDouble>();
+		if (lFactor != 1)
+		{
+			lColour[0] *= lFactor;
+			lColour[1] *= lFactor;
+			lColour[2] *= lFactor;
+		}
+		lResult->Colour = Vector4f((float)lColour[0], (float)lColour[1], (float)lColour[2], 1.0f);
 	}
 
+	if (lProperty.IsValid())
+	{
+		//const int lTextureCount = lProperty.GetSrcObjectCount<FbxFileTexture>();
+		//if (lTextureCount)
+		//{
+		//	const FbxFileTexture* lTexture = lProperty.GetSrcObject<FbxFileTexture>();
+		//	lResult->ChannelTexture->Generate(lTexture->GetFileName()); // LoadTexture
+		//	lResult->HasTexture = true;
+		//}
+
+	}
+
+	return lResult;
 }
-// */
 
 //void BaseLoader::InsertVertex(const Vector3f & position, const Vector3f & normal, const Vector2f & uv)
 //{
@@ -658,11 +741,11 @@ Vector2f FbxLoader::FetchUVs(FbxMesh * mesh, int inCtrlPointIndex, int inTexture
 //	}
 //}
 
-void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals)
+void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals, bool doIndices)
 {
 	VertexFormat Vertex;
 
-	Vector3f Zero = Vector3f(0);
+	Vector3f Zero = Vector3f::ZERO;
 
 	Max = Vector3f::ZERO;
 	Min = Vector3f::ZERO;
@@ -685,19 +768,21 @@ void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals)
 			Vertex = { Positions[i], Zero, Zero };
 		}
 
-		auto lookup = IndexMapping.find(Vertex);
-		if (lookup != IndexMapping.end())
-		{
+		if (doIndices) {
+			auto lookup = IndexMapping.find(Vertex);
+			if (lookup != IndexMapping.end())
+			{
 
-			Indices.PushBack(lookup->second);
-		}
-		else
-		{
+				Indices.PushBack(lookup->second);
+			}
+			else
+			{
 
-			uint32 index = static_cast<uint32>(Vertices.Size());
-			IndexMapping[Vertex] = index;
-			Indices.PushBack(index);
-			Vertices.PushBack(Vertex);
+				uint32 index = static_cast<uint32>(Vertices.Size());
+				IndexMapping[Vertex] = index;
+				Indices.PushBack(index);
+				Vertices.PushBack(Vertex);
+			}
 		}
 
 		if (Positions[i] > Max)
@@ -806,64 +891,13 @@ void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals)
 //	delete mSpecular;
 //}
 //
-//PMaterial *PMaterial::Initialize(const FbxSurfaceMaterial * pMaterial)
+//void * AssetLoader::InitializeMaterial(const FbxSurfaceMaterial * pMaterial)
 //{
-//	mEmissive = GetMaterialProperty(pMaterial,
-//		FbxSurfaceMaterial::sEmissive, FbxSurfaceMaterial::sEmissiveFactor);
-//
-//	mAmbient = GetMaterialProperty(pMaterial,
-//		FbxSurfaceMaterial::sAmbient, FbxSurfaceMaterial::sAmbientFactor);
-//
-//	mDiffuse = GetMaterialProperty(pMaterial,
-//		FbxSurfaceMaterial::sDiffuse, FbxSurfaceMaterial::sDiffuseFactor);
-//
-//	mSpecular = GetMaterialProperty(pMaterial,
-//		FbxSurfaceMaterial::sSpecular, FbxSurfaceMaterial::sSpecularFactor);
-//
-//	FbxProperty lShininessProperty = pMaterial->FindProperty(FbxSurfaceMaterial::sShininess);
-//	if (lShininessProperty.IsValid())
-//	{
-//		double lShininess = lShininessProperty.Get<FbxDouble>();
-//		mShinness = static_cast<float>(lShininess);
-//	}
-//	return this;
+//	
 //}
 //
-//Channel *PMaterial::GetMaterialProperty(const FbxSurfaceMaterial * pMaterial,
-//	const char * pPropertyName,
-//	const char * pFactorPropertyName)
-//{
-//	Channel *lResult = new Channel();
-//	const FbxProperty lProperty = pMaterial->FindProperty(pPropertyName);
-//	const FbxProperty lFactorProperty = pMaterial->FindProperty(pFactorPropertyName);
-//	if (lProperty.IsValid() && lFactorProperty.IsValid())
-//	{
-//		lResult->ChName = pPropertyName;
-//		FbxDouble3 lColour = lProperty.Get<FbxDouble3>();
-//		double lFactor = lFactorProperty.Get<FbxDouble>();
-//		if (lFactor != 1)
-//		{
-//			lColour[0] *= lFactor;
-//			lColour[1] *= lFactor;
-//			lColour[2] *= lFactor;
-//		}
-//		lResult->Colour = Vector4f((float)lColour[0], (float)lColour[1], (float)lColour[2], 1.0f);
-//	}
-//
-//	if (lProperty.IsValid())
-//	{
-//		const int lTextureCount = lProperty.GetSrcObjectCount<FbxFileTexture>();
-//		if (lTextureCount)
-//		{
-//			const FbxFileTexture* lTexture = lProperty.GetSrcObject<FbxFileTexture>();
-//			lResult->ChannelTexture->Generate(lTexture->GetFileName()); // LoadTexture
-//			lResult->HasTexture = true;
-//		}
-//
-//	}
-//
-//	return lResult;
-//}*/
+
+
 ///*
 //// "C:/Users/Nutellis/Documents/Visual Studio 2015/Projects/OpenGLTutorial/Engine-core/Resources/container2.png"
 ////Texture *PMaterial::LoadTexture(const char * filename) //, GLenum image_format, int internal_format, int level, int border
@@ -1163,7 +1197,7 @@ Asset * ObjLoader::Read(const char * Filepath)
 	}
 
 
-	InsertVertex(hasUVs, hasNormals);
+	InsertVertex(hasUVs, hasNormals, true);
 
 
 	format->Vertex = Vertices;
@@ -1217,9 +1251,10 @@ Asset::~Asset()
 {
 	Vertex.~TArray<VertexFormat>();
 	indices.~TArray<uint32>();
+	Materials.~TArray<PMaterial>();
 }
 
-uint8 Asset::isEmpty()
+bool Asset::isEmpty()
 {
 	uint8 Result = false;
 	if (Vertex.IsEmpty() || indices.IsEmpty())
@@ -1229,3 +1264,8 @@ uint8 Asset::isEmpty()
 
 	return Result;
 }
+
+
+//
+//static bool parseGeometryMaterials(GeometryDataImpl& geom, const Element& element, std::vector<ParseDataJob>& jobs)
+//}

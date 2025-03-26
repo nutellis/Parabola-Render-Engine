@@ -40,7 +40,7 @@ private:
 	uint32 ID;
 	uint32 Index;
 
-	uint8 bIsCreated : 1 ;
+	bool bIsCreated;
 };
 
 class VertexArrayObject

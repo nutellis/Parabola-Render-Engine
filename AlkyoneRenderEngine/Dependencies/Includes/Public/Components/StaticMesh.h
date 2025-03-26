@@ -27,6 +27,7 @@ public:
 
 	VertexArray Vertices;
 	IndexArray Indices;
+	std::unordered_map<uint32, IndexArray> MaterialIndexMapping;
 
 	TextureArray Textures;
 

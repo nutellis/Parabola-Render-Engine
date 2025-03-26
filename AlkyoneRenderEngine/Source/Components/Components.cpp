@@ -7,6 +7,8 @@
 #include <Components/StaticMesh.h>
 #include <Components/Material.h>
 
+#include <Core/Utilities.h>
+
 //-------------------------------------------------
 /*ta components na uio8etoun to RelativeLocation tou root*/
 //-------------------------------------------------
@@ -50,38 +52,53 @@ PStaticMeshComponent::PStaticMeshComponent(RenderActor* Parent, const char* path
 //	ComponentArchive->Load(path);
 //	Deserialize(*ComponentArchive);
 
-	Mesh = new PStaticMesh(ASSETLOADER.LoadAsset(path));
-	Material = new PMaterial();
+	Asset* AssetToLoad = ASSETLOADER.LoadAsset(path);
+
+	Mesh = new PStaticMesh(AssetToLoad);
+	
+	if (AssetToLoad->Materials.IsNotEmpty()) {
+		for (uint32 i = 0; i < AssetToLoad->Materials.Size(); i++) {
+			PMaterial * Material = new PMaterial();
+			Material = &AssetToLoad->Materials[i];
+			Materials.PushBack(Material);
+		}
+		Mesh->MaterialIndexMapping = AssetToLoad->MaterialIndexMapping;
+	}
+	else {
+		PMaterial* Material = new PMaterial();
+		if (AssetToLoad->Materials.Size() <= 1) {
+			Material->Diffuse.Colour = Vector4f(Vector3f((float)(rand() % 100) / 100, (float)(rand() % 100) / 100, (float)(rand() % 100) / 100), 1);
+			Material->Specular.Colour = Vector4f(Vector3f(0.5f, 0.5f, 0.5f), 1);
+			Material->Shinness = 32.0;
+		}
+		Materials.PushBack(Material);
+		
+	}
 
 	// init the shader only one time
 	if (SHADERMANAGER.GetShader("SimpleShader") == nullptr) {
-		Material->ShaderID = SHADERMANAGER.CreateShader("SimpleShader", "H:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/simpleVertex.vert", "H:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/simpleFrag.frag", nullptr);
+		Materials[0]->ShaderID = SHADERMANAGER.CreateShader("SimpleShader", "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/simpleVertex.vert", "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/simpleFrag.frag", nullptr);
 	}
 	else {
-		Material->ShaderID = SHADERMANAGER.GetShader("SimpleShader")->ID;
+		Materials[0]->ShaderID = SHADERMANAGER.GetShader("SimpleShader")->ID;
 	}
-
-	Material->Diffuse.Colour = Vector4f(Vector3f((float)(rand() % 100)/100, (float)(rand() % 100)/100, (float)(rand() % 100)/100), 1);
-	Material->Specular.Colour = Vector4f(Vector3f(0.5f, 0.5f, 0.5f), 1);
-	Material->Shinness = 32.0;
-
+	
 	Mesh->SetupBuffers();
 
 	this->Parent = Parent;
 
 }
-void PStaticMeshComponent::SetShaderMaterial(Shader * ActiveShader) const
+void PStaticMeshComponent::SetShaderMaterial(Shader * ActiveShader, PMaterial *Material) const
 {
-	ActiveShader->setFloat("material.shininess", Material->Shinness);
+	ActiveShader->setFloat("material.shininess", 32.0);
 	ActiveShader->setVec3("material.diffuse", Vector3f(Material->Diffuse.Colour));
-	ActiveShader->setVec3("material.specular", Vector3f(Material->Specular.Colour));
+	ActiveShader->setVec3("material.specular", Vector3f(0.5f, 0.5f, 0.5f));
+
 
 }
 
 void PStaticMeshComponent::DrawComponent(Shader* ActiveShader) {
 	
-	SetShaderMaterial(ActiveShader);
-
 	Model = Matrix4f::IDENTITY;
 
 	Model = Scale(GetScale(), Model);
@@ -91,11 +108,39 @@ void PStaticMeshComponent::DrawComponent(Shader* ActiveShader) {
 
 	Model = Translate(GetPosition(), Model);
 
-	//ActiveShader->Uniforms.ModelLocation
 	ActiveShader->SetMat4(ActiveShader->Uniforms.ModelLocation, true, Model);
-	
+
 	Mesh->VAO.Bind();
-	glDrawElements(GL_TRIANGLES, Mesh->Indices.Size(), GL_UNSIGNED_INT, 0);
+
+	// for each material
+	for (uint32 i = 0; i < Materials.Size(); i++) {
+		
+			// bind material
+
+			// setup buffers for each material
+			// in detail:
+			// 
+			// we should create a map of -> int (material index) : vertex indexes 
+			// for each material index render the indices and move to the next.
+			// 
+			// do everything as usual
+
+		SetShaderMaterial(ActiveShader,Materials[i]);
+		
+		if (Mesh->MaterialIndexMapping.size() == 0) {
+			glDrawElements(GL_TRIANGLES, Mesh->Indices.Size(), GL_UNSIGNED_INT, 0);
+		}
+		else {
+			glVertexArrayElementBuffer(Mesh->VAO.GetID(), Mesh->EBOs[i]->GetID());
+			//std::cout << "MaterialIndexMapping[" << i << "]:\n";
+			//for (int j = 0; j < Mesh->MaterialIndexMapping[i].Size(); j++) {
+			//	std::cout << Mesh->MaterialIndexMapping[i][j] << "\t";
+			//}
+			//std::cout << "\n";
+
+			glDrawElements(GL_TRIANGLES, Mesh->MaterialIndexMapping[i].Size(), GL_UNSIGNED_INT, 0);
+		}
+	}
 }
 
 //void PStaticMeshComponent::Deserialize(UArchive & Ar)

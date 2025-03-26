@@ -284,7 +284,7 @@ public:
 
 	HCButtonWidget testButton;
 
-	Pyramid * pyramid;
+	Pyramid * triangle;
 	Plane plane;
 	Cube * cube;
 	Triangle model;

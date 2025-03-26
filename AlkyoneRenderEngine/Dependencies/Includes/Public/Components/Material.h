@@ -9,6 +9,7 @@ class PChannel
 public:
 	const char* Name;
 
+
 	Vector4f Colour;
 
 	bool HasTexture;
@@ -40,7 +41,7 @@ public:
 	//void Serialize(Archive &Ar);
 	//void Deserialize(Archive &Ar);
 
-
+	int32 MaterialID;
 
 //private:
 

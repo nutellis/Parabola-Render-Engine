@@ -120,42 +120,10 @@ void GRenderManager::Render(double DeltaTime)
 	//TODO: remove magic numbers
 	glViewport(0, 0, 1280, 720);
 
-	Matrix4f  model = Matrix4f::IDENTITY;
-
-	//TODO: move all that in scene manager
-	
-
-	//camera first
-	const float radius = 2.0f;
-	lightX = SMath::Sin(glfwGetTime()) * radius;
-	lightZ = SMath::Cos(glfwGetTime()) * radius;
-
 	auto activeCamera = SCENEMANAGER.GetActiveScene()->GetActiveCameraActor();
 		
 	activeCamera->ControlCamera();
 
-	unsigned int modelLoc;
-	unsigned int viewLoc;
-
-	////light
-	glUseProgram(SHADERMANAGER.GetShader("Light")->ID);
-	light.VAO.Bind();
-
-	model = Matrix4f::IDENTITY;
-
-	model = Scale(Vector3f(0.2f), model);
-
-	model = Translate(Vector3f(lightX, 1.5f, lightZ), model);
-	
-	modelLoc = glGetUniformLocation(SHADERMANAGER.GetShader("Light")->ID, "model");
-	viewLoc = glGetUniformLocation(SHADERMANAGER.GetShader("Light")->ID, "view");
-
-	SHADERMANAGER.GetShader("Light")->SetMat4("projection", false, activeCamera->Camera->Projection);
-
-	glUniformMatrix4fv(modelLoc, 1, GL_TRUE, model[0]);
-
-	glUniformMatrix4fv(viewLoc, 1, GL_TRUE, activeCamera->Camera->View[0]);
-	glDrawElements(GL_TRIANGLES, light.Indices.Size(), GL_UNSIGNED_INT, 0);
 // ---------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------
@@ -199,7 +167,7 @@ void GRenderManager::DrawScene()
 			PStaticMeshComponent * MeshToRender = VisibleMeshes[i]->StaticMesh;
 			
 			if (MeshToRender != nullptr) {
-				uint32 ShaderUsed = MeshToRender->GetMaterial()->ShaderID;
+				uint32 ShaderUsed = MeshToRender->GetMaterial(0)->ShaderID;
 				ShaderPerMeshMap[ShaderUsed].PushBack(MeshToRender);
 			}
 		}
@@ -213,7 +181,8 @@ void GRenderManager::DrawScene()
 			Camera->SetupShaderCamera(ShaderToUse);
 
 			// set lights
-			Lights.Front()->SetPosition(Vector3f(lightX, 1.5, lightZ));
+			// Lights.Front()->SetPosition(Vector3f(lightX, 1.5, lightZ));
+			Lights.Front()->SetPosition(Vector3f(0, 0, 2.0));
 			Lights.Front()->Light->SetupShaderLight(ShaderToUse);
 
 			for (int i = 0; i < MeshesToRender.Size(); i++) {
@@ -234,15 +203,15 @@ void GRenderManager::tempFunction()
 
 	cmr = new Camera();
 
-	cube =  new Cube();
-	pyramid = new Pyramid();
+	// cube =  new Cube();
+	// pyramid = new Pyramid();
 	//cubemesh = PStaticMesh(cube->Vertices, cube->Indices);
 
 	light = PStaticMesh(ASSETLOADER.LoadAsset("Assets/cube.obj"));
 	
 	light.SetupBuffers();
-	
-	cubemesh = PStaticMesh(ASSETLOADER.LoadAsset("Assets/cubetest.fbx"));
+	lightPos = Vector3f(0.0f, 1.0f, 0.0f);
+	/*cubemesh = PStaticMesh(ASSETLOADER.LoadAsset("Assets/cubetest.fbx"));
 	
 	cubemesh.SetupBuffers();
 
@@ -253,13 +222,13 @@ void GRenderManager::tempFunction()
 
 	planemesh = PStaticMesh(plane.Vertices, plane.Indices);
 
-	planemesh.SetupBuffers();
+	planemesh.SetupBuffers();*/
 
 	//cubemesh.VAO.Bind();
 	//pyramidmesh.VAO.Bind();
 
 	//lightPos = Vector3f(1.2f, 1.0f, 2.0f);
-	lightPos = Vector3f(0.0f, 1.0f, 0.0f);
+	
 
 	//test = ModelManager();
 	//test.loadModel("dragon.obj");

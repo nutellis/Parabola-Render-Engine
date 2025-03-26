@@ -196,10 +196,10 @@ void GShaderManager::Init()
 
 	LOG(DEBUG, "Initiating SHADER_MANAGER\n");
 
-	CreateShader("Light", "H:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/lamp.vs", "H:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/lamp.fs");
+	CreateShader("Light", "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/lamp.vs", "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/lamp.fs");
 	
 	//TEXT
-	CreateShader("Text", "H:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/TextShader.vs", "H:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/TextFragShader.fs");
+	CreateShader("Text", "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/TextShader.vs", "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/TextFragShader.fs");
 
 
 	//probably read some standard shaders that need to load. For now do nothing. hoho

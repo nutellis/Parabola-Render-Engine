@@ -131,6 +131,8 @@ public:
 			Utilities::Swap(Other.First, this->First);
 			Utilities::Swap(Other.Last, this->Last);
 			Utilities::Swap(Other.Storage, this->Storage);
+			Utilities::Swap(Other.ArraySize, this->ArraySize);
+			Utilities::Swap(Other.StorageSize, this->StorageSize);
 		}
 		return *this;
 	}
@@ -238,6 +240,7 @@ public:
 			::new (static_cast<void *>(Last)) ValueType(Utilities::Forward<Types>(Values)...);
 
 			++Last;
+			++ArraySize;
 
 		}
 		else {

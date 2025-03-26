@@ -3,7 +3,7 @@
 
 
 PStaticMesh::PStaticMesh() : Vertices(),
-Indices(), VAO(), VBO(), EBO()
+Indices(), VAO(), VBO()// , EBO()
 {
 
 	//Deserialize("ball.asset");
@@ -11,7 +11,7 @@ Indices(), VAO(), VBO(), EBO()
 }
 
 PStaticMesh::PStaticMesh(Asset* Mesh)
-	: Vertices(), Indices(), VAO(), VBO(), EBO()
+	: Vertices(), Indices(), VAO(), VBO()// , EBO()
 {
 	if (!Mesh->isEmpty())
 	{
@@ -21,7 +21,7 @@ PStaticMesh::PStaticMesh(Asset* Mesh)
 }
 
 PStaticMesh::PStaticMesh(const char * filepath) : Vertices(),
-Indices(), VAO(), VBO(), EBO()
+Indices(), VAO(), VBO()// , EBO()
 {
 	//ObjLoader load = ObjLoader();
 	//FbxLoader load = FbxLoader();
@@ -52,8 +52,8 @@ PStaticMesh::PStaticMesh(const VertexArray & vertex, IndexArray & index) :
 	Vertices(vertex),
 	Indices(index),
 	VAO(),
-	VBO(),
-	EBO()
+	VBO()
+	// EBO()
 {
 //	Textures = TextureArray();
 	//Textures.PushBack(Texture());
@@ -75,7 +75,22 @@ void PStaticMesh::SetupBuffers()
 {
 	VAO.CreateArray();
 	VBO.CreateBuffer(Vertices.SizeOf(), Vertices.Begin());
-	EBO.CreateBuffer(Indices.SizeOf(), Indices.Begin());
+
+	if(MaterialIndexMapping.size() != 0) {
+		for (auto& Material : MaterialIndexMapping) {
+			VertexBufferObject* EBO = new VertexBufferObject();
+			EBO->CreateBuffer(Material.second.SizeOf(), Material.second.Begin());
+			EBOs.PushBack(EBO);
+		}
+	}
+	else {
+		VertexBufferObject* EBO = new VertexBufferObject();
+		EBO->CreateBuffer(Indices.SizeOf(), Indices.Begin());
+		EBOs.PushBack(EBO);
+		VAO.AttachElementBuffer(EBO->GetID());
+	}
+	
+	
 
 	uint32 VBOIndex = VBO.GetIndex();
 
@@ -86,7 +101,7 @@ void PStaticMesh::SetupBuffers()
 
 	VAO.AttachVertexBuffer(VBOIndex, VBOIndex, sizeof(VertexFormat));
 
-	VAO.AttachElementBuffer(EBO.GetID());
+	//VAO.AttachElementBuffer(EBO.GetID());
 
 	//VAO.SetupAttribute(VBO.GetIndex(), 0, offsetof(VertexFormat, VertexFormat::Position));
 

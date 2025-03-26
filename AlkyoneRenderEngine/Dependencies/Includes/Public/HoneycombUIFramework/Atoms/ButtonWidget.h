@@ -46,8 +46,8 @@ public:
 
     void InitButton() {
         
-        SHADERMANAGER.CreateShader("GUIShader", "H:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/buttonVertexShader.vs",
-            "H:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/ButtonFragShader.fs", nullptr);
+        SHADERMANAGER.CreateShader("GUIShader", "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/buttonVertexShader.vs",
+            "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/ButtonFragShader.fs", nullptr);
 
 
         // Vertex data for a button

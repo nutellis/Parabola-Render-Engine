@@ -51,41 +51,26 @@ void GInputManager::KeyPressCallback(GLFWwindow* Window, int key, int scancode, 
 
 	if (glfwGetKey(Window, GLFW_KEY_W) == GLFW_PRESS) {
 		cmr->Camera->ProcessKeyboard(FORWARD, 0.3f);
-		//cmr->Position = cmr->Position + (cmr->Front * cameraSpeed);
 	}
 	if (glfwGetKey(Window, GLFW_KEY_S) == GLFW_PRESS) {
 		cmr->Camera->ProcessKeyboard(BACKWARD, 0.3f);
-		//cmr->Position = cmr->Position + (cmr->Front * cameraSpeed);
 	}
 	if (glfwGetKey(Window, GLFW_KEY_A) == GLFW_PRESS) {
-
 		cmr->Camera->ProcessKeyboard(LEFT, 0.3f);
-		//Vector3f Left = Left.Cross(cmr->Front, cmr->Up);
-		//cmr->Position = cmr->Position - (Normalize(Left) * cameraSpeed);
 	}
 	if (glfwGetKey(Window, GLFW_KEY_D) == GLFW_PRESS) {
 		cmr->Camera->ProcessKeyboard(RIGHT, 0.3f);
-		//Vector3f Right = Right.Cross(cmr->Front, cmr->Up);
-		//cmr->Position = cmr->Position + (Normalize(Right) * cameraSpeed);
 	}
 	if (glfwGetKey(Window, GLFW_KEY_R) == GLFW_PRESS) {
 		cmr->Camera->ProcessKeyboard(UP, 0.3f);
-		//Vector3f Right = Right.Cross(cmr->Front, cmr->Up);
-		//cmr->Position = cmr->Position + (Normalize(Right) * cameraSpeed);
 	}
 	if (glfwGetKey(Window, GLFW_KEY_F) == GLFW_PRESS) {
 		cmr->Camera->ProcessKeyboard(DOWN, 0.3f);
-		//Vector3f Right = Right.Cross(cmr->Front, cmr->Up);
-		//cmr->Position = cmr->Position + (Normalize(Right) * cameraSpeed);
 	}
 	if (glfwGetKey(Window, GLFW_KEY_K) == GLFW_PRESS) {
 		cmr->ObjectPosition = Vector3f(-0.0f, 2.0f, -5.0f);
-		//Vector3f Right = Right.Cross(cmr->Front, cmr->Up);
-		//cmr->Position = cmr->Position + (Normalize(Right) * cameraSpeed);
 	}
-	
-	//LOG(CMD, " A key was pressed");
-	//Todo : heyoooo
+
 }
 
 void GInputManager::MouseCallback(GLFWwindow * Window, double xpos, double ypos)

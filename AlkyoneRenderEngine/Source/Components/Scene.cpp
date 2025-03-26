@@ -44,17 +44,26 @@ void Scene::SortChild(RenderActor* Child) {
 void Scene::InitScene() {
 
 	// init scene from a previous saved one. for now just init one for testing
-	RenderActor* pyramid = new RenderActor("pyramid");
-	this->AddChild(pyramid);
+	RenderActor* triangle = new RenderActor("triangle");
+	//this->AddChild(triangle);
 
-	pyramid->SetPosition(Vector3f(0.0, 0.0, 0.0));
-	pyramid->AddMesh("Assets/tri.fbx");
-	SortChild(pyramid);
+	//triangle->SetPosition(Vector3f(-1.0, 0.0, 0.0));
+	//triangle->AddMesh("Assets/triangle.fbx");
+	////pyramid->SetScale(Vector3f(0.02));
+	//SortChild(triangle);
+
+	RenderActor* plane = new RenderActor("plane");
+	this->AddChild(plane);
+
+	plane->SetPosition(Vector3f(1.0, 0.0, 0.0));
+	plane->AddMesh("Assets/plane.fbx");
+	//pyramid->SetScale(Vector3f(0.02));
+	SortChild(plane);
 
 	RenderActor* camera = new RenderActor("camera");
 	this->AddChild(camera);
 
-	camera->SetPosition(Vector3f(-1.0f, 2.0f, -5.0f));
+	camera->SetPosition(Vector3f(0.0f, 0.0f, -5.0f));
 	camera->AddCamera();
 	SortChild(camera);
 	
@@ -66,7 +75,7 @@ void Scene::InitScene() {
 	light->AddLight();
 	SortChild(light);
 
-	RenderActor* lightMesh = new RenderActor("lightMesh");
+	/*RenderActor* lightMesh = new RenderActor("lightMesh");
 	this->AddChild(lightMesh);
 
 	lightMesh->SetPosition(Vector3f(3.0, 1.5, 1.0));
@@ -80,7 +89,7 @@ void Scene::InitScene() {
 	aMesh->SetPosition(Vector3f(-3.0, 1.5, 1.0));
 	aMesh->AddMesh("Assets/torus.fbx");
 	aMesh->SetScale(Vector3f(0.3));
-	SortChild(aMesh);
+	SortChild(aMesh);*/
 }
 
 void Scene::ResetScene() {

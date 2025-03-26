@@ -3,8 +3,7 @@
 #ifndef ASSETBUILDER_H
 #define ASSETBUILDER_H
 
-#include <Core/PODTypes.h>
-#include <Core/UDTypes.h>
+#include <Core/RenderCore.h>
 #include <VertexFormat.h>
 
 #include <ParabolaMath.h>
@@ -12,7 +11,6 @@
 #include <fbxsdk.h>
 
 #include <unordered_map>
-
 
 #include <Core/SingletonBase.h>
 #include <Managers/ManagerBase.h>
@@ -25,7 +23,10 @@
 
 //#include <Utilities/Archive.h>
 
-#include <Core/RenderCore.h>
+
+
+class PChannel;
+class PMaterial;
 
 struct Asset {
 
@@ -33,10 +34,12 @@ struct Asset {
 	~Asset();
 	TArray<VertexFormat> Vertex;
 	IndexArray indices;
+	TArray<PMaterial> Materials;
+	std::unordered_map<uint32, IndexArray> MaterialIndexMapping;
 
 	//AxisAlignedBoundingBox BoundingBox;
 
-	uint8 isEmpty();
+	bool isEmpty();
 
 	//std::vector<int64> indices;
 	//std::vector<VertexFormat2> Vertex;
@@ -83,12 +86,14 @@ class BaseLoader {
 public:
 
 	//virtual void InsertVertex(const Vector3f& position, const Vector3f& normal, const Vector2f& uv);
-	virtual void InsertVertex(bool hasUVs, bool hasNormals);
+	virtual void InsertVertex(bool hasUVs, bool hasNormals, bool doIndices);
 
 protected:
 	TArray<Vector3f> Positions;
 	TArray<Vector3f> Normals;
 	TArray<Vector2f> UVs;
+	TArray<int32> MaterialPerPolygon;
+	std::unordered_map<uint32, IndexArray> MaterialIndexMapping;
 
 	TArray<Vector3f> RawPositions;
 	TArray<VertexFormat> Vertices;
@@ -102,6 +107,9 @@ protected:
 
 	bool hasNormals;
 	bool hasUVs;
+	bool hasMaterials;
+
+
 
 };
 
@@ -139,7 +147,9 @@ private:
 	//Vector3f FetchBinormal(FbxMesh* mesh, int controlPointIndex, int gVertexCounter);
 	//Vector3f FetchTangent(FbxMesh* mesh, int controlPointIndex, int gVertexCounter);
 	
-	void FetchMaterial(FbxNode * node);
+	TArray<PMaterial> FetchMaterial(FbxNode * node);
+
+	PChannel* GetMaterialProperty(const FbxSurfaceMaterial* pMaterial, const char* pPropertyName, const char* pFactorPropertyName);
 
 	const char *path;
 
