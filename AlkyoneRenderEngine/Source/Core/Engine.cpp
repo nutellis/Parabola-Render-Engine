@@ -32,6 +32,8 @@ Engine::Engine()
 {
 	LogManager = GLogManager::getInstancePtr();
 
+	WindowManager = GWindowManager::getInstancePtr();
+
 	RenderManager = GRenderManager::getInstancePtr();
 	
 	InputManager = GInputManager::getInstancePtr();
@@ -57,6 +59,7 @@ Engine::~Engine()
 
 	GUIManager = nullptr;
 
+	WindowManager = nullptr;
 }
 
 void Engine::Run()
@@ -67,8 +70,8 @@ void Engine::Run()
 	
 	Time::LastTime = Time::Seconds();
 
-
 	LOG(INFO, "Engine is Running Full SPEEED :)\n");
+	
 	while (!glfwWindowShouldClose(GWindowManager::getInstance().GetWindow()))
 	{
 		Time::CurrentTime = Time::Seconds();
@@ -80,13 +83,13 @@ void Engine::Run()
 
 		//accum += Time::DeltaTime;
 		
-		
+		glfwPollEvents();
 		
 	
 		//while (accum < Time::CurrentTime)
 		//{
 			
-			RenderManager->Render(Time::DeltaTime);
+		RenderManager->Render(Time::DeltaTime);
 			//LOG(CMD, "FPS: %f", 1/Time::FixedDeltaTime);
 			
 	
@@ -95,8 +98,8 @@ void Engine::Run()
 
 		//	accum += Time::FixedDeltaTime;
 		//}
-	
-			glfwPollEvents();
+		glfwSwapBuffers(gWindowManager.GetWindow());
+			
 	}
 }
 
@@ -106,6 +109,8 @@ void Engine::Init()
 	Time::InitTime();
 
 	GLogManager::getInstance().Init();
+
+	GWindowManager::getInstance().Init();
 
 	GRenderManager::getInstance().Init();
 
@@ -119,6 +124,7 @@ void Engine::Init()
 
 void Engine::Terminate()
 {
+
 	GRenderManager::getInstance().Terminate();
 
 	GInputManager::getInstance().Terminate();
@@ -128,6 +134,8 @@ void Engine::Terminate()
 	GGUIManager::getInstance().Terminate();
 
 	GEditor::getInstance().Terminate();
+
+	GWindowManager::getInstance().Terminate();
 
 	LOG(DEBUG, "All systems went to sleep. Engine is no more");
 }

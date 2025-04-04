@@ -4,7 +4,16 @@ Shader::Shader()
 {
 }
 
-Shader::Shader(uint32 InId, const char* InName) : ID(InId), Name(InName) {}
+Shader::Shader(
+	uint32 InId, 
+	std::string InName,
+	std::string InVertexPath,
+	std::string InFragmentPath)
+	: 
+	ID(InId), 
+	Name(InName), 
+	VertexPath(InVertexPath),
+	FragmentPath(InFragmentPath) {}
 
 void Shader::Enable()
 {
@@ -15,7 +24,7 @@ void Shader::Enable()
 	Uniforms.ProjectionLocation = glGetUniformLocation(ID, "projection");
 }
 
-void Shader::disable() const
+void Shader::Disable() const
 {
 	glUseProgram(0);
 }
@@ -85,5 +94,16 @@ void Shader::SetMat4(uint32 Uniform, bool ShouldTranspose, const Matrix4f &Matri
 void Shader::SetMat4(const char* Name, bool ShouldTranspose, const glm::mat4& mat) const
 {
 	glUniformMatrix4fv(glGetUniformLocation(ID, Name), 1, ShouldTranspose, &mat[0][0]);
+}
+
+
+std::string Shader::GetVertexPath() const
+{
+	return VertexPath;
+}
+
+std::string Shader::GetFragmentPath() const
+{
+	return FragmentPath;
 }
 

@@ -9,6 +9,8 @@ class FBORenderTarget : RenderTarget
 public:
 	FBORenderTarget();
 
+	FBORenderTarget(uint32 Width, uint32 Height);
+
 	~FBORenderTarget();
 
 	void Bind();
@@ -19,10 +21,13 @@ public:
 		return Texture;
 	}
 
-
+public: 
+	uint32 Width;
+	uint32 Height;
 private:
 	uint32 Texture;
 	uint32 DepthStencilRBO;
+
 
 };
 

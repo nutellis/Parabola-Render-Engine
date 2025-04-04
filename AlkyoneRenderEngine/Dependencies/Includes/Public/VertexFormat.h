@@ -55,7 +55,7 @@ public:
 		UVs(Other.UVs) {
 
 	}
-	VertexFormat(VertexFormat&& Other) {
+	VertexFormat(VertexFormat&& Other) noexcept {
 		*this = std::move(Other);
 	}
 

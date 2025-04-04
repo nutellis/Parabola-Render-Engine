@@ -1,11 +1,10 @@
 #include <Components/Material.h>
 
 
-
 PChannel::PChannel() :
 	HasTexture(false),
 	ChannelTexture(nullptr), 
-	Colour(Vector4f())
+	Colours(Vector4f())
 {}
 
 PChannel::~PChannel()
@@ -15,13 +14,7 @@ PChannel::~PChannel()
 
 
 
-PMaterial::PMaterial() :
-	Emissive(),
-	Ambient(),
-	Diffuse(),
-	Specular(),
-	Normal(),
-	Shinness(0)
+PMaterial::PMaterial() : ShaderName("BRDF")
 {	//TextureSlot = 0;
 	//isActive = false;
 }

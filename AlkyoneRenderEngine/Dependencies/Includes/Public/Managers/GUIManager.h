@@ -26,13 +26,15 @@ public:
 
 	void DrawLog(const char* title, bool* p_open = NULL);
 
-	void DrawPreview();
+	void DrawEditor();
 
 	void DrawSceneGraph();
 
 	/*void DrawPreview(FBORenderTarget* RenderTarget);*/
 
 	void BindRenderTarget();
+
+	FBORenderTarget * GetRenderTarget();
 
 	// Inherited via ManagerBase
 	virtual void Init() override;
@@ -44,7 +46,5 @@ private:
 
 private:
 	// keep a list of gui items to be rendered.
-
-	//TODO: delete temp var
 	FBORenderTarget* RenderTarget;
 };

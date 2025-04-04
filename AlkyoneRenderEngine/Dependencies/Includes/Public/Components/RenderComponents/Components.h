@@ -15,20 +15,19 @@
 
 // #include <ObjectInitializer.h>
 
-class RenderActor;
+class PRenderActor;
 class PStaticMesh;
-class PMaterial;
 class Shader;
 
 //Component that has Transformation info but cannot be rendered.
 class PSceneComponent {
 
 public:
-	RenderActor* Parent;
+	PRenderActor* Parent;
 
 	PSceneComponent();
 
-	PSceneComponent(RenderActor* InParent) : Parent(InParent) {}
+	PSceneComponent(PRenderActor* InParent) : Parent(InParent) {}
 
 	bool bAbsoluteLocation;
 	bool bAbsoluteRotation;
@@ -54,38 +53,10 @@ class PShapeComponent : public PPrimitiveComponent {
 
 };
 
-//Component that has premade geometry
-class PStaticMeshComponent : public PPrimitiveComponent {
-
-public:
-	float angle;
-	PStaticMeshComponent();
-	PStaticMeshComponent(RenderActor* Parent, const char* path);
-
-	void SetShaderMaterial(Shader* ActiveShader, PMaterial* Material) const;
-
-	void DrawComponent(Shader* ActiveShader);
-
-	inline PStaticMesh * GetMesh() const { return Mesh; }
-	inline PMaterial * GetMaterial(uint32 Index) const { return Materials[Index]; }
-
-	
-	/*void Deserialize(UArchive& Ar);
-	void BindTextures(Shader shader);*/
-
-	Matrix4f Model;
-
-private:
-	PStaticMesh *Mesh;
-	TArray<PMaterial *> Materials;
-
-	
-};
-
 class PPointLightComponent : public PSceneComponent
 {
 public:
-	PPointLightComponent(RenderActor* Parent);
+	PPointLightComponent(PRenderActor* Parent);
 
 	PPointLightComponent(PSceneComponent *Default);
 
@@ -145,6 +116,8 @@ public:
 	Vector3f Up;
 	Vector3f Right;
 	Vector3f WorldUp;
+
+	Vector3f CameraDirection;
 	
 	// Euler Angles
 	float Yaw;
@@ -163,14 +136,12 @@ public:
 	// Constructor with vectors
 	//PCameraComponent(Vector3f up = Vector3f(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
 
-	PCameraComponent(RenderActor* Parent, Vector3f up = Vector3f(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
+	PCameraComponent(PRenderActor* Parent, Vector3f up = Vector3f(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
 	// Constructor with scalar values
 	PCameraComponent(float upX, float upY, float upZ, float yaw, float pitch);
 
-	//void SetShader(Shader shader);
-
 	//Matrix4f LookAt(const Vector4f & Eye, const Vector4f & At, const Vector4f & Up = Vector4f(0.0f, 1.0f, 0.0f));
-	void LookAt(const Vector4f& Eye, const Vector4f& At, const Vector4f& Up = Vector4f(0.0f, 1.0f, 0.0f));
+	void LookAt(const Vector3f& Eye, const Vector3f& Center, const Vector3f& Up = Vector3f(0.0f, 1.0f, 0.0f));
 
 	void SetProjection(ProjectionType Type);
 

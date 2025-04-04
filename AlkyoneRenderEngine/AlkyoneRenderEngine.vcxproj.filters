@@ -141,6 +141,15 @@
     <ClCompile Include="Source\Components\Material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Dependencies\Includes\Public\Components\RenderComponents\StaticMeshComponent.h">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Components\RenderComponents\StaticMeshComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Components\SkyBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\..\Program Files\Autodesk\FBX\FBX SDK\2020.0.1\include\fbxsdk.h">
@@ -1754,6 +1763,15 @@
     <ClInclude Include="Dependencies\Includes\Public\Components\Material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Dependencies\Includes\Private\tiny_obj_loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\Includes\Public\Utilities\FileUtilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\Includes\Public\Components\SkyBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Dependencies\Includes\Private\glm\detail\func_common.inl">
@@ -2089,5 +2107,8 @@
     <None Include="Dependencies\Includes\Private\glm\gtx\wrap.inl">
       <Filter>Header Files</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="CustomTypes.natvis" />
   </ItemGroup>
 </Project>

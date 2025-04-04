@@ -18,7 +18,15 @@ FBORenderTarget::FBORenderTarget() : RenderTarget()
 {
 	Texture = 0;
 	DepthStencilRBO = 0;
+	Width = 0;
+	Height = 0;
 
+}
+
+FBORenderTarget::FBORenderTarget(uint32 Width, uint32 Height) : RenderTarget(), Width(Width), Height(Height)
+{
+	Texture = 0;
+	DepthStencilRBO = 0;
 }
 
 FBORenderTarget::~FBORenderTarget()
@@ -41,7 +49,7 @@ bool FBORenderTarget::Init()
 
 	glGenTextures(1, &Texture);
 	glBindTexture(GL_TEXTURE_2D, Texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1280, 720, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -50,7 +58,7 @@ bool FBORenderTarget::Init()
 
 	glGenRenderbuffers(1, &DepthStencilRBO);
 	glBindRenderbuffer(GL_RENDERBUFFER, DepthStencilRBO);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 1280, 720); //TODO: Fix dimensions
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, Width, Height);
 	
 	// attach to framebuffer
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, DepthStencilRBO);

@@ -15,6 +15,12 @@ struct VertexAttributes
 	//uint32 Stride;
 };
 
+struct PVertexComponentCount {
+	uint32 Position = 3;
+	uint32 Normal = 3;
+	uint32 UVs = 2;
+};
+
 
 class VertexBufferObject
 {
@@ -45,6 +51,10 @@ private:
 
 class VertexArrayObject
 {
+
+public:
+	PVertexComponentCount ComponentCount;
+
 public:
 	VertexArrayObject();
 
@@ -52,9 +62,9 @@ public:
 
 	void Bind();
 
-	void CreateArray();
+	void CreateArray(PVertexComponentCount ComponentCount = PVertexComponentCount());
 
-	void SetupAttribute(uint32 BufferIndex, uint32 Attribute, uint32 RelativeOffset);
+	void SetupAttribute(uint32 BufferIndex, uint32 Attribute, uint32 ComponentCount, uint32 RelativeOffset);
 
 	void AttachVertexBuffer(uint32 Buffer, uint32 Index, uint32 Stride);
 

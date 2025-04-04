@@ -311,6 +311,20 @@ public:
 		//delete First;
 	}
 
+	void Destroy() {
+		if (Last == First) {
+			return;
+		}
+		while (Last != First)
+		{
+			Last--;
+			Last->~T();
+		}
+
+		ArraySize = 0;
+		StorageSize = 0;
+	}
+
 	//returns Value, or nullptr
 	template <typename Predicate>
 	T FindFirst(Predicate predicate) {
@@ -408,18 +422,6 @@ private:
 
 	}
 
-	void Destroy(Pointer PFirst, Pointer PLast) {
-		while (PLast != (PFirst - 1))
-		{
-			std::cout << "Before: " << PLast << "\n";
-			PLast->~T();
-
-			PLast--;
-			std::cout << "After: " << PLast << "\n";
-		}
-
-	}
-
 private:
 
 	SizeType ArraySize;
@@ -434,4 +436,30 @@ private:
 
 	//and end of array
 	ValueType *Storage;
+
+
+
+public:
+		class Iterator {
+		public:
+			Iterator(T* ptr) : m_ptr(ptr) {}
+
+			T& operator*() const { return *m_ptr; }
+			T* operator->() { return m_ptr; }
+
+			// Prefix increment
+			Iterator& operator++() { m_ptr++; return *this; }
+
+			// Postfix increment
+			Iterator operator++(int) { Iterator tmp = *this; ++(*this); return tmp; }
+
+			friend bool operator==(const Iterator& a, const Iterator& b) { return a.m_ptr == b.m_ptr; }
+			friend bool operator!=(const Iterator& a, const Iterator& b) { return a.m_ptr != b.m_ptr; }
+
+		private:
+			T* m_ptr;
+		};
+
+		Iterator begin() { return Iterator(First); }
+		Iterator end() { return Iterator(Last); }
 };

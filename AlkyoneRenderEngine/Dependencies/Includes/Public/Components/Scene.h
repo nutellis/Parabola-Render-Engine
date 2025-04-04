@@ -2,9 +2,10 @@
 
 #include <Utilities/Containers/Array.h>
 
-class RenderActor;
+class PRenderActor;
 class GSceneManager;
 class PCameraComponent;
+class PSkyBox;
 
 // Contains a scenegraph of Actors. Nothing else
 
@@ -17,17 +18,20 @@ public:
 	Scene(GSceneManager* Parent);
 	~Scene();
 
-	RenderActor* GetRoot();
+	PRenderActor* GetRoot();
 
-	void AddChild(RenderActor* Child);
+	void AddChild(PRenderActor* Child);
 
-	void SortChild(RenderActor* Child);
+	void AddToRoot(PRenderActor* Root);
+
+	void SortChild(PRenderActor* Child);
 
 	void InitScene();
 
 	void ResetScene();
 
-	RenderActor* GetActiveCameraActor();
+	PRenderActor* GetActiveCameraActor();
+	PSkyBox* GetSkyBox();
 
 
 	//cull nodes
@@ -39,13 +43,13 @@ public:
 	//render scene
 
 public:
-	TArray<RenderActor *> SceneMeshes;
-	TArray<RenderActor *> SceneLights;
-	TArray<RenderActor *> SceneCameras;
+	TArray<PRenderActor *> SceneMeshes;
+	TArray<PRenderActor *> SceneLights;
+	TArray<PRenderActor *> SceneCameras;
 private:
 	// SceneManager which created this node
 	GSceneManager* Creator;
 
-	RenderActor* Root;
+	PRenderActor* Root;
 	bool isActive;
 };

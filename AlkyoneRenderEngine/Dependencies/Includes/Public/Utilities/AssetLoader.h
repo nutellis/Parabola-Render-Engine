@@ -27,15 +27,19 @@
 
 class PChannel;
 class PMaterial;
+class PStaticMesh;
 
 struct Asset {
 
 	Asset();
 	~Asset();
-	TArray<VertexFormat> Vertex;
-	IndexArray indices;
-	TArray<PMaterial> Materials;
-	std::unordered_map<uint32, IndexArray> MaterialIndexMapping;
+
+	const char* name;
+	TArray<VertexFormat> Vertices;
+	IndexArray Indices;
+	TArray<PMaterial *> Materials;
+	TArray<PStaticMesh *> Meshes;
+	IndexArray MaterialIndexMapping;
 
 	//AxisAlignedBoundingBox BoundingBox;
 
@@ -70,7 +74,6 @@ public:
 	static GAssetLoader * getInstancePtr();
 
 public:
-	const char * SplitPath(const char * filepath);
 
 	Asset * LoadAsset(const char * Filepath);
 	
@@ -86,14 +89,13 @@ class BaseLoader {
 public:
 
 	//virtual void InsertVertex(const Vector3f& position, const Vector3f& normal, const Vector2f& uv);
-	virtual void InsertVertex(bool hasUVs, bool hasNormals, bool doIndices);
+	virtual void InsertVertex(bool hasUVs, bool hasNormals);
 
 protected:
 	TArray<Vector3f> Positions;
 	TArray<Vector3f> Normals;
 	TArray<Vector2f> UVs;
-	TArray<int32> MaterialPerPolygon;
-	std::unordered_map<uint32, IndexArray> MaterialIndexMapping;
+	IndexArray MaterialPerPolygonIndices;
 
 	TArray<Vector3f> RawPositions;
 	TArray<VertexFormat> Vertices;

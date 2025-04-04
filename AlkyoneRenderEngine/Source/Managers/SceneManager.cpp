@@ -38,10 +38,10 @@ Scene* GSceneManager::GetActiveScene()
 }
 
 
-//const TArray<RenderActor> GSceneManager::GetActiveSceneElements() {
+//const TArray<PRenderActor> GSceneManager::GetActiveSceneElements() {
 //	
 //
-//	RenderActor* Root = ActiveScene->GetRoot();
+//	PRenderActor* Root = ActiveScene->GetRoot();
 //
 //	for (auto i = 0; i < Root->Children.Size(); i++) {
 //		
@@ -107,15 +107,16 @@ void GSceneManager::DrawSceneGraph()
 	window_flags |= ImGuiWindowFlags_NoResize;
 	window_flags |= ImGuiWindowFlags_NoScrollbar;
 
-	static RenderActor* selectedIndex = nullptr;
+	static PRenderActor* selectedIndex = nullptr;
+	static bool useUniformScaling = true;
 	ImGui::Begin("SceneGraph", 0, window_flags);
 	{
 		Scene* ActiveScene = GetActiveScene();
 		if (ActiveScene != nullptr) {
-			RenderActor* Root = ActiveScene->GetRoot();
+			PRenderActor* Root = ActiveScene->GetRoot();
 			ImGui::BeginChild("Graph", ImVec2(ImGui::GetContentRegionAvail().x, 0), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY);
 
-			RenderActor* ReturnedValue = RecurseSceneChildren(Root);
+			PRenderActor* ReturnedValue = RecurseSceneChildren(Root);
 			if (ReturnedValue != nullptr) {
 				selectedIndex = ReturnedValue;
 			}
@@ -125,7 +126,7 @@ void GSceneManager::DrawSceneGraph()
 			if (selectedIndex != nullptr) {
 				ImGui::BeginGroup();
 				ImGui::BeginChild("Node Details", ImVec2(ImGui::GetContentRegionAvail().x, 360), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY, ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 line below us
-				ImGui::Text("MyObject: %s", selectedIndex->ObjectName);
+				ImGui::Text("MyObject: %s", selectedIndex->ObjectName.c_str());
 				ImGui::Separator();
 				if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None))
 				{
@@ -139,6 +140,20 @@ void GSceneManager::DrawSceneGraph()
 						if (ImGui::InputFloat3("Translation", &selectedIndex->ObjectPosition.X)) {
 							selectedIndex->SetPosition(selectedIndex->ObjectPosition);
 						}
+						if (useUniformScaling) {
+							if (ImGui::InputFloat("Scale", &selectedIndex->ObjectScale.X)) {
+								selectedIndex->SetScale(selectedIndex->ObjectScale.X);
+							}
+						}
+						else {
+							if (ImGui::InputFloat3("Scale", &selectedIndex->ObjectScale.X)) {
+								selectedIndex->SetScale(selectedIndex->ObjectScale);
+							}
+						}
+						
+						ImGui::SameLine();
+						ImGui::Checkbox("Uniform Scaling", &useUniformScaling);
+
 						ImGui::EndTabItem();
 					}
 					ImGui::EndTabBar();
@@ -155,16 +170,16 @@ void GSceneManager::DrawSceneGraph()
 }
 
 
-RenderActor* GSceneManager::RecurseSceneChildren(RenderActor* Root) {
-	RenderActor* SelectedNode = nullptr;
+PRenderActor* GSceneManager::RecurseSceneChildren(PRenderActor* Root) {
+	PRenderActor* SelectedNode = nullptr;
 
 	ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
-	if (ImGui::TreeNodeEx((void*)(intptr_t)0, node_flags | ImGuiTreeNodeFlags_DefaultOpen, Root->ObjectName))
+	if (ImGui::TreeNodeEx((void*)(intptr_t)0, node_flags | ImGuiTreeNodeFlags_DefaultOpen, Root->ObjectName.c_str()))
 	{
 		for (int i = 0; i < Root->Children.Size(); i++)
 		{
 			if (Root->Children[i]->Children.IsNotEmpty()) {
-				RenderActor* ReturnedValue = RecurseSceneChildren(Root->Children[i]);
+				PRenderActor* ReturnedValue = RecurseSceneChildren(Root->Children[i]);
 				if (ReturnedValue != nullptr) {
 					SelectedNode = ReturnedValue;
 				}
@@ -172,7 +187,7 @@ RenderActor* GSceneManager::RecurseSceneChildren(RenderActor* Root) {
 			else {
 				node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 
-				if (ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags, Root->Children[i]->ObjectName))
+				if (ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags, Root->Children[i]->ObjectName.c_str()))
 				{
 					if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
 						// callback for selection

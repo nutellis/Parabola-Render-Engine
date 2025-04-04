@@ -27,7 +27,7 @@ template <typename T>
 struct TMatrix4
 {
 
-private:	
+private:
 	union {
 		MVS_ALIGN(16) T M[4][4];
 	};
@@ -40,19 +40,19 @@ public:
 
 	template<typename U>
 	TMatrix4(const TVector3<U>& In0, const TVector3<U>& In1, const TVector3<U>& In2, const TVector3<U>& In3);
-	
+
 	template<typename U>
 	TMatrix4(const TVector4<U>& In0, const TVector4<U>& In1, const TVector4<U>& In2, const TVector4<U>& In3);
 
 
 	const T * operator[](uint8 i) const;
-	
+
 	T * operator[](uint8 i);
 
 	TMatrix4 operator*(const TMatrix4& Other) const;
 
 	TMatrix4 operator*(T Scalar) const;
-	
+
 	template<typename U>
 	TMatrix4 operator*(const TVector4<U>) const;
 
@@ -63,6 +63,8 @@ public:
 	TMatrix4 GetTransposed() const;
 
 	TVector4<T> GetVector(uint8 i);
+
+	TVector4<T> GetVector(uint8 i) const;
 
 	//void SetIdentity();
 

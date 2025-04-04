@@ -9,7 +9,7 @@
 
 #include <Utilities/Containers/Array.h>
 
-#include <FileUtilities.h>
+#include <Utilities/FileUtilities.h>
 
 class Shader;
 
@@ -29,21 +29,21 @@ public:
 	GShaderManager();
 	~GShaderManager();
 
-	uint32 CreateShader(const char* Name, const char* VertexPath, const char* FragmentPath, const char* GeometryPath);
-
+	Shader* CompileProgram(std::string Name, std::string VertexPath, std::string FragmentPath, std::string GeometryPath);
 
 	//void AddShader(Shader* shader);
 
-
-	Shader* GetShader(const char* Name);
+	Shader* GetShader(std::string Name);
 
 	Shader* GetShader(const uint32 Id);
 	
 	
 	void Clean();
 
-	void ReloadShader(const char* name);
+	void ReloadShader(std::string name);
 	void ReloadShader(const Shader* shader);
+
+
 
 
 
@@ -56,8 +56,8 @@ private:
 	// utility functions for checking shader compilation/linking errors.
 	// ------------------------------------------------------------------------
 
-	void CheckShaderCompileErrors(GLuint shader, const char* type);
-	void CheckProgramCompileErrors(GLuint shader, const char* type);
+	void CheckShaderCompileErrors(GLuint shader, const char* type, const char* ShaderName);
+	void CheckProgramCompileErrors(GLuint shader, const char* type, const char* ShaderName);
 
 	
 	

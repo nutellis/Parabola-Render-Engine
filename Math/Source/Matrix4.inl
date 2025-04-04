@@ -15,7 +15,8 @@ const TMatrix4<T> TMatrix4<T>::IDENTITY(
 
 template <typename T>
 inline TMatrix4<T>::TMatrix4()
-{}
+{
+}
 
 template <typename T>
 inline TMatrix4<T>::TMatrix4(
@@ -43,7 +44,7 @@ inline TMatrix4<T>::TMatrix4(const T Scalar)
 template <typename T>
 template <typename U>
 inline TMatrix4<T>::TMatrix4
-(const TVector3<U> & In0, const TVector3<U> & In1, const TVector3<U> & In2, const TVector3<U> & In3)
+(const TVector3<U>& In0, const TVector3<U>& In1, const TVector3<U>& In2, const TVector3<U>& In3)
 {
 	M[0][0] = In0.X; M[0][1] = In0.Y;  M[0][2] = In0.Z;  M[0][3] = 0;
 	M[1][0] = In1.X; M[1][1] = In1.Y;  M[1][2] = In1.Z;  M[1][3] = 0;
@@ -51,8 +52,8 @@ inline TMatrix4<T>::TMatrix4
 	M[3][0] = In3.X; M[3][1] = In3.Y;  M[3][2] = In3.Z;  M[3][3] = 1;
 }
 
-template<typename T>
-template<typename U>
+template <typename T>
+template <typename U>
 inline TMatrix4<T>::TMatrix4(const TVector4<U>& In0, const TVector4<U>& In1, const TVector4<U>& In2, const TVector4<U>& In3)
 {
 	M[0][0] = In0.X; M[0][1] = In0.Y;  M[0][2] = In0.Z;  M[0][3] = In0.W;
@@ -61,17 +62,17 @@ inline TMatrix4<T>::TMatrix4(const TVector4<U>& In0, const TVector4<U>& In1, con
 	M[3][0] = In3.X; M[3][1] = In3.Y;  M[3][2] = In3.Z;  M[3][3] = In3.W;
 }
 
-//
-//template <typename T>
-//inline void TMatrix4<T>::SetIdentity()
-//{
-//
-//	M[0][0] = 1; M[0][1] = 0;  M[0][2] = 0;  M[0][3] = 0;
-//	M[1][0] = 0; M[1][1] = 1;  M[1][2] = 0;  M[1][3] = 0;
-//	M[2][0] = 0; M[2][1] = 0;  M[2][2] = 1;  M[2][3] = 0;
-//	M[3][0] = 0; M[3][1] = 0;  M[3][2] = 0;  M[3][3] = 1;
-//
-//}
+template <typename T>
+inline const T* TMatrix4<T>::operator[](uint8 i) const
+{
+	return M[i];
+}
+
+template <typename T>
+inline 	T* TMatrix4<T>::operator[](uint8 i)
+{
+	return M[i];
+}
 
 template <typename T>
 inline TMatrix4<T> TMatrix4<T>::GetTransposed() const
@@ -100,6 +101,12 @@ inline TMatrix4<T> TMatrix4<T>::GetTransposed() const
 
 template <typename T>
 inline TVector4<T> TMatrix4<T>::GetVector(uint8 i)
+{
+	return TVector4<T>(M[i][0], M[i][1], M[i][2], M[i][3]);
+}
+
+template <typename T>
+inline TVector4<T> TMatrix4<T>::GetVector(uint8 i) const
 {
 	return TVector4<T>(M[i][0], M[i][1], M[i][2], M[i][3]);
 }
@@ -140,126 +147,87 @@ inline TMatrix4<T> TMatrix4<T>::Inverse() const
 	TMatrix4 Temp;
 
 	Temp[0][0] = M[2][2] * M[3][3] - M[2][3] * M[3][2];
-	Temp[0][1] = M[2][1] * M[3][3] - M[2][3] * M[3][1];
-	Temp[0][2] = M[2][1] * M[3][2] - M[2][2] * M[3][1];
-	Temp[0][3] = M[2][0] * M[3][3] - M[2][3] * M[3][0];
-	Temp[1][0] = M[2][0] * M[3][2] - M[2][2] * M[3][0];
-	Temp[1][1] = M[2][0] * M[3][1] - M[2][1] * M[3][0];
-	Temp[1][2] = M[1][2] * M[3][3] - M[1][3] * M[3][2];
-	Temp[1][3] = M[1][1] * M[3][3] - M[1][3] * M[3][1];
-	Temp[2][0] = M[1][1] * M[3][2] - M[1][2] * M[3][1];
-	Temp[2][1] = M[1][0] * M[3][3] - M[1][3] * M[3][0];
-	Temp[2][2] = M[1][0] * M[3][2] - M[1][2] * M[3][0];
-	Temp[2][3] = M[1][0] * M[3][1] - M[1][1] * M[3][0];
-	Temp[3][0] = M[1][1] * M[2][3] - M[1][3] * M[2][1];
-	Temp[3][1] = M[1][1] * M[2][2] - M[1][2] * M[2][1];
-	Temp[3][2] = M[1][0] * M[2][3] - M[1][3] * M[2][0];
-	Temp[3][3] = M[1][0] * M[2][1] - M[1][1] * M[2][0];
+	Temp[0][1] = M[1][2] * M[3][3] - M[1][3] * M[3][2];
+	Temp[0][2] = M[1][2] * M[2][3] - M[1][3] * M[2][2];
 
-	Cofactors[0][0] = (M[1][1] * Temp[0][0]) - (M[1][2] * Temp[0][1]) + (M[1][3] * Temp[0][2]);
+	Temp[1][0] = M[2][2] * M[3][3] - M[2][3] * M[3][2];
+	Temp[1][1] = M[0][2] * M[3][3] - M[0][3] * M[3][2];
+	Temp[1][2] = M[0][2] * M[2][3] - M[0][3] * M[2][2];
 
-	Det[0] = M[0][0] * Cofactors[0][0];
+	Temp[2][0] = M[1][2] * M[3][3] - M[1][3] * M[3][2];
+	Temp[2][1] = M[0][2] * M[3][3] - M[0][3] * M[3][2];
+	Temp[2][2] = M[0][2] * M[1][3] - M[0][3] * M[1][2];
 
-	Cofactors[0][1] = -((M[1][0] * Temp[0][0]) - (M[1][2] * Temp[0][3]) + (M[1][3] * Temp[1][0]));
+	Temp[3][0] = M[1][2] * M[2][3] - M[1][3] * M[2][2];
+	Temp[3][1] = M[0][2] * M[2][3] - M[0][3] * M[2][2];
+	Temp[3][2] = M[0][2] * M[1][3] - M[0][3] * M[1][2];
 
-	Det[1] = M[0][1] * Cofactors[0][1];
+	Det[0] = M[1][1] * Temp[0][0] - M[2][1] * Temp[0][1] + M[3][1] * Temp[0][2];
+	Det[1] = M[0][1] * Temp[1][0] - M[2][1] * Temp[1][1] + M[3][1] * Temp[1][2];
+	Det[2] = M[0][1] * Temp[2][0] - M[1][1] * Temp[2][1] + M[3][1] * Temp[2][2];
+	Det[3] = M[0][1] * Temp[3][0] - M[1][1] * Temp[3][1] + M[2][1] * Temp[3][2];
 
-	Cofactors[0][2] = (M[1][0] * Temp[0][1]) - (M[1][1] * Temp[0][3]) + (M[1][3] * Temp[1][1]);
+	const T Determinant = M[0][0] * Det[0] - M[1][0] * Det[1] + M[2][0] * Det[2] - M[3][0] * Det[3];
 
-	Det[2] = M[0][2] * Cofactors[0][2];
+	//if (Determinant == 0.0 || !FMath::IsFinite(Determinant))
+	//{
+	//	*DstMatrix = FMatrix44d::Identity;
+	//	return false;
+	//}
 
-	Cofactors[0][3] = -((M[1][0] * Temp[0][2]) - (M[1][1] * Temp[1][0]) + (M[1][2] * Temp[1][1]));
-	Det[3] = M[0][3] * Cofactors[0][3];
+	const T RDet = 1.0 / Determinant;
 
-	// Row 1
-	Cofactors[1][0] = -((M[0][1] * Temp[0][0]) -
-		(M[0][2] * Temp[0][1]) +
-		(M[0][3] * Temp[0][2]));
-
-	Cofactors[1][1] = (M[0][0] * Temp[0][0]) -
-		(M[0][2] * Temp[0][3]) +
-		(M[0][3] * Temp[1][0]);
-
-	Cofactors[1][2] = -((M[0][0] * (Temp[0][1])) -
-		(M[0][1] * (Temp[0][3])) +
-		(M[0][3] * (Temp[1][1])));
-
-	Cofactors[1][3] = (M[0][0] * (Temp[0][2])) -
-		(M[0][1] * (Temp[1][0])) +
-		(M[0][2] * (Temp[1][1]));
-
-	//Row 2
-	Cofactors[2][0] = (M[0][1] * (Temp[1][2])) -
-		(M[0][2] * (Temp[1][3])) +
-		(M[0][3] * (Temp[2][0]));
-
-	Cofactors[2][1] = -((M[0][0] * (Temp[1][2])) -
-		(M[0][2] * (Temp[2][1])) +
-		(M[0][3] * (Temp[2][2])));
-
-	Cofactors[2][2] = (M[0][0] * (Temp[1][3])) -
-		(M[0][1] * (Temp[2][1])) +
-		(M[0][3] * (Temp[2][3]));
-
-	Cofactors[2][3] = -((M[0][1] * (Temp[2][0])) -
-		(M[0][1] * (Temp[2][2])) +
-		(M[0][2] * (Temp[2][3])));
-
-	//Row 3
-	Cofactors[3][0] = -((M[0][1] * (M[1][2] * M[2][3] - M[1][3] * M[2][2])) -
-		(M[0][2] * (Temp[3][0])) +
-		(M[0][3] * (Temp[3][1])));
-
-	Cofactors[3][1] = (M[0][0] * (M[1][2] * M[2][3] - M[1][3] * M[3][2])) -
-		(M[0][2] * (Temp[3][2])) +
-		(M[0][3] * (M[1][0] * M[2][2] - M[1][2] * M[2][0]));
-
-	Cofactors[3][2] = -((M[0][0] * (Temp[3][0])) -
-		(M[0][1] * (Temp[3][2])) +
-		(M[0][3] * (Temp[3][3])));
-
-	Cofactors[3][3] = (M[0][0] * (Temp[3][1])) -
-		(M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0])) +
-		(M[0][2] * (Temp[3][3]));
-
-	T Determinant = Det[0] + Det[1] + Det[2] + Det[3];
-	const T RDet = 1.0f / Determinant;
-
-	Result[0][0] = RDet * Cofactors[0][0];
-	Result[0][1] = RDet * Cofactors[1][0];
-	Result[0][2] = RDet * Cofactors[2][0];
-	Result[0][3] = RDet * Cofactors[3][0];
-
-	Result[1][0] = RDet * Cofactors[0][1];
-	Result[1][1] = RDet * Cofactors[1][1];
-	Result[1][2] = RDet * Cofactors[2][1];
-	Result[1][3] = RDet * Cofactors[3][1];
-
-	Result[2][0] = RDet * Cofactors[0][2];
-	Result[2][1] = RDet * Cofactors[1][2];
-	Result[2][2] = RDet * Cofactors[2][2];
-	Result[2][3] = RDet * Cofactors[3][2];
-
-	Result[3][0] = RDet * Cofactors[0][3];
-	Result[3][1] = RDet * Cofactors[1][3];
-	Result[3][2] = RDet * Cofactors[2][3];
-	Result[3][3] = RDet * Cofactors[3][3];
+	Result[0][0] = RDet * Det[0];
+	Result[0][1] = -RDet * Det[1];
+	Result[0][2] = RDet * Det[2];
+	Result[0][3] = -RDet * Det[3];
+	Result[1][0] = -RDet * (M[1][0] * Temp[0][0] - M[2][0] * Temp[0][1] + M[3][0] * Temp[0][2]);
+	Result[1][1] = RDet * (M[0][0] * Temp[1][0] - M[2][0] * Temp[1][1] + M[3][0] * Temp[1][2]);
+	Result[1][2] = -RDet * (M[0][0] * Temp[2][0] - M[1][0] * Temp[2][1] + M[3][0] * Temp[2][2]);
+	Result[1][3] = RDet * (M[0][0] * Temp[3][0] - M[1][0] * Temp[3][1] + M[2][0] * Temp[3][2]);
+	Result[2][0] = RDet * (
+		M[1][0] * (M[2][1] * M[3][3] - M[2][3] * M[3][1]) -
+		M[2][0] * (M[1][1] * M[3][3] - M[1][3] * M[3][1]) +
+		M[3][0] * (M[1][1] * M[2][3] - M[1][3] * M[2][1])
+		);
+	Result[2][1] = -RDet * (
+		M[0][0] * (M[2][1] * M[3][3] - M[2][3] * M[3][1]) -
+		M[2][0] * (M[0][1] * M[3][3] - M[0][3] * M[3][1]) +
+		M[3][0] * (M[0][1] * M[2][3] - M[0][3] * M[2][1])
+		);
+	Result[2][2] = RDet * (
+		M[0][0] * (M[1][1] * M[3][3] - M[1][3] * M[3][1]) -
+		M[1][0] * (M[0][1] * M[3][3] - M[0][3] * M[3][1]) +
+		M[3][0] * (M[0][1] * M[1][3] - M[0][3] * M[1][1])
+		);
+	Result[2][3] = -RDet * (
+		M[0][0] * (M[1][1] * M[2][3] - M[1][3] * M[2][1]) -
+		M[1][0] * (M[0][1] * M[2][3] - M[0][3] * M[2][1]) +
+		M[2][0] * (M[0][1] * M[1][3] - M[0][3] * M[1][1])
+		);
+	Result[3][0] = -RDet * (
+		M[1][0] * (M[2][1] * M[3][2] - M[2][2] * M[3][1]) -
+		M[2][0] * (M[1][1] * M[3][2] - M[1][2] * M[3][1]) +
+		M[3][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1])
+		);
+	Result[3][1] = RDet * (
+		M[0][0] * (M[2][1] * M[3][2] - M[2][2] * M[3][1]) -
+		M[2][0] * (M[0][1] * M[3][2] - M[0][2] * M[3][1]) +
+		M[3][0] * (M[0][1] * M[2][2] - M[0][2] * M[2][1])
+		);
+	Result[3][2] = -RDet * (
+		M[0][0] * (M[1][1] * M[3][2] - M[1][2] * M[3][1]) -
+		M[1][0] * (M[0][1] * M[3][2] - M[0][2] * M[3][1]) +
+		M[3][0] * (M[0][1] * M[1][2] - M[0][2] * M[1][1])
+		);
+	Result[3][3] = RDet * (
+		M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1]) -
+		M[1][0] * (M[0][1] * M[2][2] - M[0][2] * M[2][1]) +
+		M[2][0] * (M[0][1] * M[1][2] - M[0][2] * M[1][1])
+		);
 
 	return Result;
 }
-
-template <typename T>
-inline const T * TMatrix4<T>::operator[](uint8 i) const
-{
-	return M[i];
-}
-
-template <typename T>
-inline 	T * TMatrix4<T>::operator[](uint8 i)
-{
-	return M[i];
-}
-
 
 //template <typename T>
 //inline TMatrix4<T> TMatrix4<T>::operator*(const TMatrix4 & Other) const
@@ -270,28 +238,26 @@ inline 	T * TMatrix4<T>::operator[](uint8 i)
 //}
 
 template <typename T>
-inline TMatrix4<T> TMatrix4<T>::operator*(const TMatrix4 & Other) const
+inline TMatrix4<T> TMatrix4<T>::operator*(const TMatrix4& Other) const
 {
-	TMatrix4<T> Result;
-	Result[0][0] = M[0][0] * Other[0][0] + M[0][1] * Other[1][0] + M[0][2] * Other[2][0] + M[0][3] * Other[3][0];
-	Result[0][1] = M[0][0] * Other[0][1] + M[0][1] * Other[1][1] + M[0][2] * Other[2][1] + M[0][3] * Other[3][1];
-	Result[0][2] = M[0][0] * Other[0][2] + M[0][1] * Other[1][2] + M[0][2] * Other[2][2] + M[0][3] * Other[3][2];
-	Result[0][3] = M[0][0] * Other[0][3] + M[0][1] * Other[1][3] + M[0][2] * Other[2][3] + M[0][3] * Other[3][3];
 
-	Result[1][0] = M[1][0] * Other[0][0] + M[1][1] * Other[1][0] + M[1][2] * Other[2][0] + M[1][3] * Other[3][0];
-	Result[1][1] = M[1][0] * Other[0][1] + M[1][1] * Other[1][1] + M[1][2] * Other[2][1] + M[1][3] * Other[3][1];
-	Result[1][2] = M[1][0] * Other[0][2] + M[1][1] * Other[1][2] + M[1][2] * Other[2][2] + M[1][3] * Other[3][2];
-	Result[1][3] = M[1][0] * Other[0][3] + M[1][1] * Other[1][3] + M[1][2] * Other[2][3] + M[1][3] * Other[3][3];
+	TVector4<T> const SrcA0 = GetVector(0);
+	TVector4<T> const SrcA1 = GetVector(1);
+	TVector4<T> const SrcA2 = GetVector(2);
+	TVector4<T> const SrcA3 = GetVector(3);
 
-	Result[2][0] = M[2][0] * Other[0][0] + M[2][1] * Other[1][0] + M[2][2] * Other[2][0] + M[2][3] * Other[3][0];
-	Result[2][1] = M[2][0] * Other[0][1] + M[2][1] * Other[1][1] + M[2][2] * Other[2][1] + M[2][3] * Other[3][1];
-	Result[2][2] = M[2][0] * Other[0][2] + M[2][1] * Other[1][2] + M[2][2] * Other[2][2] + M[2][3] * Other[3][2];
-	Result[2][3] = M[2][0] * Other[0][3] + M[2][1] * Other[1][3] + M[2][2] * Other[2][3] + M[2][3] * Other[3][3];
+	TVector4<T> const SrcB0 = Other.GetVector(0);
+	TVector4<T> const SrcB1 = Other.GetVector(1);
+	TVector4<T> const SrcB2 = Other.GetVector(2);
+	TVector4<T> const SrcB3 = Other.GetVector(3);
 
-	Result[3][0] = M[3][0] * Other[0][0] + M[3][1] * Other[1][0] + M[3][2] * Other[2][0] + M[3][3] * Other[3][0];
-	Result[3][1] = M[3][0] * Other[0][1] + M[3][1] * Other[1][1] + M[3][2] * Other[2][1] + M[3][3] * Other[3][1];
-	Result[3][2] = M[3][0] * Other[0][2] + M[3][1] * Other[1][2] + M[3][2] * Other[2][2] + M[3][3] * Other[3][2];
-	Result[3][3] = M[3][0] * Other[0][3] + M[3][1] * Other[1][3] + M[3][2] * Other[2][3] + M[3][3] * Other[3][3];
+
+	TMatrix4<T> Result = TMatrix4<T>(
+		SrcA0 * SrcB0[0] + SrcA1 * SrcB0[1] + SrcA2 * SrcB0[2] + SrcA3 * SrcB0[3],
+		SrcA0 * SrcB1[0] + SrcA1 * SrcB1[1] + SrcA2 * SrcB1[2] + SrcA3 * SrcB1[3],
+		SrcA0 * SrcB2[0] + SrcA1 * SrcB2[1] + SrcA2 * SrcB2[2] + SrcA3 * SrcB2[3],
+		SrcA0 * SrcB3[0] + SrcA1 * SrcB3[1] + SrcA2 * SrcB3[2] + SrcA3 * SrcB3[3]
+	);
 
 	return Result;
 }
@@ -302,14 +268,14 @@ template <typename T>
 inline TMatrix4<T> TMatrix4<T>::operator*(T Scalar) const
 {
 	return TMatrix4<T>(
-		Scalar*M[0][0], Scalar*M[0][1], Scalar*M[0][2], Scalar*M[0][3],
-		Scalar*M[1][0], Scalar*M[1][1], Scalar*M[1][2], Scalar*M[1][3],
-		Scalar*M[2][0], Scalar*M[2][1], Scalar*M[2][2], Scalar*M[2][3],
-		Scalar*M[3][0], Scalar*M[3][1], Scalar*M[3][2], Scalar*M[3][3]);
+		Scalar * M[0][0], Scalar * M[0][1], Scalar * M[0][2], Scalar * M[0][3],
+		Scalar * M[1][0], Scalar * M[1][1], Scalar * M[1][2], Scalar * M[1][3],
+		Scalar * M[2][0], Scalar * M[2][1], Scalar * M[2][2], Scalar * M[2][3],
+		Scalar * M[3][0], Scalar * M[3][1], Scalar * M[3][2], Scalar * M[3][3]);
 }
 
 template <typename T>
-inline TMatrix4<T> TMatrix4<T>::operator+(const TMatrix4 & Other) const
+inline TMatrix4<T> TMatrix4<T>::operator+(const TMatrix4& Other) const
 {
 	TMatrix4 Result;
 	AddMatrix(&Result, this, &Other);
@@ -331,7 +297,7 @@ void TMatrix4<T>::Print()
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			std::cout << "[" << i << "]" << "[" << j << "]=" << M[i][j] <<"\t";
+			std::cout << "[" << i << "]" << "[" << j << "]=" << M[i][j] << "\t";
 		}
 		std::cout << "\n";
 	}

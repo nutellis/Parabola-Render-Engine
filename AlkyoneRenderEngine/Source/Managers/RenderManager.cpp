@@ -21,9 +21,11 @@
 #include <Managers/SceneManager.h>
 #include <Components/Scene.h>
 #include <Components/RenderActor.h>
+#include <Components/SkyBox.h>
 #include <Components/Material.h>
+#include<Components/RenderComponents/StaticMeshComponent.h>
 
-
+#include <Components/FBORenderTarget.h>
 
 
 template<> GRenderManager* SingletonBase<GRenderManager>::instance = 0;
@@ -44,9 +46,6 @@ GRenderManager * GRenderManager::getInstancePtr()
 
 GRenderManager::GRenderManager()
 {
-
-	WindowManager = GWindowManager::getInstancePtr();
-
 	OpenGLSystem = new RenderSystem();
 
 	ShaderManager = GShaderManager::getInstancePtr();
@@ -59,8 +58,6 @@ GRenderManager::GRenderManager()
 
 GRenderManager::~GRenderManager()
 {
-	WindowManager = nullptr;
-
 	delete OpenGLSystem;
 
 	ShaderManager = nullptr;
@@ -108,50 +105,64 @@ float lightX;
 float lightZ;
 void GRenderManager::Render(double DeltaTime)
 {
-	glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	
-	//change to framebuffer
-	GUIMANAGER.BindRenderTarget();
 
-	glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
+	//change to framebuffer
+	gGuiManager.BindRenderTarget();
+
+	glViewport(0, 0, gGuiManager.GetRenderTarget()->Width, gGuiManager.GetRenderTarget()->Height);
+	glClearColor(0.2f, 0.2f, 0.8f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//TODO: remove magic numbers
-	glViewport(0, 0, 1280, 720);
+	ActiveScene = gSceneManager.GetActiveScene();
+	
+	ActiveScene->GetActiveCameraActor()->ControlCamera(gGuiManager.GetRenderTarget()->Width, gGuiManager.GetRenderTarget()->Height);
 
-	auto activeCamera = SCENEMANAGER.GetActiveScene()->GetActiveCameraActor();
-		
-	activeCamera->ControlCamera();
-
-// ---------------------------------------------------------------------------------------------
-// ---------------------------------------------------------------------------------------------
-// ---------------------------------------------------------------------------------------------
-// ---------------------------------------------------------------------------------------------
+	DrawSkyBox();
 	DrawScene();
 
-	std::string fps;
-	fps = "Delta Time: "+ std::to_string(glfwGetTime());
-	// draw text 
-	text->RenderText(*SHADERMANAGER.GetShader("Text"), fps, 1.0f, 1.0f, 0.5f, glm::vec3(1, 1, 1));
 
+	// Draw GUI
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	glViewport(0, 0, 1920, 1080);
 
-	
-	GUIMANAGER.Draw();
 
-	glfwSwapBuffers(WINDOWMANAGER.GetWindow());
-	
+	gGuiManager.Draw();
+
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glUseProgram(0);	
 }
 
+void GRenderManager::DrawSkyBox() {
+	
+	Shader* shader = gShaderManager.GetShader("SkyBoxShader");
+	shader->Enable();
+	
+	Matrix4f viewMatrix = ActiveScene->GetActiveCameraActor()->Camera->GetViewMatrix();
+	Matrix4f projectionMatrix = ActiveScene->GetActiveCameraActor()->Camera->GetProjectionMatrix();
+
+	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_2D, ActiveScene->GetSkyBox()->EnviromentMap->textureID);
+	glActiveTexture(GL_TEXTURE7);
+	glBindTexture(GL_TEXTURE_2D, ActiveScene->GetSkyBox()->IrradianceMap->textureID);
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, ActiveScene->GetSkyBox()->ReflectionMap->textureID);
+	glActiveTexture(GL_TEXTURE0);
+
+	float environment_multiplier = 1.3f;
+	shader->setFloat("environment_multiplier", environment_multiplier);
+	shader->SetMat4("inv_PV", false, (projectionMatrix * viewMatrix).Inverse());
+	shader->setVec3("camera_pos", ActiveScene->GetActiveCameraActor()->GetPosition());
+
+	ActiveScene->GetSkyBox()->Draw();
+
+	shader->Disable();
+}
 
 void GRenderManager::DrawScene()
 {
 	std::unordered_map<uint32, TArray<PStaticMeshComponent*>> ShaderPerMeshMap;
-
-	Scene* ActiveScene = SCENEMANAGER.GetActiveScene();
 
 	if (ActiveScene != nullptr) {
 
@@ -159,21 +170,22 @@ void GRenderManager::DrawScene()
 		PCameraComponent* Camera = ActiveScene->GetActiveCameraActor()->Camera;
 
 		//for now get light but later we will need lights!
-		TArray<RenderActor*> Lights = ActiveScene->SceneLights;
+		TArray<PRenderActor*> Lights = ActiveScene->SceneLights;
 
 		//get visible meshes. For now just get all meshes.
-		TArray<RenderActor *> VisibleMeshes = ActiveScene->SceneMeshes;
+		TArray<PRenderActor *> VisibleMeshes = ActiveScene->SceneMeshes;
 		for (int i = 0; i < VisibleMeshes.Size(); i++) {
 			PStaticMeshComponent * MeshToRender = VisibleMeshes[i]->StaticMesh;
 			
+			//TODO: for now we are using hardcoded BRDF_Default for all the meshes
 			if (MeshToRender != nullptr) {
-				uint32 ShaderUsed = MeshToRender->GetMaterial(0)->ShaderID;
+				uint32 ShaderUsed = gShaderManager.GetShader("BRDF_Default")->ID;
 				ShaderPerMeshMap[ShaderUsed].PushBack(MeshToRender);
 			}
 		}
 
 		for (const auto& Pair : ShaderPerMeshMap) {
-			Shader* ShaderToUse = SHADERMANAGER.GetShader(Pair.first);
+			Shader* ShaderToUse = gShaderManager.GetShader(Pair.first);
 			TArray <PStaticMeshComponent*> MeshesToRender = Pair.second;
 			
 			ShaderToUse->Enable();
@@ -182,84 +194,19 @@ void GRenderManager::DrawScene()
 
 			// set lights
 			// Lights.Front()->SetPosition(Vector3f(lightX, 1.5, lightZ));
-			Lights.Front()->SetPosition(Vector3f(0, 0, 2.0));
 			Lights.Front()->Light->SetupShaderLight(ShaderToUse);
 
 			for (int i = 0; i < MeshesToRender.Size(); i++) {
+				MeshesToRender[i]->SetupModelMatrix(ShaderToUse);
 				MeshesToRender[i]->DrawComponent(ShaderToUse);
 			}
 		}
 	}
 }
 
-void GRenderManager::tempFunction()
-{
-
-	//temp
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	text = new Text();
-
-	cmr = new Camera();
-
-	// cube =  new Cube();
-	// pyramid = new Pyramid();
-	//cubemesh = PStaticMesh(cube->Vertices, cube->Indices);
-
-	light = PStaticMesh(ASSETLOADER.LoadAsset("Assets/cube.obj"));
-	
-	light.SetupBuffers();
-	lightPos = Vector3f(0.0f, 1.0f, 0.0f);
-	/*cubemesh = PStaticMesh(ASSETLOADER.LoadAsset("Assets/cubetest.fbx"));
-	
-	cubemesh.SetupBuffers();
-
-	pyramidmesh = PStaticMesh(ASSETLOADER.LoadAsset("Assets/tri.fbx"));
-
-	pyramidmesh.SetupBuffers();
-
-
-	planemesh = PStaticMesh(plane.Vertices, plane.Indices);
-
-	planemesh.SetupBuffers();*/
-
-	//cubemesh.VAO.Bind();
-	//pyramidmesh.VAO.Bind();
-
-	//lightPos = Vector3f(1.2f, 1.0f, 2.0f);
-	
-
-	//test = ModelManager();
-	//test.loadModel("dragon.obj");
-
-	//vao.CreateArray();
-	//vbo.CreateBuffer(test.vertexBuff.size() * sizeof(float), &test.vertexBuff);//Vertices.SizeOf(), Vertices.Begin());
-	//ebo.CreateBuffer(test.indexBuff.size() * sizeof(uint32), &test.indexBuff);
-
-	//vao.SetupAttribute(vbo.GetIndex(), 0, 0);
-	////vao.SetupAttribute(vbo.GetIndex(), 2, offsetof(VertexFormat, VertexFormat::TextureCoords));
-	////vao.SetupAttribute(vbo.GetIndex(), 1, offsetof(VertexFormat, VertexFormat::Color));
-
-
-	//vao.AttachVertexBuffer(vbo.GetID(), vbo.GetIndex(), sizeof(VertexFormat));
-	//vao.AttachElementBuffer(ebo.GetID());
-
-	//vao.SetupAttribute(vbo.GetIndex(), 0, offsetof(VertexFormat, VertexFormat::Position));
-
-
-	//vao.AttachVertexBuffer(vbo.GetID(),0, sizeof(float));
-	//vao.AttachElementBuffer(ebo.GetID());
-
-}
-
 void GRenderManager::Init()
 {
-	//TODO i ll probably have to change this. No need for windowmanager to be
-	//part of the renderer. Take it out, init and go on with your lives
 	LOG(DEBUG, "Initiating RENDER_MANAGER\n");
-	GWindowManager::getInstance().Init();
-	//first init the window
 	
 	//init context
 	OpenGLSystem->Init();
@@ -270,9 +217,6 @@ void GRenderManager::Init()
 	GShaderManager::getInstance().Init();
 
 	GAssetLoader::getInstance().Init();
-
-
-	tempFunction();
 	
 	LOG(INFO, "RENDER_MANAGER INITIATED\n");
 }

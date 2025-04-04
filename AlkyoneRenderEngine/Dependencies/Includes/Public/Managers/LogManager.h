@@ -12,6 +12,7 @@
 
 #include <Core/SingletonBase.h>
 #include <Managers/ManagerBase.h>
+#include <Utilities/Containers/Array.h>	
 
 #include <Vector3.h>
 
@@ -37,7 +38,7 @@ enum ImportanceEnum
 struct GuiLog
 {
 	char                  InputBuf[256];
-	ImVector<char*>       Items;
+	TArray<std::string>   Items;
 //	bool                  AutoScroll;
 
 	static int   Stricmp(const char* s1, const char* s2) { int d; while ((d = toupper(*s2) - toupper(*s1)) == 0 && *s1) { s1++; s2++; } return d; }
@@ -63,9 +64,7 @@ struct GuiLog
 
 	void Clear()
 	{
-		for (int i = 0; i < Items.Size; i++)
-			free(Items[i]);
-		Items.clear();
+		Items.Destroy();
 	}
 
 	void AddLog(const char* fmt, ...) IM_FMTARGS(2)
@@ -76,7 +75,7 @@ struct GuiLog
 		vsnprintf(buf, IM_ARRAYSIZE(buf), fmt, args);
 		buf[IM_ARRAYSIZE(buf) - 1] = 0;
 		va_end(args);
-		Items.push_back(Strdup(buf));
+		Items.PushBack(Strdup(buf));
 	}
 
 

@@ -7,6 +7,7 @@
 
 #include <Managers/LogManager.h>
 
+
 class RenderSystem
 {
 public:
@@ -221,6 +222,11 @@ public:
 			LOG(WARNING, "%s:: %s, %s, %d: %s\n", sSeverity, sSource, sType, id, message);
 
 			//std::cout << src_str << ", " << type_str << ", " << severity_str << ", " << id << ": " << message << '\n';
+		}
+		if (severity == GL_DEBUG_SEVERITY_HIGH)
+		{
+			/*if (IsDebuggerPresent())
+				__debugbreak();*/
 		}
 	}
 

@@ -37,25 +37,26 @@ static  auto DegreesToRadians(T const& DegVal) -> decltype(DegVal * (PI / 180.f)
 
 
 
-//row-major. USE TRUE WHEN CALLING OPENGL.
+//colum-major. USE FALSE WHEN CALLING OPENGL.
 // ¯\_(ツ)_/¯
 template <typename T>
-static TMatrix4<T> Translate(const TVector3<T> Translation, TMatrix4<T>const & Source)
+static TMatrix4<T> Translate(const TVector3<T> Translation, TMatrix4<T> const& Source)
 {
 	TMatrix4<T> Result = Source;
-	Result[0][3] += Translation.X;
-	Result[1][3] += Translation.Y;
-	Result[2][3] += Translation.Z;
+	Result[3][0] += Translation.X;
+	Result[3][1] += Translation.Y;
+	Result[3][2] += Translation.Z;
 
 	return Result;
-} 
+}
+
 template <typename T>
-static TMatrix4<T> Translate(const TVector4<T> Translation, TMatrix4<T>const & Source)
+static TMatrix4<T> Translate(const TVector4<T> Translation, TMatrix4<T> const& Source)
 {
 	TMatrix4<T> Result = Source;
-	Result[0][3] += Translation.X;
-	Result[1][3] += Translation.Y;
-	Result[2][3] += Translation.Z;
+	Result[3][0] += Translation.X;
+	Result[3][1] += Translation.Y;
+	Result[3][2] += Translation.Z;
 
 	return Result;
 }
@@ -97,25 +98,21 @@ static TMatrix4<T> Rotate(TVector3<T> RotationAxis, float Angle, TMatrix4<T> con
 	const float t = 1 - cosTheta;
 	TMatrix4<T> Rotate = TMatrix4<T>::IDENTITY;
 
-
 	RotationAxis.Normalize();
 
 	Rotate[0][0] = t * RotationAxis.X * RotationAxis.X + cosTheta;
-	Rotate[0][1] = t * RotationAxis.X * RotationAxis.Y - sinTheta * RotationAxis.Z;
-	Rotate[0][2] = t * RotationAxis.X * RotationAxis.Z  + sinTheta * RotationAxis.Y;
-
 	Rotate[1][0] = t * RotationAxis.X * RotationAxis.Y + sinTheta * RotationAxis.Z;
-	Rotate[1][1] = t * RotationAxis.Y * RotationAxis.Y + cosTheta;
-	Rotate[1][2] = t * RotationAxis.Y * RotationAxis.Z - sinTheta * RotationAxis.X;
-
 	Rotate[2][0] = t * RotationAxis.X * RotationAxis.Z - sinTheta * RotationAxis.Y;
+
+	Rotate[0][1] = t * RotationAxis.X * RotationAxis.Y - sinTheta * RotationAxis.Z;
+	Rotate[1][1] = t * RotationAxis.Y * RotationAxis.Y + cosTheta;
 	Rotate[2][1] = t * RotationAxis.Y * RotationAxis.Z + sinTheta * RotationAxis.X;
+
+	Rotate[0][2] = t * RotationAxis.X * RotationAxis.Z + sinTheta * RotationAxis.Y;
+	Rotate[1][2] = t * RotationAxis.Y * RotationAxis.Z - sinTheta * RotationAxis.X;
 	Rotate[2][2] = t * RotationAxis.Z * RotationAxis.Z + cosTheta;
 
-	/*Matrix4<T> Result = Matrix4<T>::IDENTITY;
-	Result = */
-
-	return Source * Rotate;
+	return Rotate * Source;
 }
 
 template <typename Type>

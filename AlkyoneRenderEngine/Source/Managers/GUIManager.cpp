@@ -29,7 +29,7 @@ GGUIManager * GGUIManager::getInstancePtr()
 
 GGUIManager::GGUIManager()
 {
-	RenderTarget = new FBORenderTarget();
+	RenderTarget = new FBORenderTarget(1280,720);
 }
 
 GGUIManager::~GGUIManager()
@@ -50,11 +50,11 @@ void GGUIManager::Draw()
 	ImGui::ShowDemoWindow();
 
 
-	/*DrawLog("Editor Log", &open); */
+	DrawLog("Editor Log", &open);
 
 	if (GEditor::getInstancePtr() != nullptr) {
-		DrawPreview();
-		SCENEMANAGER.DrawSceneGraph();
+		DrawEditor();
+		gSceneManager.DrawSceneGraph();
 	}
 
 	// Render dear imgui into screen
@@ -65,6 +65,10 @@ void GGUIManager::Draw()
 void GGUIManager::BindRenderTarget() {
 	RenderTarget->Bind();
 }
+FBORenderTarget * GGUIManager::GetRenderTarget() {
+	return RenderTarget;
+}
+
 
 void GGUIManager::Init()
 {
@@ -73,7 +77,7 @@ void GGUIManager::Init()
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO & io = ImGui::GetIO();
-	ImGui_ImplGlfw_InitForOpenGL(WINDOWMANAGER.GetWindow(), true);
+	ImGui_ImplGlfw_InitForOpenGL(gWindowManager.GetWindow(), true);
 	ImGui_ImplOpenGL3_Init("#version 450");
 	io.ConfigWindowsMoveFromTitleBarOnly = true;
 	ImGui::StyleColorsDark();
@@ -101,8 +105,6 @@ void GGUIManager::DrawLog(const char* title, bool* p_open)
 	window_flags |= ImGuiWindowFlags_NoCollapse;
 	window_flags |= ImGuiWindowFlags_NoResize;
 
-	GuiLog LogGUI = LOGMANAGER.EditorLog;
-
 	ImGuiTextFilter     Filter;
 	bool AutoScroll = true;  // Keep scrolling if already at the bottom.
 
@@ -112,6 +114,11 @@ void GGUIManager::DrawLog(const char* title, bool* p_open)
 		return;
 	}
 
+
+	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
+		ImGui::GetIO().Framerate);
+	ImGui::Separator();
+	ImGui::Spacing();
 	// Options menu
 	if (ImGui::BeginPopup("Options"))
 	{
@@ -139,7 +146,7 @@ void GGUIManager::DrawLog(const char* title, bool* p_open)
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1)); // Tighten spacing
 
 	if (clear)
-		LogGUI.Clear();
+		gLogManager.EditorLog.Clear();
 	if (copy)
 		ImGui::LogToClipboard();
 
@@ -148,23 +155,22 @@ void GGUIManager::DrawLog(const char* title, bool* p_open)
 	//while (clipper.Step())
 	//{
 		//for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
-		for (int i = 0; i < LogGUI.Items.Size; i++)
+		for (auto& logItem: gLogManager.EditorLog.Items)
 	
 		{
-			const char* item = LogGUI.Items[i];
-			if (!Filter.PassFilter(item))
+			if (!Filter.PassFilter(logItem.c_str()))
 				continue;
 
 			// Normally you would store more information in your item than just a string.
 			// (e.g. make Items[] an array of structure, store color/type etc.)
 			ImVec4 color;
 			bool has_color = false;
-			if (strstr(item, "[ERROR]")) { color = ImVec4(1.0f, 0.4f, 0.4f, 1.0f); has_color = true; }
-			else if (strstr(item, "[WARNING]")) { color = ImVec4(1.0f, 1.0f, 0.19f, 1.0f); has_color = true; }
-			else if (strstr(item, "[DEBUG]")) { color = ImVec4(0.1f, 1.0f, 0.1f, 1.0f); has_color = true; }
+			if (strstr(logItem.c_str(), "[ERROR]")) { color = ImVec4(1.0f, 0.4f, 0.4f, 1.0f); has_color = true; }
+			else if (strstr(logItem.c_str(), "[WARNING]")) { color = ImVec4(1.0f, 1.0f, 0.19f, 1.0f); has_color = true; }
+			else if (strstr(logItem.c_str(), "[DEBUG]")) { color = ImVec4(0.1f, 1.0f, 0.1f, 1.0f); has_color = true; }
 			if (has_color)
 				ImGui::PushStyleColor(ImGuiCol_Text, color);
-			ImGui::TextUnformatted(item);
+			ImGui::TextUnformatted(logItem.c_str());
 			if (has_color)
 				ImGui::PopStyleColor();
 		}
@@ -225,18 +231,18 @@ void GGUIManager::DrawLog(const char* title, bool* p_open)
 	ImGui::End();
 }
 
-void GGUIManager::DrawPreview()
+void GGUIManager::DrawEditor()
 {
-	ImGui::SetNextWindowSize(ImVec2(1280, 720));
-	ImGui::SetNextWindowPos(ImVec2(0, 0));
-	ImGuiWindowFlags window_flags = 0;
-	window_flags |= ImGuiWindowFlags_NoMove;
-	window_flags |= ImGuiWindowFlags_NoCollapse;
-	window_flags |= ImGuiWindowFlags_NoResize;
+	if (RenderTarget != nullptr) {
+		ImGui::SetNextWindowSize(ImVec2(RenderTarget->Width, RenderTarget->Height));
+		ImGui::SetNextWindowPos(ImVec2(0, 0));
+		ImGuiWindowFlags window_flags = 0;
+		window_flags |= ImGuiWindowFlags_NoMove;
+		window_flags |= ImGuiWindowFlags_NoCollapse;
+		window_flags |= ImGuiWindowFlags_NoResize;
 
-	ImGui::Begin("Preview", 0, window_flags);
-	{
-		if (RenderTarget != nullptr) {
+		ImGui::Begin("Editor", 0, window_flags);
+		{
 			ImGui::Image(
 				(ImTextureID)RenderTarget->GetTexture(),
 				ImGui::GetContentRegionAvail(),
@@ -244,7 +250,6 @@ void GGUIManager::DrawPreview()
 				ImVec2(1, 0)
 			);
 		}
+		ImGui::End();
 	}
-	ImGui::End();
-
 }

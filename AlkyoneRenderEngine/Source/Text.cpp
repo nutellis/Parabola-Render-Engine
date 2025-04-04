@@ -90,7 +90,7 @@ void Text::RenderText(Shader &shader, std::string text, GLfloat x, GLfloat y, GL
 	// Activate corresponding render state	
 	glUseProgram(shader.ID); //shader.enable();
 	
-	//SHADERMANAGER.GetShader("Text");
+	//gShaderManager.GetShader("Text");
 	shader.SetMat4("projection", false, projection);
 	shader.setVec3("textColor", color.x, color.y, color.z);
 	glActiveTexture(GL_TEXTURE0);

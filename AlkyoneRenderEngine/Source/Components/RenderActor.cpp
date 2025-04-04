@@ -1,13 +1,14 @@
 #include <Components\RenderActor.h>
+#include <Components\RenderComponents\StaticMeshComponent.h>
 #include <ParabolaMath.h>
 
-RenderActor::RenderActor()
+PRenderActor::PRenderActor()
 {
     std::cout << "This is an Actor\n";
   //  RootComponent = new PSceneComponent();
 }
 
-RenderActor::RenderActor(const char* NodeName): ObjectName(NodeName)
+PRenderActor::PRenderActor(const char* NodeName): ObjectName(NodeName)
 {
     ObjectPosition = Vector3f::ZERO;
     ObjectRotation = Vector3f::ZERO;
@@ -15,7 +16,7 @@ RenderActor::RenderActor(const char* NodeName): ObjectName(NodeName)
 
 }
 
-void RenderActor::AddLight()
+void PRenderActor::AddLight()
 {
 
     //StaticMesh = ObjectInitializer::CreateSubObject<PStaticMeshComponent>("Assets/ball.asset", this);//new PStaticMeshComponent("ball.asset", RootComponent, false);
@@ -40,14 +41,14 @@ void RenderActor::AddLight()
     //std::cout << "Z " << StaticMesh->GetMaterial()->mDiffuse->ch_Colour.z << std::endl;
 }
 
-void RenderActor::AddMesh(const char* path)
+void PRenderActor::AddMesh(const char* path)
 {
     StaticMesh = new PStaticMeshComponent(this, path);
 
     ActorType = EntityType::MODEL;
 }
 
-void RenderActor::AddCamera()
+void PRenderActor::AddCamera()
 {
    // RootComponent->RelativeLocation = Vector3f(0.0f, 0.0f, 3.f);
 
@@ -60,30 +61,30 @@ void RenderActor::AddCamera()
     ActorType = EntityType::CAMERA;
 }
 
-void RenderActor::AddChild(RenderActor* Child)
+void PRenderActor::AddChild(PRenderActor* Child)
 {
     Child->Parent = this;
     Children.PushBack(Child);
 }
 
-void RenderActor::RemoveChild(RenderActor* Child)
+void PRenderActor::RemoveChild(PRenderActor* Child)
 {
     //Children.Remove(Child);
 }
 
-void RenderActor::RemoveAllChildren()
+void PRenderActor::RemoveAllChildren()
 {
     Children.Clear();
 }
 
 
 
-Vector3f RenderActor::GetPosition()
+Vector3f PRenderActor::GetPosition()
 {
     return this->ObjectPosition;
 }
 
-void RenderActor::SetPosition(Vector3f inPosition)
+void PRenderActor::SetPosition(Vector3f inPosition)
 {
     if (Parent == nullptr) {
         ObjectPosition = Vector3f(0.0, 0.0, 0.0) + inPosition;
@@ -98,50 +99,55 @@ void RenderActor::SetPosition(Vector3f inPosition)
 
 }
 
-Vector3f RenderActor::GetRotation()
+Vector3f PRenderActor::GetRotation()
 {
     return ObjectRotation;
 }
 
-void RenderActor::SetRotation(Vector3f inRotation)
+void PRenderActor::SetRotation(Vector3f inRotation)
 {
     //TODO: nope. Fix dis
     ObjectRotation = inRotation;
 }
 
-void RenderActor::resetOrientation()
+void PRenderActor::resetOrientation()
 {
     //TODO: resetOrientation
 }
 
-Vector3f RenderActor::GetScale()
+Vector3f PRenderActor::GetScale()
 {
     //TODO: do something for uniform scaling? Maybe return a float?
     return ObjectScale;
 
 }
 
-void RenderActor::SetScale(Vector3f inScale)
+void PRenderActor::SetScale(Vector3f inScale)
 {
     ObjectScale = inScale;
 }
 
-void RenderActor::Scaling(Vector3f Scaling)
+void PRenderActor::SetScale(float inScale)
+{
+    ObjectScale = inScale;
+}
+
+void PRenderActor::Scaling(Vector3f Scaling)
 {
     ObjectScale = Scaling;
 }
 
-void RenderActor::DrawMeshChildren(Shader * ActiveShader) {
+void PRenderActor::DrawMeshChildren(Shader * ActiveShader) {
     if (StaticMesh != nullptr && ActorType == MODEL) {
         
-        StaticMesh->Model = Matrix4f::IDENTITY;
+        StaticMesh->ModelMatrix = Matrix4f::IDENTITY;
 
-        StaticMesh->Model = Scale(this->ObjectScale, StaticMesh->Model);
+        StaticMesh->ModelMatrix = Scale(this->ObjectScale, StaticMesh->ModelMatrix);
 
         // fix angle parameter (StaticMesh->angle)
-        // Model = Rotate(this->ObjectRotation, StaticMesh->angle, Model);
+        // ModelMatrix = Rotate(this->ObjectRotation, StaticMesh->angle, ModelMatrix);
 
-        StaticMesh->Model = Translate(this->ObjectPosition, StaticMesh->Model);
+        StaticMesh->ModelMatrix = Translate(this->ObjectPosition, StaticMesh->ModelMatrix);
 
 
         StaticMesh->DrawComponent(ActiveShader);
@@ -152,9 +158,9 @@ void RenderActor::DrawMeshChildren(Shader * ActiveShader) {
 }
 
 
-void RenderActor::ControlCamera() {
+void PRenderActor::ControlCamera(uint32 Width, uint32 Height) {
 
-    Camera->LookAt(ObjectPosition, ObjectPosition + Camera->Front, Camera->Up);
+    Camera->Perspective(45.0f, (float)Width / (float)Height, 5.0f, 2000.0f);
 
-    Camera->Perspective(Camera->Zoom, (float)1280 / (float)720, 0.1f, 100.0f);
+    Camera->LookAt(ObjectPosition, ObjectPosition + Camera->CameraDirection, Camera->WorldUp);
 }

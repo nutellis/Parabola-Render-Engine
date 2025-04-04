@@ -10,7 +10,7 @@
 #include <Managers/ManagerBase.h>
 
 class Scene;
-class RenderActor;
+class PRenderActor;
 class SceneNode;
 
 
@@ -27,7 +27,7 @@ public:
 
 	Scene * GetActiveScene();
 
-	//const RenderActor* GetActiveSceneElements();
+	//const PRenderActor* GetActiveSceneElements();
 
 	//uint8 AddStaticMesh();
 
@@ -41,7 +41,7 @@ public:
 
 	void FrustrumCull();
 
-	RenderActor* RecurseSceneChildren(RenderActor* Root);
+	PRenderActor* RecurseSceneChildren(PRenderActor* Root);
 
 private:
 

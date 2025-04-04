@@ -24,12 +24,12 @@
 
 #include <HoneycombUIFramework/Atoms/ButtonWidget.h>
 
-
 #include <Text.h>
 
 
 
 class RenderSystem;
+class Scene;
 
 //TEMP
 class Cube
@@ -232,8 +232,6 @@ public:
 	GRenderManager();
 	~GRenderManager();
 
-	GWindowManager * WindowManager;
-
 	GShaderManager * ShaderManager;
 
 	GAssetLoader * AssetLoader;
@@ -249,6 +247,8 @@ private:
 
 	ShaderUniforms uniforms;
 
+	Scene* ActiveScene;
+
 public:
 
 	void GetContextInfo();
@@ -259,6 +259,8 @@ public:
 
 	void Render(double currentTime);
 
+	void DrawSkyBox();
+
 	void Update(double DeltaTime);
 
 
@@ -266,8 +268,6 @@ public:
 
 
 	void DrawScene();
-
-	void tempFunction();
 
 	// Inherited via ManagerBase
 	virtual void Init() override;

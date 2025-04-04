@@ -2,6 +2,7 @@
 
 
 #include <VertexFormat.h>
+#include <Managers/LogManager.h>
 
 
 /*	some wisdom
@@ -45,15 +46,17 @@ void VertexArrayObject::Bind()
 	glBindVertexArray(ID);
 }
 
-void VertexArrayObject::CreateArray()
+void VertexArrayObject::CreateArray(PVertexComponentCount InComponentCount)
 {
 	if (bIsCreated == false) {
 		glCreateVertexArrays(1, &ID);
+
+		ComponentCount = InComponentCount;
 		bIsCreated = true;
 	}
 }
 
-void VertexArrayObject::SetupAttribute(uint32 BufferIndex, uint32 Attribute, uint32 RelativeOffset)
+void VertexArrayObject::SetupAttribute(uint32 BufferIndex, uint32 Attribute, uint32 ComponentCount, uint32 RelativeOffset)
 {
 
 	// Enable the attribute
@@ -61,7 +64,7 @@ void VertexArrayObject::SetupAttribute(uint32 BufferIndex, uint32 Attribute, uin
 
 
 	// Tell OpenGL what the format of the attribute is
-	glVertexArrayAttribFormat(ID, Attribute, 3, GL_FLOAT, GL_FALSE,RelativeOffset);
+	glVertexArrayAttribFormat(ID, Attribute, ComponentCount, GL_FLOAT, GL_FALSE,RelativeOffset);
 
 
 	// Tell OpenGL which vertex buffer binding to use for this attribute. 
@@ -111,19 +114,19 @@ void  VertexBufferObject::CreateBuffer(size_t Size , const void *Data = nullptr)
 	// Create the buffer
 	if (bIsCreated == false) {
 		glCreateBuffers(1, &ID);
+		assert(Index < 16 && "Attribute index out of range!");
+		if (ID < 16) {
+			Index = ID;
+			if (Data != nullptr) {
 
-		Index = ID;
-
-		if (Data != nullptr) {
-
-			glNamedBufferStorage(ID, Size, Data, GL_DYNAMIC_STORAGE_BIT);
-			//glBufferData(GL_ARRAY_BUFFER, Size, Data, GL_STATIC_DRAW);
+				glNamedBufferStorage(ID, Size, Data, GL_DYNAMIC_STORAGE_BIT);
+				//glBufferData(GL_ARRAY_BUFFER, Size, Data, GL_STATIC_DRAW);
+			}
+			bIsCreated = true;
 		}
-		else
-		{
-			glNamedBufferStorage(ID, Size, NULL, GL_DYNAMIC_STORAGE_BIT);
+		else {
+			ERROR("Buffer ID out of range");
 		}
-		bIsCreated = true;
 	}
 	else
 	{

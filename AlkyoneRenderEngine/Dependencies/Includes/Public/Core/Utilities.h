@@ -1,5 +1,6 @@
 #pragma once
 #include <cstring>
+#include <Core/PODTypes.h>
 
 
 namespace Utilities {

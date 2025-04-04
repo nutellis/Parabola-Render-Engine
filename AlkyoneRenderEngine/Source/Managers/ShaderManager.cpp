@@ -28,33 +28,34 @@ GShaderManager::GShaderManager()
 GShaderManager::~GShaderManager()
 {}
 
-uint32 GShaderManager::CreateShader(const char* Name, const char* VertexPath, const char* FragmentPath, const char* GeometryPath = nullptr)
+Shader * GShaderManager::CompileProgram(std::string Name, std::string VertexPath, std::string FragmentPath, std::string GeometryPath = "")
 {
-	const char* vShaderCode = FileUtilities::read_file(VertexPath);
-	const char * fShaderCode = FileUtilities::read_file(FragmentPath);
-
+    std::string vShaderCodeStr = FileUtilities::ReadFilePath(VertexPath);
+    const char* vShaderCode = vShaderCodeStr.c_str();
+    std::string fShaderCodeStr = FileUtilities::ReadFilePath(FragmentPath);
+    const char* fShaderCode = fShaderCodeStr.c_str();
 	uint32 ID, VertexShader, FragmentShader, GeometryShader, bCompileGeometry = 0;
 
 	// vertex shader
 	VertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(VertexShader, 1, &vShaderCode, NULL);
 	glCompileShader(VertexShader);
-	CheckShaderCompileErrors(VertexShader, "VERTEX");
+	CheckShaderCompileErrors(VertexShader, "VERTEX", Name.c_str());
 	// fragment Shader
 	FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(FragmentShader, 1, &fShaderCode, NULL);
 	glCompileShader(FragmentShader);
-	CheckShaderCompileErrors(FragmentShader, "FRAGMENT");
+	CheckShaderCompileErrors(FragmentShader, "FRAGMENT", Name.c_str());
 
 	// if geometry shader is given, compile geometry shader
-	if (GeometryPath != nullptr)
+	if (GeometryPath.empty() == false)
 	{
 		bCompileGeometry = 1;
-		const char * gShaderCode = FileUtilities::read_file(GeometryPath);
+		const char * gShaderCode = FileUtilities::ReadFilePath(GeometryPath).c_str();
 		GeometryShader = glCreateShader(GL_GEOMETRY_SHADER);
 		glShaderSource(GeometryShader, 1, &gShaderCode, NULL);
 		glCompileShader(GeometryShader);
-		CheckShaderCompileErrors(GeometryShader, "GEOMETRY");
+		CheckShaderCompileErrors(GeometryShader, "GEOMETRY", Name.c_str());
 	}
 	// shader Program
 	ID = glCreateProgram();
@@ -66,7 +67,7 @@ uint32 GShaderManager::CreateShader(const char* Name, const char* VertexPath, co
 	}
 
 	glLinkProgram(ID);
-	CheckProgramCompileErrors(ID, "PROGRAM");
+	CheckProgramCompileErrors(ID, "PROGRAM", Name.c_str());
 
 	// delete the shaders as they're linked into our program now and no longer necessery
 
@@ -81,23 +82,16 @@ uint32 GShaderManager::CreateShader(const char* Name, const char* VertexPath, co
 		glDeleteShader(GeometryShader);
 	}
 
+	Shader* shader = new Shader(ID, Name, VertexPath, FragmentPath);
 
-
-	//Temporary solution. Need to find a better one!
-	Shaders.PushBack(new Shader(ID, Name));
-
-	return ID;
+	return shader;
 }
 
-//void GShaderManager::AddShader(Shader* shader)
-//{
-//	s_Shaders.push_back(shader);
-//}
 
-Shader* GShaderManager::GetShader(const char* Name)
+Shader* GShaderManager::GetShader(std::string Name)
 {
 	Shader * FoundShader = Shaders.FindFirst([Name](const Shader* At) {
-		return strcmp(At->Name, Name) == 0;
+		return At->Name == Name;
 		});
 
 	return FoundShader;
@@ -119,28 +113,19 @@ void GShaderManager::Clean()
 	//spdel s_Shaders[i];
 }
 
-void GShaderManager::ReloadShader(const char* name)
+void GShaderManager::ReloadShader(std::string name)
 {
-	//for (int i = 0; i < s_Shaders.size(); i++)
-	//{
-	//	//if (s_Shaders[i]->GetName() == name)
-	//	//{
-	//		//String path = s_Shaders[i]->GetFilePath();
-	//	//	String error;
-	//	//	if (!Shader::TryCompileFromFile(path, error))
-	//	{
-	//		//SP_ERROR(error);
-	//	}
-	//	//else
-	//	{
-	//		s_Shaders[i]->~Shader();
-	//		//s_Shaders[i] = API::Shader::CreateFromFile(name, path, s_Shaders[i]);
-	//		//SP_INFO("Reloaded shader: " + name);
-	//	}
-	//	return;
-	//	//}
-	//}
-	//SP_WARN("Could not find '", name, "' shader to reload.");
+	for (auto& shader : Shaders) {
+		if (shader->Name == name) {
+			Shader * ReloadedShader = CompileProgram(shader->Name, shader->GetVertexPath(), shader->GetFragmentPath());
+			if (ReloadedShader->ID != -1) {
+				shader = Utilities::Move(ReloadedShader);
+			}
+			else {
+				LOG(ERROR, "Failed to reload shader: %s", name.c_str());
+			}
+		}
+	}
 }
 
 void GShaderManager::ReloadShader(const Shader* shader)
@@ -159,7 +144,7 @@ void GShaderManager::ReloadShader(const Shader* shader)
 	//	SP_WARN("Could not find specified shader to reload.");
 }
 
-void GShaderManager::CheckShaderCompileErrors(GLuint shader, const char* type)
+void GShaderManager::CheckShaderCompileErrors(GLuint shader, const char* type, const char * ShaderName)
 {
 	int32 success;
 	char infoLog[1024];
@@ -167,14 +152,14 @@ void GShaderManager::CheckShaderCompileErrors(GLuint shader, const char* type)
 	glGetShaderInfoLog(shader, 1024, NULL, infoLog);
 	if (!success)
 	{
-		LOG(ERROR, "SHADER COMPILATION ERROR OF TYPE: %s \n%s \n-- --------------------------------------------------- --", type, infoLog);
+		LOG(ERROR, "SHADER COMPILATION ERROR OF %s ON: %s \n%s \n-- --------------------------------------------------- --", type, ShaderName, infoLog);
 	}
 	else
 	{
 		LOG(DEBUG, " %s SHADER COMPILED SUCCESSFULLY\n%s \n-- --------------------------------------------------- --", type, infoLog);
 	}
 }
-void GShaderManager::CheckProgramCompileErrors(GLuint shader, const char* type)
+void GShaderManager::CheckProgramCompileErrors(GLuint shader, const char* type, const char* ShaderName)
 {
 	int32 success;
 	char infoLog[1024];
@@ -183,7 +168,7 @@ void GShaderManager::CheckProgramCompileErrors(GLuint shader, const char* type)
 	glGetProgramInfoLog(shader, 1024, NULL, infoLog);
 	if (!success)
 	{
-		LOG(ERROR, "PROGRAM LINKING ERROR OF TYPE: %s \n%s \n-- --------------------------------------------------- --", type, infoLog);
+		LOG(ERROR, "PROGRAM LINKING ERROR OF TYPE: %s on Program %s \n %s-- --------------------------------------------------- --", type, ShaderName, infoLog);
 	}
 	else
 	{
@@ -196,11 +181,36 @@ void GShaderManager::Init()
 
 	LOG(DEBUG, "Initiating SHADER_MANAGER\n");
 
-	CreateShader("Light", "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/lamp.vs", "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/lamp.fs");
-	
-	//TEXT
-	CreateShader("Text", "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/TextShader.vs", "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/TextFragShader.fs");
 
+	Shader * BrdfShader = CompileProgram("BRDF_Default", "Shaders/brdf_shading.vert", "Shaders/brdf_shading.frag");
+	if (BrdfShader->ID == 0)
+	{
+		LOG(ERROR, "Failed to compile BRDF_Default shader\n");
+	}
+	else
+	{
+		Shaders.PushBack(BrdfShader);
+	}
+
+	Shader* LightShader = CompileProgram("Light", "Shaders/lamp.vs", "Shaders/lamp.fs");
+	if (LightShader->ID == 0)
+	{
+		LOG(ERROR, "Failed to compile BRDF_Default shader\n");
+	}
+	else
+	{
+		Shaders.PushBack(LightShader);
+	}
+	//TEXT
+	Shader* SkyBoxShader = CompileProgram("SkyBoxShader", "Shaders/skybox.vert", "Shaders/skybox.frag");
+	if (SkyBoxShader->ID == 0)
+	{
+		LOG(ERROR, "Failed to compile BRDF_Default shader\n");
+	}
+	else
+	{
+		Shaders.PushBack(SkyBoxShader);
+	}
 
 	//probably read some standard shaders that need to load. For now do nothing. hoho
 	LOG(DEBUG, "SHADER_MANAGER INITIATED\n"); 
@@ -208,6 +218,7 @@ void GShaderManager::Init()
 
 void GShaderManager::Terminate()
 {
+	Shaders.~TArray();
 
 	LOG(DEBUG, "SHADER_MANAGER Terminated");
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Core/RenderCore.h>
+#include <Utilities/Containers/Array.h>
 
 class Image;
 
@@ -9,8 +10,9 @@ public:
 	Texture();
 	~Texture();
 
-	void Generate(const char * filename);
+	void Generate(std::string filename, bool IsHDRImage = false);
 
+	void GenerateMipMaps(TArray<std::string> filenames, bool IsHDRImage = false);
 
 	// 2D texture generation
 	void Generate(uint32 iNwidth, uint32 iNheight, uint32 inInternalFormat, uint32 InFormat, uint32 InType, void* InData);
@@ -19,7 +21,8 @@ public:
 	void Unbind();
 
 	// update relevant texture state
-	void SetWrapMode(uint32 WrapMode, uint8 Bind = false);
+	void SetWrapModeS(uint32 WrapMode, uint8 Bind = false);
+	void SetWrapModeT(uint32 WrapMode, uint8 Bind = false);
 	void SetFilterMin(uint32 Filter, uint8 Bind = false);
 	void SetFilterMax(uint32 Filter, uint8 Bind = false);
 

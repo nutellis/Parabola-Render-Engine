@@ -26,6 +26,8 @@ public:
 
 	void Run();
 
+	GWindowManager* WindowManager;
+
 	GRenderManager * RenderManager;
 
 	//TODO TEMP INPUT MANAGER

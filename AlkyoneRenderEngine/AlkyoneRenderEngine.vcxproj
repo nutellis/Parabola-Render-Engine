@@ -87,7 +87,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>Q:\Users\Nutellis\Documents\Projects\OpenGLEngine\Math\Dependencies\Includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Q:\Users\Nutellis\Documents\Projects\Parabola-Render-Engine\Math\Dependencies\Includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;FBXSDK_SHARED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
@@ -163,6 +163,8 @@
     <ClCompile Include="Dependencies\Includes\Private\ImGUI\imgui_impl_opengl3.cpp" />
     <ClCompile Include="Dependencies\Includes\Private\ImGUI\imgui_tables.cpp" />
     <ClCompile Include="Dependencies\Includes\Private\ImGUI\imgui_widgets.cpp" />
+    <ClCompile Include="Source\Components\RenderComponents\StaticMeshComponent.cpp" />
+    <ClCompile Include="Dependencies\Includes\Public\Components\RenderComponents\StaticMeshComponent.h" />
     <ClCompile Include="Source\Components\BoundingBox.cpp" />
     <ClCompile Include="Source\Components\Camera.cpp" />
     <ClCompile Include="Source\Components\Clock.cpp" />
@@ -175,6 +177,7 @@
     <ClCompile Include="Source\Components\RenderWindow.cpp" />
     <ClCompile Include="Source\Components\Scene.cpp" />
     <ClCompile Include="Source\Components\SceneNode.cpp" />
+    <ClCompile Include="Source\Components\SkyBox.cpp" />
     <ClCompile Include="Source\Components\StaticMesh.cpp" />
     <ClCompile Include="Source\Components\Texture.cpp" />
     <ClCompile Include="Source\Core\Time.cpp" />
@@ -684,6 +687,7 @@
     <ClInclude Include="Dependencies\Includes\Private\ImGUI\imstb_truetype.h" />
     <ClInclude Include="Dependencies\Includes\Private\KHR\khrplatform.h" />
     <ClInclude Include="Dependencies\Includes\Private\stb_image.h" />
+    <ClInclude Include="Dependencies\Includes\Private\tiny_obj_loader.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\BoundingBox.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\Camera.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\Clock.h" />
@@ -700,6 +704,7 @@
     <ClInclude Include="Dependencies\Includes\Public\Core\Editor.h" />
     <ClInclude Include="Dependencies\Includes\Public\Core\Utilities.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\RenderActor.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Utilities\FileUtilities.h" />
     <ClInclude Include="Dependencies\Includes\Public\HoneycombUIFramework\Atoms\ButtonWidget.h" />
     <ClInclude Include="Dependencies\Includes\Public\HoneycombUIFramework\Atoms\LabelWidget.h" />
     <ClInclude Include="Dependencies\Includes\Public\HoneycombUIFramework\BaseWidget.h" />
@@ -736,6 +741,7 @@
     <ClInclude Include="Dependencies\Includes\Public\Core\PODTypes.h" />
     <ClInclude Include="Dependencies\Includes\Public\Core\UDTypes.h" />
     <ClInclude Include="Dependencies\Includes\Public\Win32\Win32RenderWindow.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Components\SkyBox.h" />
     <ClInclude Include="Source\Utilities\TestData\TestData.h" />
     <ClInclude Include="Source\Win32\Win32RenderWindow.cpp" />
   </ItemGroup>
@@ -851,6 +857,9 @@
     <None Include="Dependencies\Includes\Private\glm\gtx\vector_angle.inl" />
     <None Include="Dependencies\Includes\Private\glm\gtx\vector_query.inl" />
     <None Include="Dependencies\Includes\Private\glm\gtx\wrap.inl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="CustomTypes.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -24,7 +24,7 @@ public:
 
         glm::mat4 projection = glm::ortho(0.0f, static_cast<GLfloat>(800), 0.0f, static_cast<GLfloat>(600));
 
-        auto shader = SHADERMANAGER.GetShader("GUIShader");
+        auto shader = gShaderManager.GetShader("GUIShader");
         // Draw button rectangle
         glUseProgram(shader->ID);
 
@@ -45,10 +45,8 @@ public:
     }
 
     void InitButton() {
-        
-        SHADERMANAGER.CreateShader("GUIShader", "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/buttonVertexShader.vs",
-            "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/ButtonFragShader.fs", nullptr);
-
+       // gShaderManager.CreateShader("GUIShader", "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/buttonVertexShader.vs",
+         //   "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/ButtonFragShader.fs");
 
         // Vertex data for a button
         float vertices[] = {

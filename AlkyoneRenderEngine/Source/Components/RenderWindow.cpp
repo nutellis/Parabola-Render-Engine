@@ -77,7 +77,7 @@ void RenderWindow::Create(const char * newName, uint32 newWidth, uint32 newHeigh
 		
 		//Vsync
 		//glfwSwapInterval(VSync);
-		glfwSwapInterval(0);
+		glfwSwapInterval(1);
 
 		//callbacks
 

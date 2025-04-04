@@ -4,8 +4,6 @@
 #include <Components/RenderActor.h>
 #include <Managers/ShaderManager.h>
 #include <Components/Shader.h>
-#include <Components/StaticMesh.h>
-#include <Components/Material.h>
 
 #include <Core/Utilities.h>
 
@@ -39,132 +37,10 @@ Vector3f PSceneComponent::GetScale() const
 
 //----------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------
-//								STATIC MESH COMPONENT
-//----------------------------------------------------------------------------------------
-PStaticMeshComponent::PStaticMeshComponent()
-{
-}
-
-
-PStaticMeshComponent::PStaticMeshComponent(RenderActor* Parent, const char* path)//const char* path,PSceneComponent *Default,bool isAbsolute)
-{
-	std::cout << "This is a StaticMeshComponent\n";
-//	ComponentArchive->Load(path);
-//	Deserialize(*ComponentArchive);
-
-	Asset* AssetToLoad = ASSETLOADER.LoadAsset(path);
-
-	Mesh = new PStaticMesh(AssetToLoad);
-	
-	if (AssetToLoad->Materials.IsNotEmpty()) {
-		for (uint32 i = 0; i < AssetToLoad->Materials.Size(); i++) {
-			PMaterial * Material = new PMaterial();
-			Material = &AssetToLoad->Materials[i];
-			Materials.PushBack(Material);
-		}
-		Mesh->MaterialIndexMapping = AssetToLoad->MaterialIndexMapping;
-	}
-	else {
-		PMaterial* Material = new PMaterial();
-		if (AssetToLoad->Materials.Size() <= 1) {
-			Material->Diffuse.Colour = Vector4f(Vector3f((float)(rand() % 100) / 100, (float)(rand() % 100) / 100, (float)(rand() % 100) / 100), 1);
-			Material->Specular.Colour = Vector4f(Vector3f(0.5f, 0.5f, 0.5f), 1);
-			Material->Shinness = 32.0;
-		}
-		Materials.PushBack(Material);
-		
-	}
-
-	// init the shader only one time
-	if (SHADERMANAGER.GetShader("SimpleShader") == nullptr) {
-		Materials[0]->ShaderID = SHADERMANAGER.CreateShader("SimpleShader", "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/simpleVertex.vert", "Q:/Users/Nutellis/Documents/Projects/OpenGLEngine/AlkyoneRenderEngine/Shaders/simpleFrag.frag", nullptr);
-	}
-	else {
-		Materials[0]->ShaderID = SHADERMANAGER.GetShader("SimpleShader")->ID;
-	}
-	
-	Mesh->SetupBuffers();
-
-	this->Parent = Parent;
-
-}
-void PStaticMeshComponent::SetShaderMaterial(Shader * ActiveShader, PMaterial *Material) const
-{
-	ActiveShader->setFloat("material.shininess", 32.0);
-	ActiveShader->setVec3("material.diffuse", Vector3f(Material->Diffuse.Colour));
-	ActiveShader->setVec3("material.specular", Vector3f(0.5f, 0.5f, 0.5f));
-
-
-}
-
-void PStaticMeshComponent::DrawComponent(Shader* ActiveShader) {
-	
-	Model = Matrix4f::IDENTITY;
-
-	Model = Scale(GetScale(), Model);
-
-	// fix angle parameter (StaticMesh->angle)
-	// Model = Rotate(this->ObjectRotation, StaticMesh->angle, Model);
-
-	Model = Translate(GetPosition(), Model);
-
-	ActiveShader->SetMat4(ActiveShader->Uniforms.ModelLocation, true, Model);
-
-	Mesh->VAO.Bind();
-
-	// for each material
-	for (uint32 i = 0; i < Materials.Size(); i++) {
-		
-			// bind material
-
-			// setup buffers for each material
-			// in detail:
-			// 
-			// we should create a map of -> int (material index) : vertex indexes 
-			// for each material index render the indices and move to the next.
-			// 
-			// do everything as usual
-
-		SetShaderMaterial(ActiveShader,Materials[i]);
-		
-		//if (Mesh->MaterialIndexMapping.size() == 0) {
-		glDrawElements(GL_TRIANGLES, Mesh->Indices.Size(), GL_UNSIGNED_INT, 0);
-		//}
-		//else {
-		//	glVertexArrayElementBuffer(Mesh->VAO.GetID(), Mesh->EBO.GetID());
-		//	//std::cout << "MaterialIndexMapping[" << i << "]:\n";
-		//	//for (int j = 0; j < Mesh->MaterialIndexMapping[i].Size(); j++) {
-		//	//	std::cout << Mesh->MaterialIndexMapping[i][j] << "\t";
-		//	//}
-		//	//std::cout << "\n";
-
-		//	glDrawElements(GL_TRIANGLES, Mesh->MaterialIndexMapping[i].Size(), GL_UNSIGNED_INT, 0);
-		//}
-	}
-}
-
-//void PStaticMeshComponent::Deserialize(UArchive & Ar)
-//{
-//	std::cout << "LOL" << std::endl;
-//	Mesh = new PStaticMesh(Ar);
-//	cMaterial = new PMaterial(Ar);
-//	cMaterial->SetupMaterial();
-//
-//}
-//void PStaticMeshComponent::BindTextures(Shader shader)
-//{
-//	cMaterial;
-//	glActiveTexture(GL_TEXTURE0);
-//	//glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
-//	// and finally bind the texture
-//	//glBindTexture(GL_TEXTURE_2D, textures[i].id);
-//}
-//----------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------
 //									POINT LIGHT COMPONENT
 //----------------------------------------------------------------------------------------
 
-PPointLightComponent::PPointLightComponent(RenderActor* Parent)
+PPointLightComponent::PPointLightComponent(PRenderActor* Parent)
 {
 	std::cout << "This is a PointLightComponent\n";
 	Attributes = new PointLightAttributes();
@@ -210,42 +86,61 @@ PPointLightComponent::~PPointLightComponent()
 
 void PPointLightComponent::SetupShaderLight(Shader * ActiveShader) {
 	
-	// be sure to activate shader when setting uniforms/drawing objects
-	ActiveShader->setVec3("light.position", Parent->ObjectPosition);
-	//SHADERMANAGER.GetShader("SimpleShader")->setVec3("light.position", Vector3f(lightX, 1.5f, lightZ));
+	//// be sure to activate shader when setting uniforms/drawing objects
+	//ActiveShader->setVec3("light.position", Parent->ObjectPosition);
+	////gShaderManager.GetShader("SimpleShader")->setVec3("light.position", Vector3f(lightX, 1.5f, lightZ));
 
-	ActiveShader->setFloat("light.cutOff", SMath::Cos(DegreesToRadians(Attributes->CutOff)));
-	ActiveShader->setFloat("light.outerCutOff", SMath::Cos(DegreesToRadians(Attributes->OuterCutOff)));
-	// light properties
-	ActiveShader->setVec3("light.ambient", Attributes->Ambient);
-	// we configure the diffuse intensity slightly higher; the right lighting conditions differ with each lighting method and environment.
-	// each environment and lighting type requires some tweaking to get the best out of your environment.
-	ActiveShader->setVec3("light.diffuse", Attributes->Diffuse);
-	ActiveShader->setVec3("light.specular", Attributes->Specular); // add to attributes
-	ActiveShader->setFloat("light.constant", Attributes->Constant);
-	ActiveShader->setFloat("light.linear", Attributes->Linear);
-	ActiveShader->setFloat("light.quadratic",Attributes->Quadratic);
+	//ActiveShader->setFloat("light.cutOff", SMath::Cos(DegreesToRadians(Attributes->CutOff)));
+	//ActiveShader->setFloat("light.outerCutOff", SMath::Cos(DegreesToRadians(Attributes->OuterCutOff)));
+	//// light properties
+	//ActiveShader->setVec3("light.ambient", Attributes->Ambient);
+	//// we configure the diffuse intensity slightly higher; the right lighting conditions differ with each lighting method and environment.
+	//// each environment and lighting type requires some tweaking to get the best out of your environment.
+	//ActiveShader->setVec3("light.diffuse", Attributes->Diffuse);
+	//ActiveShader->setVec3("light.specular", Attributes->Specular); // add to attributes
+	//ActiveShader->setFloat("light.constant", Attributes->Constant);
+	//ActiveShader->setFloat("light.linear", Attributes->Linear);
+	//ActiveShader->setFloat("light.quadratic",Attributes->Quadratic);
+
+
+
+	ActiveShader->setVec3("LightPosition", Parent->ObjectPosition);
+	
+	float environment_multiplier = 1.3f;
+	ActiveShader->setFloat("environment_multiplier", environment_multiplier);
+
+	/*labhelper::setUniformSlow(currentShaderProgram, "point_light_position", lightPosition);
+	labhelper::setUniformSlow(currentShaderProgram, "point_light_color", point_light_color);
+	labhelper::setUniformSlow(currentShaderProgram, "point_light_intensity_multiplier",
+		point_light_intensity_multiplier);
+	labhelper::setUniformSlow(currentShaderProgram, "viewSpaceLightPosition", vec3(viewSpaceLightPosition));
+	labhelper::setUniformSlow(currentShaderProgram, "viewSpaceLightDir",
+		normalize(vec3(viewMatrix * vec4(-lightPosition, 0.0f))));*/
+
+
 }
 
 //----------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------
 //									CAMERA COMPONENT
 //----------------------------------------------------------------------------------------
-PCameraComponent::PCameraComponent(RenderActor * Parent, Vector3f up, float yaw, float pitch) : PSceneComponent(Parent), Front(Vector3f(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
+PCameraComponent::PCameraComponent(PRenderActor * Parent, Vector3f up, float yaw, float pitch) : PSceneComponent(Parent), Front(Vector3f(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
 {
 	IsActiveCamera = true;
 
 	Up = up;
-	WorldUp = Vector3f(Up);
+	WorldUp = Up;
 
 	Yaw = yaw;
 	Pitch = pitch;
 
 	MouseSensitivity = 0.2f;
 
-	Zoom = 60.0f;
+	Zoom = 45.0f;
 
-	UpdateCameraVectors();
+	CameraDirection = Normalize(Vector3f::ZERO - Parent->ObjectPosition);
+
+	//UpdateCameraVectors();
 
 }
 
@@ -258,29 +153,32 @@ PCameraComponent::PCameraComponent(float upX, float upY, float upZ, float yaw, f
 	Up = Vector3f(upX, upY, upZ);
 	Yaw = yaw;
 	Pitch = pitch;
-	UpdateCameraVectors();
+	// UpdateCameraVectors();
 }
 
-void PCameraComponent::LookAt(const Vector4f& Eye, const Vector4f& At, const Vector4f& Up)
+void PCameraComponent::LookAt(const Vector3f& Eye, const Vector3f& Center, const Vector3f& Up)
 {
-	Vector4f F = Normalize(At - Eye);
-	Vector4f R = Normalize(F.Cross(Up));
-	Vector4f U = R.Cross(F);
+	Vector3f F = Normalize(Center - Eye);
+	Vector3f R = Normalize(F.Cross(Up));
+	Vector3f U = (R.Cross(F));
 
-	Vector4f T = Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
+	Matrix4f Result = Matrix4f::IDENTITY;
 
-	Matrix4f Result = Matrix4f(R, U, -F, T);
+	Result[0][0] = R.X;
+	Result[1][0] = R.Y;
+	Result[2][0] = R.Z;
 
-	Matrix4f Translation;
-	Translation = Matrix4f::IDENTITY;
+	Result[0][1] = U.X;
+	Result[1][1] = U.Y;
+	Result[2][1] = U.Z;
 
-	Translation = Translate(-Eye, Matrix4f::IDENTITY);
+	Result[0][2] = -F.X;
+	Result[1][2] = -F.Y;
+	Result[2][2] = -F.Z;
 
-	//Translation[0][3] = - Eye.X;
-	//Translation[1][3] = - Eye.Y;
-	//Translation[2][3] = - Eye.Z;
-
-	Result = Result * Translation;
+	Result[3][0] = -R.Dot(Eye);
+	Result[3][1] = -U.Dot(Eye);
+	Result[3][2] = F.Dot(Eye);
 
 	View = Result;
 }
@@ -298,26 +196,24 @@ void PCameraComponent::SetProjection(ProjectionType Type)
 }
 
 void PCameraComponent::Perspective(
-	const float& FieldOfView, 
-	const float& AspectRatio, 
-	const float& ZNear, 
+	const float& FieldOfView,
+	const float& AspectRatio,
+	const float& ZNear,
 	const float& ZFar
 )
 {
 	Matrix4f Result = Matrix4f::ZERO;
 	if (ZNear <= 0) {
-
+		// Handle invalid ZNear value
 	}
 	else {
+		float F = SMath::Tan(DegreesToRadians(FieldOfView) * 0.5f);
 
-		float F = SMath::Cotan(DegreesToRadians(FieldOfView) * 0.5f);
-
-		Result[0][0] = F / AspectRatio;
-		Result[1][1] = F;
-		Result[2][2] = (ZFar + ZNear) / (ZNear - ZFar);
-		Result[2][3] = -1;
-		Result[3][2] = (2 * ZFar * ZNear) / (ZNear - ZFar);
-
+		Result[0][0] = 1.0f / (AspectRatio * F);
+		Result[1][1] = 1.0f / F;
+		Result[2][2] = -(ZFar + ZNear) / (ZFar - ZNear);
+		Result[2][3] = -1.0f;
+		Result[3][2] = -(2.0f * ZFar * ZNear) / (ZFar - ZNear);
 	}
 	Projection = Result;
 
@@ -391,19 +287,23 @@ void PCameraComponent::UpdateCameraVectors()
 
 void PCameraComponent::ProcessKeyboard(CameraMovement direction, float deltaTime)
 {
+
+
 	float velocity = MovementSpeed * deltaTime;
 	if (direction == FORWARD)
-		Parent->ObjectPosition += (Front * velocity);
+		Parent->ObjectPosition += (CameraDirection * velocity);
 	if (direction == BACKWARD)
-		Parent->ObjectPosition -= (Front * velocity);
+		Parent->ObjectPosition -= (CameraDirection * velocity);
 	if (direction == LEFT)
-		Parent->ObjectPosition -= (Right * velocity);
+		Parent->ObjectPosition -= (CameraDirection.Cross(WorldUp) * velocity);
 	if (direction == RIGHT)
-		Parent->ObjectPosition += (Right * velocity);
+		Parent->ObjectPosition += (CameraDirection.Cross(WorldUp) * velocity);
 	if (direction == UP)
-		Parent->ObjectPosition += (Up * velocity);
+		Parent->ObjectPosition += (WorldUp * velocity);
 	if (direction == DOWN)
-		Parent->ObjectPosition -= (Up * velocity);
+		Parent->ObjectPosition -= (WorldUp * velocity);
+
+	
 }
 
 void PCameraComponent::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch)
@@ -438,11 +338,10 @@ void PCameraComponent::ProcessMouseScroll(float yoffset)
 
 void PCameraComponent::SetupShaderCamera(Shader* ActiveShader) {
 	//view
-	ActiveShader->SetMat4(ActiveShader->Uniforms.ViewLocation, true, View);
+	ActiveShader->SetMat4(ActiveShader->Uniforms.ViewLocation, false, View);
 	//projection
 	ActiveShader->SetMat4(ActiveShader->Uniforms.ProjectionLocation, false, Projection);
-
-	ActiveShader->setVec3("viewPos", GetPosition());
+	
 }
 
 void PCameraComponent::SetDefaults()

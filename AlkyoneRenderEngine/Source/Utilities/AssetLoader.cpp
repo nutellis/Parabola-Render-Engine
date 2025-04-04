@@ -2,9 +2,16 @@
 
 #include <Managers/LogManager.h>
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
+
 #include <Components/Material.h>
+#include <Components/Texture.h>
 
 
+#include <Components/StaticMesh.h>
+#include <algorithm>
+#include <Utilities/FileUtilities.h>
 
 
 
@@ -32,62 +39,24 @@ GAssetLoader::~GAssetLoader()
 {
 }
 
-const char* GAssetLoader::SplitPath(const char * filepath)
-{
-	std::string temp;
-	char* tempchar;
 
-	int i = 0, pos = 0, j = 0, count = 0, size = 0;;
-	while (filepath[i] != '\0' && filepath[i] != '.')
-	{
-		if (filepath[i] == '/')
-		{
-			pos = i;
-			count = 0;
-		}
-		if (filepath[i + 1] == '.')
-		{
-			size = count;
-		}
-		count++;
-		i++;
-	}
-	temp.resize(size);
-
-	i = pos + 1;
-	while (filepath[i] != '.')
-	{
-		temp[j] = filepath[i];
-		j++;
-		i++;
-	}
-	temp += ".asset";
-	tempchar = new char[temp.size()];
-	strcpy(tempchar, temp.c_str());
-	return (const char*)tempchar;
-}
-
-
-
-Asset * GAssetLoader::LoadAsset(const char * Filepath)
+Asset * GAssetLoader::LoadAsset(const char * filepath)
 {
 	Asset * Result = new Asset();
 
-	std::string Extension, TempStr = Filepath;
-	size_t pos = TempStr.find_first_of(".");
-	Extension = TempStr.substr(pos, std::string::npos);
 	LOG(DEBUG, "IMPORTING MESH...");
-	if (Extension.compare(".obj") == 0)
+	if (FileUtilities::FileExtension(filepath) == ".obj")
 	{
+		
 		ObjLoader Loader;// = ObjLoader();
 
-		Result = Loader.Read(Filepath);
+		Result = Loader.Read(filepath);
 	}
-	else if (Extension.compare(".fbx") == 0)
+	else if (FileUtilities::FileExtension(filepath) ==(".fbx"))
 	{
 		FbxLoader Loader;// = FbxLoader();
 
-		Result = Loader.Read(Filepath);
+		Result = Loader.Read(filepath);
 
 	}
 	else
@@ -193,7 +162,7 @@ Asset * FbxLoader::Build(FbxNode *node)
 
 
 			//Testing materials
-			format->Materials = FetchMaterial(node);
+			//format->Materials = FetchMaterial(node);
 
 			int32 PolygonCount = Mesh->GetPolygonCount();
 
@@ -238,11 +207,11 @@ Asset * FbxLoader::Build(FbxNode *node)
 				MaterialReferenceMode = LayerElementMaterial->GetReferenceMode();
 				MaterialMappingMode = LayerElementMaterial->GetMappingMode();
 			}
-
-			FbxLayerElementNormal * LayerElementNormal = BaseLayer->GetNormals();
+			FbxLayerElementNormal* LayerElementNormal = BaseLayer->GetNormals();
 
 			FbxLayerElement::EReferenceMode NormalReferenceMode(FbxLayerElement::eDirect);
 			FbxLayerElement::EMappingMode NormalMappingMode(FbxLayerElement::eByControlPoint);
+			
 			if (LayerElementNormal)
 			{
 				hasNormals = true;
@@ -253,9 +222,11 @@ Asset * FbxLoader::Build(FbxNode *node)
 			//Fetch Position
 			int32 VertexCount = Mesh->GetControlPointsCount();
 
+			RawPositions = TArray<Vector3f>(VertexCount);
+
 			Vector3f VertexPosition(0.0f);
 
-			for (int32 VertexIndex = 0; VertexIndex <= VertexCount; ++VertexIndex)
+			for (int32 VertexIndex = 0; VertexIndex < VertexCount; ++VertexIndex)
 			{
 				FbxVector4 FbxPosition = Mesh->GetControlPoints()[VertexIndex];
 				VertexPosition.X = FbxPosition.mData[0];
@@ -270,6 +241,8 @@ Asset * FbxLoader::Build(FbxNode *node)
 			/*result.X = static_cast<float>(LayerElementMaterial->GetDirectArray().GetAt(inTextureUVIndex).mData[0]);
 			result.Y = static_cast<float>(gVertexUV->GetDirectArray().GetAt(inTextureUVIndex).mData[1]);*/
 
+			const int* polygonIndicesArray = Mesh->GetPolygonVertices();
+
 			//number of polugons(triangles for us) For each polygon
 			for (int32 PolygonIndex = 0; PolygonIndex < PolygonCount; PolygonIndex++)
 			{
@@ -280,8 +253,7 @@ Asset * FbxLoader::Build(FbxNode *node)
 				Vector3f normal(0.0f);
 				Vector2f uv(0.0f);
 
-				MaterialPerPolygon.PushBack(LayerElementMaterial->GetIndexArray()[PolygonIndex]);
-				// MaterialIndexMapping[LayerElementMaterial->GetIndexArray()[PolygonIndex]] = TArray<uint32>();
+				//MaterialIndexMapping[LayerElementMaterial->GetIndexArray()[PolygonIndex]] = TArray<uint32>();
 
 				//Vector3f binormal(0.0f);
 				//Vector3f tangent(0.0f);
@@ -290,16 +262,19 @@ Asset * FbxLoader::Build(FbxNode *node)
 				{
 					ControlPointIndex = Mesh->GetPolygonVertex(PolygonIndex, CornerIndex);
 
+					//Indices.PushBack(polygonIndicesArray[Mesh->GetPolygonVertexIndex(PolygonIndex) + CornerIndex]);
+
 					Positions.PushBack(RawPositions[ControlPointIndex]);
 
 					if (LayerElementMaterial) {
 						switch (MaterialMappingMode) {
 						case FbxLayerElement::eAllSame: {
-							MaterialIndexMapping[LayerElementMaterial->GetIndexArray().GetAt(0)].PushBack(ControlPointIndex);
+							//MaterialIndexMapping[LayerElementMaterial->GetIndexArray().GetAt(0)].PushBack(ControlPointIndex);
 						}
 						break;
 						case FbxLayerElement::eByPolygon: {
-							MaterialIndexMapping[LayerElementMaterial->GetIndexArray().GetAt(PolygonIndex)].PushBack(ControlPointIndex);
+							//MaterialIndexMapping[LayerElementMaterial->GetIndexArray().GetAt(PolygonIndex)].PushBack(ControlPointIndex);
+							MaterialPerPolygonIndices.PushBack(LayerElementMaterial->GetIndexArray()[PolygonIndex]);
 						}
 						break;
 						}
@@ -307,18 +282,42 @@ Asset * FbxLoader::Build(FbxNode *node)
 					
 
 					//Fetching Normals
-					if (LayerElementNormal)
+					if (hasNormals)
 					{
 
 						int32 NormalMapIndex, NormalValueIndex;
 
-						if (NormalMappingMode == FbxLayerElement::eByControlPoint)
+						switch (NormalMappingMode)
 						{
+						case FbxLayerElement::EMappingMode::eByControlPoint: {
+							
+							//one normal per vertex. Get the actual normal from the normal array!
 							NormalMapIndex = ControlPointIndex;
+							break;
 						}
-						else
-						{
+						case FbxLayerElement::EMappingMode::eByPolygonVertex: {
+
+							// this means one normal per vertex per polygon (smooth shading)
+							//if there are more than one normal here, we need to interpolate between those OR use only the first normal
+
+
+
+
+
+							// how are we going to know that is an other question
 							NormalMapIndex = RealFbxVertexIndex;
+							break;
+						}
+						case FbxLayerElement::EMappingMode::eByPolygon: {
+							// this means one normal per polygon (flat shading)
+
+							// in this case we dont use indexing. We use straight up the raw data.
+
+							NormalMapIndex = RealFbxVertexIndex;
+							break;
+						}
+						// eNone, eByEdge and eAllSame are not applicable
+						default: break;
 						}
 
 						if (NormalReferenceMode == FbxLayerElement::eDirect)
@@ -329,10 +328,10 @@ Asset * FbxLoader::Build(FbxNode *node)
 						{
 							NormalValueIndex = LayerElementNormal->GetIndexArray().GetAt(NormalMapIndex);
 						}
+
 						FbxVector4 FbxNormal = LayerElementNormal->GetDirectArray().GetAt(NormalValueIndex);
 
 						Normals.PushBack(Vector3f(FbxNormal.mData[0], FbxNormal.mData[1], FbxNormal.mData[2]));
-
 					}
 
 					UVs.PushBack(FetchUVs(Mesh, ControlPointIndex, Mesh->GetTextureUVIndex(PolygonIndex, CornerIndex), 0));
@@ -345,21 +344,22 @@ Asset * FbxLoader::Build(FbxNode *node)
 
 				}
 			}
-  			InsertVertex(hasUVs, hasNormals, false);
+  			InsertVertex(hasUVs, hasNormals);
 			//actually use this data
 
 
-			format->Vertex = Vertices;
-			format->indices = Indices;
-			format->MaterialIndexMapping = MaterialIndexMapping;
+			format->Vertices = Vertices;
+			format->Indices = Indices;
+			format->MaterialIndexMapping = MaterialPerPolygonIndices;
+			//format->MaterialIndexMapping = MaterialIndexMapping;
 			//format->BoundingBox.SetExtents(Min, Max);
 
 			//format.material = mat;
 
-			std::cout << MaterialIndexMapping[1].Size() << "\n";
+			/*std::cout << MaterialIndexMapping[1].Size() << "\n";
 			for (auto i = 0; i < MaterialIndexMapping[1].Size(); i++) {
 				std::cout << MaterialIndexMapping[1][i] << "\t";
-			}
+			}*/
 
 			//Serialize(*AssetArchive);
 			//AssetArchive->Finalize(path);
@@ -463,6 +463,36 @@ Vector3f FbxLoader::FetchNormal(FbxMesh * mesh, int gVertexIndex, int gVertexCou
 			LOG(ERROR, "Error: Invalid VertexFormat reference mode!");
 		}
 		break;
+
+	case FbxLayerElement::EMappingMode::eByPolygon: {
+		// this means one normal per polygon (flat shading)
+
+		// in this case we dont use indexing. We use straight up the raw data.
+		switch (normalData->GetReferenceMode())
+		{
+		case FbxGeometryElement::eDirect:
+		{
+			//std::cout << "edw eisai" << std::endl;
+			normal.X = static_cast<float>(normalData->GetDirectArray().GetAt(gVertexCounter).mData[0]);
+			normal.Y = static_cast<float>(normalData->GetDirectArray().GetAt(gVertexCounter).mData[1]);
+			normal.Z = static_cast<float>(normalData->GetDirectArray().GetAt(gVertexCounter).mData[2]);
+		}
+		break;
+
+		case FbxGeometryElement::eIndexToDirect:
+		{
+
+			int index = normalData->GetIndexArray().GetAt(gVertexCounter);
+			normal.X = static_cast<float>(normalData->GetDirectArray().GetAt(index).mData[0]);
+			normal.Y = static_cast<float>(normalData->GetDirectArray().GetAt(index).mData[1]);
+			normal.Z = static_cast<float>(normalData->GetDirectArray().GetAt(index).mData[2]);
+		}
+		break;
+		default:
+			LOG(ERROR, "Error: Invalid VertexFormat reference mode!");
+		}
+		break;
+	}
 	}
 
 	return normal;
@@ -662,8 +692,8 @@ TArray<PMaterial> FbxLoader::FetchMaterial(FbxNode *node)
 		NewMaterial.Emissive = *GetMaterialProperty(FbxMaterial,
 			FbxSurfaceMaterial::sEmissive, FbxSurfaceMaterial::sEmissiveFactor);
 
-		NewMaterial.Ambient = *GetMaterialProperty(FbxMaterial,
-			FbxSurfaceMaterial::sAmbient, FbxSurfaceMaterial::sAmbientFactor);
+		/*NewMaterial.Ambient = *GetMaterialProperty(FbxMaterial,
+			FbxSurfaceMaterial::sAmbient, FbxSurfaceMaterial::sAmbientFactor);*/
 
 		NewMaterial.Diffuse = *GetMaterialProperty(FbxMaterial,
 			FbxSurfaceMaterial::sDiffuse, FbxSurfaceMaterial::sDiffuseFactor);
@@ -675,7 +705,7 @@ TArray<PMaterial> FbxLoader::FetchMaterial(FbxNode *node)
 		if (lShininessProperty.IsValid())
 		{
 			double lShininess = lShininessProperty.Get<FbxDouble>();
-			NewMaterial.Shinness = static_cast<float>(lShininess);
+			NewMaterial.Roughness.Colours = static_cast<float>(lShininess);
 		}
 
 		Materials.PushBack(NewMaterial);
@@ -702,7 +732,7 @@ PChannel* FbxLoader::GetMaterialProperty(const FbxSurfaceMaterial* pMaterial,
 			lColour[1] *= lFactor;
 			lColour[2] *= lFactor;
 		}
-		lResult->Colour = Vector4f((float)lColour[0], (float)lColour[1], (float)lColour[2], 1.0f);
+		lResult->Colours = Vector4f((float)lColour[0], (float)lColour[1], (float)lColour[2], 1.0f);
 	}
 
 	if (lProperty.IsValid())
@@ -720,28 +750,8 @@ PChannel* FbxLoader::GetMaterialProperty(const FbxSurfaceMaterial* pMaterial,
 	return lResult;
 }
 
-//void BaseLoader::InsertVertex(const Vector3f & position, const Vector3f & normal, const Vector2f & uv)
-//{
-//	VertexFormat Vertex = {position, normal, uv};
-//	auto lookup = s_IndexMapping.find(Vertex);
-//	if (lookup != s_IndexMapping.end())
-//	{
-//		//std::cout << "OLD VERTEX\n";// << Vertex.Normal.X << "\t" << Vertex.Normal.Y << "\t" << Vertex.Normal.Z << "\n";
-//		
-//		s_Indices.PushBack(lookup->second);
-//	}
-//	else
-//	{
-//		//std::cout << "NEW VERTEX\n";// << Vertex.Normal.X << "\t" << Vertex.Normal.Y << "\t" << Vertex.Normal.Z << "\n";
-//		
-//		uint32 index = static_cast<uint32>(s_Vertices.Size());
-//		s_IndexMapping[Vertex] = index;
-//		s_Indices.PushBack(index);
-//		s_Vertices.PushBack(Vertex);
-//	}
-//}
 
-void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals, bool doIndices)
+void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals)
 {
 	VertexFormat Vertex;
 
@@ -768,7 +778,22 @@ void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals, bool doIndices)
 			Vertex = { Positions[i], Zero, Zero };
 		}
 
-		if (doIndices) {
+		auto lookup = IndexMapping.find(Vertex);
+		if (lookup != IndexMapping.end())
+		{
+
+			Indices.PushBack(lookup->second);
+		}
+		else
+		{
+
+			uint32 index = static_cast<uint32>(Vertices.Size());
+			IndexMapping[Vertex] = index;
+			Indices.PushBack(index);
+			Vertices.PushBack(Vertex);
+		}
+
+		/*if (doIndices) {
 			auto lookup = IndexMapping.find(Vertex);
 			if (lookup != IndexMapping.end())
 			{
@@ -783,7 +808,7 @@ void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals, bool doIndices)
 				Indices.PushBack(index);
 				Vertices.PushBack(Vertex);
 			}
-		}
+		}*/
 
 		if (Positions[i] > Max)
 		{
@@ -1089,15 +1114,18 @@ ObjLoader::~ObjLoader()
 
 Asset * ObjLoader::Read(const char * Filepath)
 {
-	std::ifstream in;
+	std::string filename, extension, directory;
+
+	filename = FileUtilities::Normalise(Filepath);
+	directory = FileUtilities::ParentPath(Filepath);
+	filename = FileUtilities::FileStem(Filepath);
+	extension = FileUtilities::FileExtension(Filepath);
 
 	Vector3f temp = Vector3f();
 
-	Asset * format = new Asset();
-
 	std::string line;
 
-	in.open(Filepath, std::ios::in);
+	//in.open(Filepath, std::ios::in);
 
 	TArray<uint32> VertexIndices = TArray<uint32>();
 	TArray<uint32> NormalIndices = TArray<uint32>();
@@ -1108,104 +1136,343 @@ Asset * ObjLoader::Read(const char * Filepath)
 
 	uint32  Type = 0;
 
-	while (in)
+
+	///////////////////////////////////////////////////////////////////////
+	// Parse the OBJ file using tinyobj
+	///////////////////////////////////////////////////////////////////////
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+	std::string err;
+	// Expect '.mtl' file in the same directory and triangulate meshes
+	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err,
+		(directory + filename + extension).c_str(), directory.c_str(), true);
+	if (!err.empty())
+	{ // `err` may contain warning message.
+		std::cerr << err << std::endl;
+	}
+	if (!ret)
 	{
-		//std::getline(in, line);
+		//exit(1);
+	}
+	Asset* asset = new Asset();
+	asset->name = Filepath;
+	// model->m_filename = path;
 
-		in >> line;
+	///////////////////////////////////////////////////////////////////////
+	// Transform all materials into our datastructure
+	///////////////////////////////////////////////////////////////////////
+	for (const auto& m : materials)
+	{
+		PMaterial * material = new PMaterial();
+		material->Name = m.name;
 
-		if (line.compare("v") == 0)
+		//Diffuse
+		material->Diffuse = PChannel();
+		material->Diffuse.Colours = Vector4f(m.diffuse[0], m.diffuse[1], m.diffuse[2],1);
+		if (m.diffuse_texname != "")
 		{
-			in >> temp.X >> temp.Y >> temp.Z;
+			material->Diffuse.HasTexture = true;
+			material->Diffuse.ChannelTexture = new Texture();
 
-			RawPositions.PushBack(temp);
+			material->Diffuse.ChannelTexture->Generate(m.diffuse_texname.c_str());
 		}
-		else if (line.compare("vt") == 0)
-		{
-			in >> temp.X >> temp.Y;
 
-			RawUVs.PushBack(temp);
-		}
-		else if (line.compare("vn") == 0)
+		// Metalness
+		material->Metalness = PChannel();
+		material->Metalness.Colours = Vector4f(m.metallic, m.metallic, m.metallic, 1);
+		if (m.metallic_texname != "")
 		{
-			in >> temp.X >> temp.Y >> temp.Z;
+			material->Metalness.HasTexture = true;
+			material->Metalness.ChannelTexture = new Texture();
 
-			RawNormals.PushBack(temp);
+			material->Metalness.ChannelTexture->Generate(m.metallic_texname.c_str());
 		}
-		else if (line.compare("f") == 0)
+
+		//Fresnel
+		material->Fresnel = PChannel();
+		material->Fresnel.Colours = Vector4f(m.specular[0], m.specular[0], m.specular[0], 1);
+		if (m.specular_texname != "")
 		{
-			for (int i = 0; i < 3; i++)
+			material->Fresnel.HasTexture = true;
+			material->Fresnel.ChannelTexture = new Texture();
+
+			material->Fresnel.ChannelTexture->Generate(m.specular_texname.c_str());
+		}
+
+		//Roughness
+		material->Roughness = PChannel();
+		material->Roughness.Colours = Vector4f(m.roughness, m.roughness, m.roughness, 1);
+		if (m.roughness_texname != "")
+		{
+			material->Roughness.HasTexture = true;
+			material->Roughness.ChannelTexture = new Texture();
+
+			material->Roughness.ChannelTexture->Generate(m.roughness_texname.c_str());
+		}
+
+		material->Emissive = PChannel();
+		material->Emissive.Colours = Vector4f(m.emission[0], m.emission[1], m.emission[2], 1);
+		if (m.emissive_texname != "")
+		{
+			material->Emissive.HasTexture = true;
+			material->Emissive.ChannelTexture = new Texture();
+
+			material->Emissive.ChannelTexture->Generate(m.emissive_texname.c_str());
+		}
+
+		material->Transparency = m.transmittance[0];
+		material->IOR = m.ior;
+		asset->Materials.PushBack(material);
+	}
+
+	///////////////////////////////////////////////////////////////////////
+	// A vertex in the OBJ file may have different indices for position,
+	// normal and texture coordinate. We will not even attempt to use
+	// indexed lookups, but will store a simple vertex stream per mesh.
+	///////////////////////////////////////////////////////////////////////
+	uint64_t number_of_vertices = 0;
+	for (const auto& shape : shapes)
+	{
+		number_of_vertices += shape.mesh.indices.size();
+	}
+	asset->Vertices = TArray<VertexFormat>(number_of_vertices, VertexFormat());
+
+
+	///////////////////////////////////////////////////////////////////////
+	// For each vertex _position_ auto generate a normal that will be used
+	// if no normal is supplied.
+	///////////////////////////////////////////////////////////////////////
+	std::vector<glm::vec4> auto_normals(attrib.vertices.size() / 3);
+	for (const auto& shape : shapes)
+	{
+		for (int face = 0; face < int(shape.mesh.indices.size()) / 3; face++)
+		{
+			glm::vec3 v0 = glm::vec3(attrib.vertices[shape.mesh.indices[face * 3 + 0].vertex_index * 3 + 0],
+				attrib.vertices[shape.mesh.indices[face * 3 + 0].vertex_index * 3 + 1],
+				attrib.vertices[shape.mesh.indices[face * 3 + 0].vertex_index * 3 + 2]);
+			glm::vec3 v1 = glm::vec3(attrib.vertices[shape.mesh.indices[face * 3 + 1].vertex_index * 3 + 0],
+				attrib.vertices[shape.mesh.indices[face * 3 + 1].vertex_index * 3 + 1],
+				attrib.vertices[shape.mesh.indices[face * 3 + 1].vertex_index * 3 + 2]);
+			glm::vec3 v2 = glm::vec3(attrib.vertices[shape.mesh.indices[face * 3 + 2].vertex_index * 3 + 0],
+				attrib.vertices[shape.mesh.indices[face * 3 + 2].vertex_index * 3 + 1],
+				attrib.vertices[shape.mesh.indices[face * 3 + 2].vertex_index * 3 + 2]);
+
+			glm::vec3 e0 = glm::normalize(v1 - v0);
+			glm::vec3 e1 = glm::normalize(v2 - v0);
+			glm::vec3 face_normal = cross(e0, e1);
+
+			auto_normals[shape.mesh.indices[face * 3 + 0].vertex_index] += glm::vec4(face_normal, 1.0f);
+			auto_normals[shape.mesh.indices[face * 3 + 1].vertex_index] += glm::vec4(face_normal, 1.0f);
+			auto_normals[shape.mesh.indices[face * 3 + 2].vertex_index] += glm::vec4(face_normal, 1.0f);
+		}
+	}
+	for (auto& normal : auto_normals)
+	{
+		normal = (1.0f / normal.w) * normal;
+	}
+
+	///////////////////////////////////////////////////////////////////////
+	// Now we will turn all shapes into Meshes. A shape that has several
+	// materials will be split into several meshes with unique names
+	///////////////////////////////////////////////////////////////////////
+	int vertices_so_far = 0;
+	for (int s = 0; s < shapes.size(); ++s)
+	{
+		const auto& shape = shapes[s];
+		///////////////////////////////////////////////////////////////////
+		// The shapes in an OBJ file may several different materials.
+		// If so, we will split the shape into one Mesh per Material
+		///////////////////////////////////////////////////////////////////
+		int next_material_index = shape.mesh.material_ids[0];
+		int next_material_starting_face = 0;
+		std::vector<bool> finished_materials(materials.size(), false);
+		int number_of_materials_in_shape = 0;
+		while (next_material_index != -1)
+		{
+			int current_material_index = next_material_index;
+			int current_material_starting_face = next_material_starting_face;
+			next_material_index = -1;
+			next_material_starting_face = -1;
+			// Process a new Mesh with a unique material
+			PStaticMesh * mesh = new PStaticMesh();
+			mesh->Name = shape.name + "_" + materials[current_material_index].name;
+			mesh->MaterialIndex = current_material_index;
+			mesh->IndexStart = vertices_so_far;
+			number_of_materials_in_shape += 1;
+
+			uint64_t number_of_faces = shape.mesh.indices.size() / 3;
+			for (int i = current_material_starting_face; i < number_of_faces; i++)
 			{
-				in >> line;
-				
-
-				Type = Split(line, "/", Index);
-
-				VertexIndices.PushBack(Index[0]);
-
-				// v	v/vt	v//vn	v/vt/vn
-				if (Type == 1)
+				if (shape.mesh.material_ids[i] != current_material_index)
 				{
-					hasNormals = false;
-					hasUVs = false;
-				}
-				else if (Type == 2)
-				{
-
-					UVIndices.PushBack(Index[1]);
-
-					hasNormals = false;
-					hasUVs = true;
-				}
-				else if (Type == 3)
-				{
-					UVIndices.PushBack(Index[1]);
-					NormalIndices.PushBack(Index[2]);
-
-					hasNormals = true;
-					hasUVs = true;
-				}
-				else if (Type == 4)
-				{
-					NormalIndices.PushBack(Index[1]);
-
-					hasNormals = true;
-					hasUVs = false;
+					if (next_material_index >= 0)
+						continue;
+					else if (finished_materials[shape.mesh.material_ids[i]])
+						continue;
+					else
+					{ // Found a new material that we have not processed.
+						next_material_index = shape.mesh.material_ids[i];
+						next_material_starting_face = i;
+					}
 				}
 				else
 				{
-					//error, not good
+					///////////////////////////////////////////////////////
+					// Now we generate the vertices
+					///////////////////////////////////////////////////////
+					for (int j = 0; j < 3; j++)
+					{
+						int v = shape.mesh.indices[i * 3 + j].vertex_index;
+						asset->Vertices[vertices_so_far + j].Position =
+							Vector3f(attrib.vertices[shape.mesh.indices[i * 3 + j].vertex_index * 3 + 0],
+								attrib.vertices[shape.mesh.indices[i * 3 + j].vertex_index * 3 + 1],
+								attrib.vertices[shape.mesh.indices[i * 3 + j].vertex_index * 3 + 2]);
+						if (shape.mesh.indices[i * 3 + j].normal_index == -1)
+						{
+							// No normal, use the autogenerated
+							// asset->Vertices[vertices_so_far + j].Normal = Vector3f(
+							//	auto_normals[shape.mesh.indices[i * 3 + j].vertex_index]);
+						}
+						else
+						{
+							asset->Vertices[vertices_so_far + j].Normal = Vector3f(attrib.normals[shape.mesh.indices[i * 3 + j].normal_index * 3 + 0],
+									attrib.normals[shape.mesh.indices[i * 3 + j].normal_index * 3 + 1],
+									attrib.normals[shape.mesh.indices[i * 3 + j].normal_index * 3 + 2]);
+						}
+						if (shape.mesh.indices[i * 3 + j].texcoord_index == -1)
+						{
+							// No UV coordinates. Use null.
+							asset->Vertices[vertices_so_far + j].UVs = Vector2f(0.0f);
+						}
+						else
+						{
+							asset->Vertices[vertices_so_far + j].UVs = Vector2f(
+								attrib.texcoords[shape.mesh.indices[i * 3 + j].texcoord_index * 2 + 0],
+								attrib.texcoords[shape.mesh.indices[i * 3 + j].texcoord_index * 2 + 1]);
+						}
+					}
+					vertices_so_far += 3;
 				}
-
-				Index.Clear();
 			}
+			///////////////////////////////////////////////////////////////
+			// Finalize and push this mesh to the list
+			///////////////////////////////////////////////////////////////
+			mesh->NumVertices = vertices_so_far - mesh->IndexStart;
+			asset->Meshes.PushBack(mesh);
+			finished_materials[current_material_index] = true;
 		}
-	}
-
-	for (int i = 0; i < VertexIndices.Size(); i++)
-	{
-		Positions.PushBack(RawPositions[VertexIndices[i]]);
-
-
-		if (hasUVs) {
-			UVs.PushBack(RawUVs[UVIndices[i]]);
-		}
-		if (hasNormals)
+		if (number_of_materials_in_shape == 1)
 		{
-			Normals.PushBack(RawNormals[NormalIndices[i]]);
+			// If there's only one material, we don't need the material name in the mesh name
+			asset->Meshes.Back()->Name = shape.name;
 		}
 	}
 
-
-	InsertVertex(hasUVs, hasNormals, true);
-
-
-	format->Vertex = Vertices;
-	format->indices = Indices;
+	std::sort(asset->Meshes.Begin(), asset->Meshes.End(),
+		[](const PStaticMesh *a, const PStaticMesh *b) { return a->Name < b->Name; });
 
 
 
-	return format;
+
+	//while (in)
+	//{
+	//	//std::getline(in, line);
+
+	//	in >> line;
+
+	//	if (line.compare("v") == 0)
+	//	{
+	//		in >> temp.X >> temp.Y >> temp.Z;
+
+	//		RawPositions.PushBack(temp);
+	//	}
+	//	else if (line.compare("vt") == 0)
+	//	{
+	//		in >> temp.X >> temp.Y;
+
+	//		RawUVs.PushBack(temp);
+	//	}
+	//	else if (line.compare("vn") == 0)
+	//	{
+	//		in >> temp.X >> temp.Y >> temp.Z;
+
+	//		RawNormals.PushBack(temp);
+	//	}
+	//	else if (line.compare("f") == 0)
+	//	{
+	//		for (int i = 0; i < 3; i++)
+	//		{
+	//			in >> line;
+	//			
+
+	//			Type = Split(line, "/", Index);
+
+	//			VertexIndices.PushBack(Index[0]);
+
+	//			// v	v/vt	v//vn	v/vt/vn
+	//			if (Type == 1)
+	//			{
+	//				hasNormals = false;
+	//				hasUVs = false;
+	//			}
+	//			else if (Type == 2)
+	//			{
+
+	//				UVIndices.PushBack(Index[1]);
+
+	//				hasNormals = false;
+	//				hasUVs = true;
+	//			}
+	//			else if (Type == 3)
+	//			{
+	//				UVIndices.PushBack(Index[1]);
+	//				NormalIndices.PushBack(Index[2]);
+
+	//				hasNormals = true;
+	//				hasUVs = true;
+	//			}
+	//			else if (Type == 4)
+	//			{
+	//				NormalIndices.PushBack(Index[1]);
+
+	//				hasNormals = true;
+	//				hasUVs = false;
+	//			}
+	//			else
+	//			{
+	//				//error, not good
+	//			}
+
+	//			Index.Clear();
+	//		}
+	//	}
+	//}
+
+	//for (int i = 0; i < VertexIndices.Size(); i++)
+	//{
+	//	Positions.PushBack(RawPositions[VertexIndices[i]]);
+
+
+	//	if (hasUVs) {
+	//		UVs.PushBack(RawUVs[UVIndices[i]]);
+	//	}
+	//	if (hasNormals)
+	//	{
+	//		Normals.PushBack(RawNormals[NormalIndices[i]]);
+	//	}
+	//}
+
+
+	//InsertVertex(hasUVs, hasNormals);
+
+
+	//format->Vertex = Vertices;
+	//format->Indices = Indices;
+
+
+
+	return asset;
 }
 
 
@@ -1243,21 +1510,23 @@ const uint32 ObjLoader::Split(const std::string & in, const char * deli, TArray<
 	return VertexType;
 }
 
-Asset::Asset() : Vertex(), indices()
+Asset::Asset() : Vertices(), Indices()
 {
 }
 
 Asset::~Asset()
 {
-	Vertex.~TArray<VertexFormat>();
-	indices.~TArray<uint32>();
-	Materials.~TArray<PMaterial>();
+	
+	Vertices.~TArray<VertexFormat>();
+	Indices.~TArray<uint32>();
+	Materials.~TArray<PMaterial *>();
+	Meshes.~TArray<PStaticMesh *>();
 }
 
 bool Asset::isEmpty()
 {
 	uint8 Result = false;
-	if (Vertex.IsEmpty() || indices.IsEmpty())
+	if (Vertices.IsEmpty() || Indices.IsEmpty())
 	{
 		Result = true;
 	}

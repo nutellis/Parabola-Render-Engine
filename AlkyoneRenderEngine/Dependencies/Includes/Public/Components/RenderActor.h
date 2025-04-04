@@ -4,21 +4,27 @@
 
 #include <Core/RenderCore.h>
 #include <Components/RenderComponents/Components.h>
+
 #include <Utilities/Containers/Array.h>
+
+
+class PStaticMeshComponent;
+
 
 enum EntityType {
 	LIGHT,
 	CAMERA,
-	MODEL
+	MODEL,
+	SKYBOX
 };
 
-class RenderActor {
+class PRenderActor {
 
 public:
-	RenderActor();
-	RenderActor(const char* NodeName);
+	PRenderActor();
+	PRenderActor(const char* NodeName);
 
-	// std::vector<RenderActor*> Children; // do i need this? Find out how to access children
+	// std::vector<PRenderActor*> Children; // do i need this? Find out how to access children
 
 	//PSceneComponent* RootComponent; // not sure if this is needed
 	
@@ -28,9 +34,9 @@ public:
 
 	void AddMesh(const char* path);
 
-	void AddChild(RenderActor* Child);
+	void AddChild(PRenderActor* Child);
 
-	void RemoveChild(RenderActor* Child);
+	void RemoveChild(PRenderActor* Child);
 
 	void RemoveAllChildren();
 
@@ -65,24 +71,25 @@ public:
 	//TODO : always relative to the parent SceneNode
 	void SetScale(Vector3f inScale);
 
+	void SetScale(float inScale);
+
 
 	//You can move the object relative to its current position by using the translate method.
 	void Scaling(Vector3f Scaling);
 
 	void DrawMeshChildren(Shader* ActiveShader);
 
-	void ControlCamera();
-
+	void ControlCamera(uint32 Width, uint32 Height);
 
 
 public:
-	const char* ObjectName;
+	std::string ObjectName;
 
 	EntityType ActorType;
 
-	RenderActor* Parent;
+	PRenderActor* Parent;
 	//children vector
-	TArray<RenderActor*> Children;
+	TArray<PRenderActor*> Children;
 
 	union {
 		PStaticMeshComponent* StaticMesh;

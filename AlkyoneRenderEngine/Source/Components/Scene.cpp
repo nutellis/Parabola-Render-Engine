@@ -1,5 +1,6 @@
 #include <Components\Scene.h>
 #include <Components/RenderActor.h>
+#include <Components/SkyBox.h>
 
 Scene::Scene() {
 }
@@ -7,24 +8,31 @@ Scene::Scene() {
 Scene::Scene(GSceneManager * Parent) {
 	Creator = Parent;
 	 
-	Root = new RenderActor("Root"); //TODO: pool allocator 
+	Root = new PRenderActor("Root"); //TODO: pool allocator 
 }
 
 Scene::~Scene() {
 }
 
-RenderActor* Scene::GetRoot() {
+PRenderActor* Scene::GetRoot() {
 	return Root;
 }
 
-void Scene::AddChild(RenderActor* Child)
+void Scene::AddChild(PRenderActor* Child)
 {
 	if(Child != nullptr) {
 		Root->AddChild(Child);
 	}
 }
 
-void Scene::SortChild(RenderActor* Child) {
+void Scene::AddToRoot(PRenderActor* Root)
+{
+	if (Root != nullptr) {
+		this->Root = Root;
+	}
+}
+
+void Scene::SortChild(PRenderActor* Child) {
 	switch (Child->ActorType)
 	{
 	case CAMERA:
@@ -43,8 +51,23 @@ void Scene::SortChild(RenderActor* Child) {
 
 void Scene::InitScene() {
 
+	PSkyBox* SkyBox = new PSkyBox("SkyBox");
+	this->AddToRoot(SkyBox);
+	SkyBox->SetPosition(Vector3f(0.0, 0.0, 0.0));
+
+	const int roughnesses = 8;
+	TArray<std::string> filenames;
+	for (int i = 0; i < roughnesses; i++)
+		filenames.PushBack("Assets/envmaps/001_dl_" + std::to_string(i) + ".hdr");
+
+	SkyBox->CreateSkyBox(
+		"Assets/envmaps/001.hdr",
+		"Assets/envmaps/001_irradiance.hdr", 
+		filenames);
+
+
 	// init scene from a previous saved one. for now just init one for testing
-	RenderActor* triangle = new RenderActor("triangle");
+	PRenderActor* triangle = new PRenderActor("triangle");
 	//this->AddChild(triangle);
 
 	//triangle->SetPosition(Vector3f(-1.0, 0.0, 0.0));
@@ -52,30 +75,30 @@ void Scene::InitScene() {
 	////pyramid->SetScale(Vector3f(0.02));
 	//SortChild(triangle);
 
-	RenderActor* plane = new RenderActor("plane");
+	PRenderActor* plane = new PRenderActor("spaceship");
 	this->AddChild(plane);
 
 	plane->SetPosition(Vector3f(1.0, 0.0, 0.0));
-	plane->AddMesh("Assets/plane.fbx");
-	//pyramid->SetScale(Vector3f(0.02));
+	plane->AddMesh("Assets/space-ship.obj");
 	SortChild(plane);
 
-	RenderActor* camera = new RenderActor("camera");
+	PRenderActor* camera = new PRenderActor("camera");
 	this->AddChild(camera);
 
-	camera->SetPosition(Vector3f(0.0f, 0.0f, -5.0f));
+	camera->SetPosition(Vector3f(-70.0f, 50.0f, 70.0f));
 	camera->AddCamera();
 	SortChild(camera);
 	
 
-	RenderActor* light = new RenderActor("light");
+	PRenderActor* light = new PRenderActor("light");
 	this->AddChild(light);
 
 	light->SetPosition(Vector3f(3.0, 0.5, 1.0));
+
 	light->AddLight();
 	SortChild(light);
 
-	/*RenderActor* lightMesh = new RenderActor("lightMesh");
+	/*PRenderActor* lightMesh = new PRenderActor("lightMesh");
 	this->AddChild(lightMesh);
 
 	lightMesh->SetPosition(Vector3f(3.0, 1.5, 1.0));
@@ -83,7 +106,7 @@ void Scene::InitScene() {
 	lightMesh->SetScale(Vector3f(0.3));
 	SortChild(lightMesh);
 
-	RenderActor* aMesh = new RenderActor("torusMeshActor");
+	PRenderActor* aMesh = new PRenderActor("torusMeshActor");
 	this->AddChild(aMesh);
 
 	aMesh->SetPosition(Vector3f(-3.0, 1.5, 1.0));
@@ -97,9 +120,9 @@ void Scene::ResetScene() {
 	Root = nullptr;
 }
 
-RenderActor* Scene::GetActiveCameraActor()
+PRenderActor* Scene::GetActiveCameraActor()
 {
-	RenderActor* CameraActor = Root->Children.FindFirst([](const RenderActor* Child) {
+	PRenderActor* CameraActor = Root->Children.FindFirst([](const PRenderActor* Child) {
 		return (Child->ActorType == EntityType::CAMERA && Child->Camera != nullptr && Child->Camera->IsActiveCamera == true);
 		});
 
@@ -107,6 +130,12 @@ RenderActor* Scene::GetActiveCameraActor()
 		return CameraActor->Camera;
 	}*/
 	return CameraActor;
+}
+
+PSkyBox* Scene::GetSkyBox()
+{
+	//TODO: add checks, it might fail
+	return static_cast<PSkyBox * >(Root);
 }
 
 

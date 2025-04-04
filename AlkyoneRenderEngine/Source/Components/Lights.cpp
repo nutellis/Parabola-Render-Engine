@@ -7,14 +7,14 @@ Shader Light::SetShader(Shader shader, int index)
 
 Light::Light() : Object()
 {
-	//StaticMesh = Model();
+	//StaticMesh = ModelMatrix();
 	color = glm::vec3(1.0f);
 	intensity = 1.0f;
 }
 
 Light::Light(float inten, glm::vec3 col) : Object()
 {
-	//StaticMesh = Model();
+	//StaticMesh = ModelMatrix();
 	color = col;
 	intensity = inten;
 }

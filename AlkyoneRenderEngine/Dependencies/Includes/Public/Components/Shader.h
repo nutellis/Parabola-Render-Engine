@@ -15,22 +15,27 @@ struct ShaderUniforms {
 
 class Shader
 {
+private:
+	std::string VertexPath;
+	std::string FragmentPath;
+
 public:
 	uint32 ID;
 	
-	const char* Name;
+	std::string Name;
 
 	ShaderUniforms Uniforms;
 
 	Shader();
+
 	// constructor generates the shader on the fly
 	// ------------------------------------------------------------------------
-	Shader(uint32 Id, const char* Name);
+	Shader(uint32 InId, std::string InName, std::string VertexPath, std::string FragmentPath);
 
 	// activate the shader
 	// ------------------------------------------------------------------------
 	void Enable();
-	void disable() const;
+	void Disable() const;
 
 	//void setMaterial(PMaterial *material);
 
@@ -61,6 +66,9 @@ public:
 	void SetMat4(const char* Name, bool ShouldTranspose, const Matrix4f& Matrix) const;
 	void SetMat4(uint32 Uniform, bool ShouldTranspose, const Matrix4f& Matrix) const;
 
+
+	std::string GetVertexPath() const;
+	std::string GetFragmentPath() const;
 };
 
 #endif

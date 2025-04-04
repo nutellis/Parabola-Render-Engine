@@ -12,33 +12,25 @@
 
 #include <Utilities/AssetLoader.h>
 
-class RenderActor;
+class PStaticMeshComponent;
 
-class DrawableMesh 
+class PDrawableMesh 
 {
 	//empty for now
 };
 
-class PStaticMesh : DrawableMesh
+class PStaticMesh : PDrawableMesh
 {
 public:
 
-	const char * Name;
+	std::string Name;
 
 	VertexArray Vertices;
 	IndexArray Indices;
-	std::unordered_map<uint32, IndexArray> MaterialIndexMapping;
+	uint32 MaterialIndex;
 
-	TextureArray Textures;
-
-	VertexArrayObject VAO;
-
-	VertexBufferObject VBO, EBO;
-
-private:
-	// Parent provides all the info about transformation if needed
-	RenderActor* Parent;
-
+	uint32 IndexStart;
+	uint32 NumVertices;
 
 public:
 	
@@ -55,10 +47,6 @@ public:
 
 
 	void SetupBuffers();
-
-
-	RenderActor* GetParent();
-
 
 	void Deserialize(const char* path);
 
