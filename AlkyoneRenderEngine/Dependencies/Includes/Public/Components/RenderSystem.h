@@ -79,12 +79,24 @@ public:
 			{
 				LOG(INFO, "ARB Extension is supported");
 			}
+			if (GL_ARB_bindless_texture)
+			{
+				LOG(INFO, "ARB Bindless Texture is supported");
+			}
+			if (GL_NV_gpu_shader5)
+			{
+				LOG(INFO, "GL_NV_gpu_shader5 is supported");
+			}
+			if (GL_ARB_gpu_shader_int64)
+			{
+				LOG(INFO, "GL_ARB_gpu_shader_int64 is supported");
+			}
 
 			glEnable(GL_DEPTH_TEST);
 			LOG(INFO, "Depth Test = ENABLED");
 
-			//glEnable(GL_CULL_FACE);
-			//LOG(INFO, "Face Culling ENABLED");
+			glEnable(GL_CULL_FACE);
+			LOG(INFO, "Face Culling ENABLED");
 
 			//glEnable(GL_STENCIL_TEST);
 			//LOG(INFO, "Stencil Test ENABLED");

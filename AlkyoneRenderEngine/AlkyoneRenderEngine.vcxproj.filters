@@ -150,6 +150,18 @@
     <ClCompile Include="Source\Components\SkyBox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Components\CascadeShadowMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Utilities\PrimitiveShapes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Components\LightComponents\PointLightComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Components\LightComponents\DirectionalLightComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\..\Program Files\Autodesk\FBX\FBX SDK\2020.0.1\include\fbxsdk.h">
@@ -1631,9 +1643,6 @@
     <ClInclude Include="Dependencies\Includes\Public\Managers\LogManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Dependencies\Includes\Public\Managers\ManagerBase.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Dependencies\Includes\Public\Managers\RenderManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1757,7 +1766,7 @@
     <ClInclude Include="Dependencies\Includes\Public\Components\RenderActor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Dependencies\Includes\Public\Components\RenderComponents\Components.h">
+    <ClInclude Include="Dependencies\Includes\Public\Components\Components.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\Includes\Public\Components\Material.h">
@@ -1770,6 +1779,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\Includes\Public\Components\SkyBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\Includes\Public\Components\CascadeShadowMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\Includes\Public\Utilities\PrimitiveShapes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\Includes\Public\Utilities\CameraUtiltities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\Includes\Public\Components\LightComponents\PointLightComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\Includes\Public\Components\LightComponents\DirectionalLightComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

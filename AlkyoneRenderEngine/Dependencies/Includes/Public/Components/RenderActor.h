@@ -3,13 +3,13 @@
 #define RENDER_ACTOR_H
 
 #include <Core/RenderCore.h>
-#include <Components/RenderComponents/Components.h>
+#include <Components/Components.h>
 
 #include <Utilities/Containers/Array.h>
 
 
 class PStaticMeshComponent;
-
+class PDirectionalLightComponent;
 
 enum EntityType {
 	LIGHT,
@@ -57,6 +57,7 @@ public:
 	//TODO : always relative to the parent SceneNode
 	//You can use the pitch, yaw, and roll functions to rotate objects.
 	void SetRotation(Vector3f inRotation);
+	void AddRotation(Vector3f inRotation);
 	//You can move the object relative to its current position by using the translate method.
 
 	//Reset all rotations done to the object.
@@ -73,11 +74,9 @@ public:
 
 	void SetScale(float inScale);
 
-
-	//You can move the object relative to its current position by using the translate method.
-	void Scaling(Vector3f Scaling);
-
 	void DrawMeshChildren(Shader* ActiveShader);
+
+	void SetupModelMatrix(Shader* ActiveShader);
 
 	void ControlCamera(uint32 Width, uint32 Height);
 
@@ -94,7 +93,7 @@ public:
 	union {
 		PStaticMeshComponent* StaticMesh;
 
-		PPointLightComponent* Light;
+		PDirectionalLightComponent* Light;
 
 		PCameraComponent* Camera;
 	};
@@ -108,7 +107,10 @@ public:
 
 	// Stores the uniform scaling factor applied to this node
 	Vector3f ObjectScale;
-	
+
+	Matrix4f ModelMatrix;
+
+	bool IsMovable;
 };
 
 

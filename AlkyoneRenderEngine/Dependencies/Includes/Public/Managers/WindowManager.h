@@ -2,6 +2,7 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
+#include <Core/RenderCore.h>
 
 #include <iostream>
 #include <vector>
@@ -9,7 +10,6 @@
 #include <fstream>
 
 #include <Core/SingletonBase.h>
-#include <Managers/ManagerBase.h>
 
 
 #define MAX_KEYS	512
@@ -22,7 +22,7 @@ class RenderWindow;
 
 //create a list for multiple RenderWindows.
 //Manages windows.
-class GWindowManager : SingletonBase<GWindowManager>, ManagerBase
+class GWindowManager : SingletonManagerBase<GWindowManager>
 {
 
 public:

@@ -163,6 +163,10 @@
     <ClCompile Include="Dependencies\Includes\Private\ImGUI\imgui_impl_opengl3.cpp" />
     <ClCompile Include="Dependencies\Includes\Private\ImGUI\imgui_tables.cpp" />
     <ClCompile Include="Dependencies\Includes\Private\ImGUI\imgui_widgets.cpp" />
+    <ClCompile Include="Source\Components\LightComponents\DirectionalLightComponent.cpp" />
+    <ClCompile Include="Source\Components\LightComponents\PointLightComponent.cpp" />
+    <ClCompile Include="Source\Utilities\PrimitiveShapes.cpp" />
+    <ClCompile Include="Source\Components\CascadeShadowMap.cpp" />
     <ClCompile Include="Source\Components\RenderComponents\StaticMeshComponent.cpp" />
     <ClCompile Include="Dependencies\Includes\Public\Components\RenderComponents\StaticMeshComponent.h" />
     <ClCompile Include="Source\Components\BoundingBox.cpp" />
@@ -690,9 +694,12 @@
     <ClInclude Include="Dependencies\Includes\Private\tiny_obj_loader.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\BoundingBox.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\Camera.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Components\CascadeShadowMap.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\Clock.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Components\LightComponents\DirectionalLightComponent.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Components\LightComponents\PointLightComponent.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\Material.h" />
-    <ClInclude Include="Dependencies\Includes\Public\Components\RenderComponents\Components.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Components\Components.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\FBORenderTarget.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\Image.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\Lights.h" />
@@ -704,6 +711,7 @@
     <ClInclude Include="Dependencies\Includes\Public\Core\Editor.h" />
     <ClInclude Include="Dependencies\Includes\Public\Core\Utilities.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\RenderActor.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Utilities\CameraUtiltities.h" />
     <ClInclude Include="Dependencies\Includes\Public\Utilities\FileUtilities.h" />
     <ClInclude Include="Dependencies\Includes\Public\HoneycombUIFramework\Atoms\ButtonWidget.h" />
     <ClInclude Include="Dependencies\Includes\Public\HoneycombUIFramework\Atoms\LabelWidget.h" />
@@ -731,7 +739,6 @@
     <ClInclude Include="Dependencies\Includes\Public\Core\RenderCore.h" />
     <ClInclude Include="Dependencies\Includes\Public\Utilities\ImageLoader.h" />
     <ClInclude Include="Dependencies\Includes\Public\Managers\LogManager.h" />
-    <ClInclude Include="Dependencies\Includes\Public\Managers\ManagerBase.h" />
     <ClInclude Include="Dependencies\Includes\Public\Managers\RenderManager.h" />
     <ClInclude Include="Dependencies\Includes\Public\Managers\ShaderManager.h" />
     <ClInclude Include="Dependencies\Includes\Public\Core\SingletonBase.h" />
@@ -740,6 +747,7 @@
     <ClInclude Include="Dependencies\Includes\Public\Utilities\Containers\Array.h" />
     <ClInclude Include="Dependencies\Includes\Public\Core\PODTypes.h" />
     <ClInclude Include="Dependencies\Includes\Public\Core\UDTypes.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Utilities\PrimitiveShapes.h" />
     <ClInclude Include="Dependencies\Includes\Public\Win32\Win32RenderWindow.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\SkyBox.h" />
     <ClInclude Include="Source\Utilities\TestData\TestData.h" />

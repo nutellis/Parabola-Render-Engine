@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Core/RenderCore.h>
+#include <string>
 
 //A 'canvas' which can receive the results of a rendering operation. 
 
@@ -9,6 +10,7 @@ class RenderTarget
 {
 public:
 	RenderTarget();
+	RenderTarget(std::string Name, uint32 inWidth, uint32 inHeight);
 
 	~RenderTarget();
 
@@ -18,20 +20,25 @@ public:
 
 	 uint32 GetHeight(void) const;
 	 uint32 GetWidth(void) const;
-	 const char * getName(void) const;
+	 std::string getName(void) const;
 	 void getMetrics(uint32 & OutWidth, uint32 & OutHeight, uint32 & OutColourDepth);
+
+
+public:
+	std::string Name;
+	uint32 ID;
+	uint32 Width;
+	uint32 Height;
 
 protected:
 
-	const char * Name;
-	uint32 ID;
+	
 
 	uint8 Active : 1;
 	uint8 Priority;
 
 	
-	uint32 Width;
-	uint32 Height;
+
 	uint32 ColourDepth;
 
 };

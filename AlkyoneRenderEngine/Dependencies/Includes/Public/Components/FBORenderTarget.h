@@ -2,14 +2,15 @@
 #include <Components/RenderTarget.h>
 
 
+class Texture;
 
 
-class FBORenderTarget : RenderTarget
+class FBORenderTarget : public RenderTarget
 {
 public:
 	FBORenderTarget();
 
-	FBORenderTarget(uint32 Width, uint32 Height);
+	FBORenderTarget(std::string Name, uint32 Width, uint32 Height);
 
 	~FBORenderTarget();
 
@@ -17,17 +18,16 @@ public:
 
 	bool Init();
 
-	inline uint32 GetTexture() const {
-		return Texture;
+	uint32 GetTexture() const;
+	uint32 GetDepth() const;
+
+	inline void AttachTextureToFrameBuffer(uint32 TextureRef, uint32 Channel) {
+		glNamedFramebufferTexture(ID, Channel, TextureRef, 0);
 	}
 
-public: 
-	uint32 Width;
-	uint32 Height;
-private:
-	uint32 Texture;
-	uint32 DepthStencilRBO;
-
+public:
+	Texture * ColourAttachment;
+	Texture * DepthStencilAttachment;
 
 };
 

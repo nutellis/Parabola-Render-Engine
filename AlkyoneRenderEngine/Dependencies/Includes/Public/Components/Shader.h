@@ -41,24 +41,24 @@ public:
 
 	// utility uniform functions
 	// ------------------------------------------------------------------------
-	void setBool(const char* Name, bool Value) const;
+	void SetBool(const char* Name, bool Value) const;
 	// ------------------------------------------------------------------------
-	void setInt(const char* Name, int Value) const;
+	void SetInt(const char* Name, int Value) const;
 	// ------------------------------------------------------------------------
-	void setFloat(const char*Name, float Value) const;
+	void SetFloat(const char*Name, float Value) const;
 	// ------------------------------------------------------------------------
-	void setVec2(const char*Name, const Vector2f &Value) const;
-	void setVec2(const char*Name, float x, float y) const;
+	void SetVec2(const char*Name, const Vector2f &Value) const;
+	void SetVec2(const char*Name, float x, float y) const;
 	// ------------------------------------------------------------------------
-	void setVec3(const char*Name, const Vector3f &Value) const;
-	void setVec3(const char*Name, float x, float y, float z) const;
+	void SetVec3(const char*Name, const Vector3f &Value) const;
+	void SetVec3(const char*Name, float x, float y, float z) const;
 	// ------------------------------------------------------------------------
-	void setVec4(const char*Name, const Vector4f &Value) const;
-	void setVec4(const char*Name, float x, float y, float z, float w);
+	void SetVec4(const char*Name, const Vector4f &Value) const;
+	void SetVec4(const char*Name, float x, float y, float z, float w);
 	// ------------------------------------------------------------------------
-	void setMat2(const char*Name, const glm::mat2 &Matrix) const;
+	void SetMat2(const char*Name, const glm::mat2 &Matrix) const;
 	// ------------------------------------------------------------------------
-	void setMat3(const char*Name, const glm::mat3 &Matrix) const;
+	void SetMat3(const char*Name, const glm::mat3 &Matrix) const;
 
 	
 	// ------------------------------------------------------------------------

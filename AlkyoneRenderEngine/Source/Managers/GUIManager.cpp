@@ -7,10 +7,11 @@
 
 
 #include <Managers/SceneManager.h>
+#include <Managers/RenderManager.h>
 
 #include <Core/Editor.h>
 
-template<> GGUIManager* SingletonBase<GGUIManager>::instance = 0;
+template<> GGUIManager* SingletonManagerBase<GGUIManager>::instance = 0;
 GGUIManager & GGUIManager::getInstance()
 {
 	//assert?
@@ -29,16 +30,13 @@ GGUIManager * GGUIManager::getInstancePtr()
 
 GGUIManager::GGUIManager()
 {
-	RenderTarget = new FBORenderTarget(1280,720);
 }
 
 GGUIManager::~GGUIManager()
 {
-	RenderTarget = nullptr;
 }
 
-void GGUIManager::Draw()
-{
+void GGUIManager::Draw(){
 
 	bool open = true;
 
@@ -53,22 +51,15 @@ void GGUIManager::Draw()
 	DrawLog("Editor Log", &open);
 
 	if (GEditor::getInstancePtr() != nullptr) {
-		DrawEditor();
+		gRenderManager.DrawPreview();
 		gSceneManager.DrawSceneGraph();
+		gRenderManager.DrawOptions();
 	}
 
 	// Render dear imgui into screen
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
-
-void GGUIManager::BindRenderTarget() {
-	RenderTarget->Bind();
-}
-FBORenderTarget * GGUIManager::GetRenderTarget() {
-	return RenderTarget;
-}
-
 
 void GGUIManager::Init()
 {
@@ -81,8 +72,6 @@ void GGUIManager::Init()
 	ImGui_ImplOpenGL3_Init("#version 450");
 	io.ConfigWindowsMoveFromTitleBarOnly = true;
 	ImGui::StyleColorsDark();
-
-	RenderTarget->Init();
 }
 
 void GGUIManager::Terminate()
@@ -229,27 +218,4 @@ void GGUIManager::DrawLog(const char* title, bool* p_open)
 
 	ImGui::EndChild();
 	ImGui::End();
-}
-
-void GGUIManager::DrawEditor()
-{
-	if (RenderTarget != nullptr) {
-		ImGui::SetNextWindowSize(ImVec2(RenderTarget->Width, RenderTarget->Height));
-		ImGui::SetNextWindowPos(ImVec2(0, 0));
-		ImGuiWindowFlags window_flags = 0;
-		window_flags |= ImGuiWindowFlags_NoMove;
-		window_flags |= ImGuiWindowFlags_NoCollapse;
-		window_flags |= ImGuiWindowFlags_NoResize;
-
-		ImGui::Begin("Editor", 0, window_flags);
-		{
-			ImGui::Image(
-				(ImTextureID)RenderTarget->GetTexture(),
-				ImGui::GetContentRegionAvail(),
-				ImVec2(0, 1),
-				ImVec2(1, 0)
-			);
-		}
-		ImGui::End();
-	}
 }

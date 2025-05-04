@@ -7,6 +7,7 @@
 
 /* 3 element Vector*/
 
+#pragma pack(push, 1)
 template <typename Type>
 struct TVector3
 {
@@ -41,9 +42,7 @@ public:
 
 	TVector3 Ones() const;
 
-	Type length() const;
-
-	void Normalize();
+	Type Length() const;
 
 	TVector3 GetNormalized() const;
 
@@ -66,7 +65,7 @@ public:
 
 	TVector3 operator*(const TVector3& Other) const;
 	TVector3 operator*(const Type Scalar) const;
-	
+	TVector3 operator*(const TMatrix4<Type>& Other) const;
 
 	TVector3 operator/(const TVector3& Other) const;
 	TVector3 operator/(const Type Scalar) const;
@@ -92,14 +91,8 @@ public:
 	TVector3 operator - () const;
 
 
-
-
-
-
 private:
-	int32 VectorLength = 3;
-
-
+	void Normalize();
 
 
 public:
@@ -109,6 +102,7 @@ public:
 
 	void Print();
 };
+#pragma pack(pop)
 
 template<typename T>
 struct std::hash<TVector3<T>>

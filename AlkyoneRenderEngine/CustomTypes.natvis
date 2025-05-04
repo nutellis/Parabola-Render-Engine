@@ -59,4 +59,26 @@
 			<Item Name="Uniforms">Uniforms</Item>
 		</Expand>
 	</Type>
+
+	<!-- Visualization for TVector4 -->
+	<Type Name="TVector4&lt;*&gt;">
+		<DisplayString>({X}, {Y}, {Z}, {W})</DisplayString>
+		<Expand>
+			<Item Name="X">X</Item>
+			<Item Name="Y">Y</Item>
+			<Item Name="Z">Z</Item>
+			<Item Name="W">W</Item>
+		</Expand>
+	</Type>
+
+	<!-- Visualization for TMatrix4 -->
+	<Type Name="TMatrix4&lt;*&gt;">
+		<DisplayString>Matrix4x4</DisplayString>
+		<Expand>
+			<ArrayItems>
+				<Size>4</Size>
+				<ValuePointer>M</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
 </AutoVisualizer>

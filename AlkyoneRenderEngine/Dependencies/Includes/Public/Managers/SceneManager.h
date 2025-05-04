@@ -7,14 +7,13 @@
 #include <Core/RenderCore.h>
 
 #include <Core/SingletonBase.h>
-#include <Managers/ManagerBase.h>
 
 class Scene;
 class PRenderActor;
 class SceneNode;
 
 
-class GSceneManager : SingletonBase<GSceneManager>, ManagerBase
+class GSceneManager : SingletonManagerBase<GSceneManager>
 {
 public:
 	static GSceneManager& getInstance();

@@ -1,6 +1,9 @@
 #version 450
+#extension GL_ARB_bindless_texture : enable
+#extension GL_NV_gpu_shader5 : enable
+#extension GL_ARB_gpu_shader_int64: enable
 
-#define SOLUTION_USE_BUILTIN_SHADOW_TEST 1
+// #define SOLUTION_USE_BUILTIN_SHADOW_TEST 0
 // required by GLSL spec Sect 4.5.3 (though nvidia does not, amd does)
 precision highp float;
 
@@ -14,9 +17,9 @@ uniform float material_shininess = 0;
 uniform vec3 material_emission = vec3(0);
 
 uniform int has_color_texture = 0;
-layout(binding = 0) uniform sampler2D colorMap;
+layout(binding = 1) uniform sampler2D colorMap;
 uniform int has_emission_texture = 0;
-layout(binding = 5) uniform sampler2D emissiveMap;
+//layout(binding = 5) uniform sampler2D emissiveMap;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Environment
@@ -25,12 +28,6 @@ layout(binding = 6) uniform sampler2D environmentMap;
 layout(binding = 7) uniform sampler2D irradianceMap;
 layout(binding = 8) uniform sampler2D reflectionMap;
 uniform float environment_multiplier;
-
-///////////////////////////////////////////////////////////////////////////////
-// Light source
-///////////////////////////////////////////////////////////////////////////////
-uniform vec3 point_light_color = vec3(1.0, 1.0, 1.0);
-uniform float point_light_intensity_multiplier = 50.0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Constants
@@ -44,11 +41,10 @@ in vec2 texCoord;
 in vec3 viewSpaceNormal;
 in vec3 viewSpacePosition;
 
-in vec4 shadowMapCoord;
 ///////////////////////////////////////////////////////////////////////////////
 // Input uniform variables
 ///////////////////////////////////////////////////////////////////////////////
-uniform mat4 view;
+uniform mat4 viewInverse;
 
 
 uniform int enableSSAO = 0;
@@ -57,13 +53,28 @@ uniform int enableSSAO = 0;
 ///////////////////////////////////////////////////////////////////////////////
 // Light source
 ///////////////////////////////////////////////////////////////////////////////
-// uniform mat4 lightMatrix;
+
+uniform vec3 point_light_color = vec3(1.0, 1.0, 1.0);
+uniform float point_light_intensity_multiplier = 1.0;
 
 uniform vec3 LightPosition;
+uniform vec3 LightDirection;
 
-vec3 viewSpaceLightDir;
-vec3 viewSpaceLightPosition;
+uniform vec3 viewSpaceLightPosition;
+uniform vec3 viewSpaceLightDir;
 
+///////////////////////////////////////////////////////////////////////////////
+// Shadow Information
+///////////////////////////////////////////////////////////////////////////////
+layout(std430, binding = 0) buffer TextureHandles {
+    uint64_t handles[]; // Array of texture handles
+};
+
+in vec4 shadowMapCoord[4];
+uniform vec4 FragmentDistance;
+
+
+layout(binding = 16) uniform sampler2D ssaoTexture;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Output color
@@ -71,24 +82,45 @@ vec3 viewSpaceLightPosition;
 layout(location = 0) out vec4 fragmentColor;
 
 
-#if SOLUTION_USE_BUILTIN_SHADOW_TEST
-layout(binding = 10) uniform sampler2DShadow shadowMapTex;
-#else  // USE_BUILTIN_SHADOW_TEST
-layout(binding = 10) uniform sampler2D shadowMapTex;
-#endif // ~ USE_BUILTIN_SHADOW_TEST
 
-layout(binding = 16) uniform sampler2D ssaoTexture;
+float shadowCoef()
+{
+	int index = 3;
+	
+	// find the appropriate depth map to look up in based on the depth of this fragment
+	if(gl_FragCoord.z < FragmentDistance.x)
+		index = 0;
+	else if(gl_FragCoord.z < FragmentDistance.y)
+		index = 1;
+	else if(gl_FragCoord.z < FragmentDistance.z)
+		index = 2;
+	
+	// get the texture handle of the shadow map
+	 uint64_t shadowHandle = handles[0];
+	 sampler2D shadowTexture = sampler2D(shadowHandle);
 
+	vec3 shadowUV = shadowMapCoord[0].xyz / shadowMapCoord[0].w;
 
+	float shadowDepth = texture(shadowTexture, shadowMapCoord[index].xy / shadowMapCoord[0].w).x;
+	float diff = (shadowDepth >= (shadowMapCoord[0].z / shadowMapCoord[0].w)) ? 1.0 : 0.0;
+	// shadowDepth - shadowMapCoord[0].z / shadowMapCoord[0].w;
+
+	return diff ; //clamp(diff * 250.0 + 1.0, 0.0, 1.0);
+}
 
 
 vec3 calculateDirectIllumiunation(vec3 wo, vec3 n, vec3 base_color)
 {
 	vec3 direct_illum = base_color;
-	const float distance_to_light = length(viewSpaceLightPosition - viewSpacePosition);
-	const float falloff_factor = 1.0 / (distance_to_light * distance_to_light);
-	vec3 Li = point_light_intensity_multiplier * point_light_color * falloff_factor;
-	vec3 wi = normalize(viewSpaceLightPosition - viewSpacePosition);
+	//const float distance_to_light = length(viewSpaceLightPosition - viewSpacePosition);
+	//const float falloff_factor = 1.0 / (distance_to_light * distance_to_light);
+	   // constant across the scene
+
+	vec3 Li = point_light_intensity_multiplier * point_light_color; // * falloff_factor;
+	vec3  wi = LightDirection;
+
+	//vec3 wi = normalize(viewSpaceLightPosition - viewSpacePosition);
+
 	if(dot(wi, n) <= 0.0)
 		return vec3(0.0);
 	float ndotwi = dot(n, wi);
@@ -102,6 +134,7 @@ vec3 calculateDirectIllumiunation(vec3 wo, vec3 n, vec3 base_color)
 	float D = ((material_shininess + 2) / (2.0 * PI)) * pow(ndotwh, material_shininess);
 	float G = min(1.0, min(2.0 * ndotwh * ndotwo / wodotwh, 2.0 * ndotwh * ndotwi / wodotwh));
 	float F = material_fresnel + (1.0 - material_fresnel) * pow(1.0 - wodotwh, 5.0);
+	F = clamp(F, 0.0, 0.8);
 	float denominator = 4.0 * clamp(ndotwo * ndotwi, 0.0001, 1.0);
 	float brdf = D * F * G / denominator;
 
@@ -115,7 +148,6 @@ vec3 calculateDirectIllumiunation(vec3 wo, vec3 n, vec3 base_color)
 
 vec3 calculateIndirectIllumination(vec3 wo, vec3 n, vec3 base_color)
 {
-	mat4 viewInverse = inverse(view);
 	vec3 indirect_illum = vec3(0.f);
 
 	vec3 world_normal = vec3(viewInverse * vec4(n, 0.0));
@@ -129,18 +161,23 @@ vec3 calculateIndirectIllumination(vec3 wo, vec3 n, vec3 base_color)
 
 	vec3 wi = normalize(reflect(-wo, n));
 	vec3 wr = normalize(vec3(viewInverse * vec4(wi, 0.0)));
+	float ndotwr = max(dot(world_normal, wr), 0.0);
+
 	theta = acos(max(-1.0f, min(1.0f, wr.y)));
 	phi = atan(wr.z, wr.x);
 	if(phi < 0.0f)
 		phi = phi + 2.0f * PI;
 	lookup = vec2(phi / (2.0 * PI), 1 - theta / PI);
 	float roughness = sqrt(sqrt(2.0 / (material_shininess + 2.0)));
+	roughness = clamp(roughness, 0.15, 1.0);
+
 	Li = environment_multiplier * textureLod(reflectionMap, lookup, roughness * 7.0).rgb;
 	
 	vec3 wh = normalize(wi + wo);
 	float wodotwh = max(0.0, dot(wo, wh));
 	float F = material_fresnel + (1.0 - material_fresnel) * pow(1.0 - wodotwh, 5.0);
-	vec3 dielectric_term = F * Li + (1.0 - F) * diffuse_term;
+
+	vec3 dielectric_term = F * Li * ndotwr + (1.0 - F) * diffuse_term;
 	vec3 metal_term = F * base_color * Li;
 
 	indirect_illum = material_metalness * metal_term + (1.0 - material_metalness) * dielectric_term;
@@ -151,16 +188,13 @@ vec3 calculateIndirectIllumination(vec3 wo, vec3 n, vec3 base_color)
 void main()
 {
 
-	viewSpaceLightPosition = vec3(view * vec4(LightPosition, 1.0f));
-	viewSpaceLightDir = normalize(vec3(view * vec4(-LightPosition, 0.0f)));
-
 	float visibility = 1.0;
 
 //	#if SOLUTION_USE_BUILTIN_SHADOW_TEST // SOLUTION_CODE >= 8
 //		visibility = textureProj(shadowMapTex, shadowMapCoord);
 //	#else
-//		float depth = texture(shadowMapTex, shadowMapCoord.xy / shadowMapCoord.w).r;
-//		visibility = (depth >= (shadowMapCoord.z / shadowMapCoord.w)) ? 1.0 : 0.0;
+	//	float depth = texture(shadowMapTex, shadowMapCoord.xy / shadowMapCoord.w).r;
+		//visibility = (depth >= (shadowMapCoord.z / shadowMapCoord.w)) ? 1.0 : 0.0;
 //	#endif // ~ USE_BUILTIN_SHADOW_TEST
 //
 	float ssao = 1.0; // Default to fully visible
@@ -175,7 +209,7 @@ void main()
 	{
 		base_color = base_color * texture(colorMap, texCoord).rgb;
 	}
-//
+	visibility = shadowCoef();
 	// Direct illumination
 	vec3 direct_illumination_term = visibility * calculateDirectIllumiunation(wo, n, base_color);
 
@@ -186,12 +220,12 @@ void main()
 	// Add emissive term. If emissive texture exists, sample this term.
 	///////////////////////////////////////////////////////////////////////////
 	vec3 emission_term = material_emission * material_color;
-	if(has_emission_texture == 1)
-	{
-		emission_term = texture(emissiveMap, texCoord).rgb * 0.5 ;
-	}
+//	if(has_emission_texture == 1)
+//	{
+//		emission_term = texture(emissiveMap, texCoord).rgb * 0.5 ;
+//	}
 
-	vec3 shading = direct_illumination_term + (ssao * indirect_illumination_term) + emission_term; // 
+	vec3 shading = direct_illumination_term + indirect_illumination_term + emission_term; // (ssao * )
 	
 	fragmentColor = vec4(shading, 1.0);
 

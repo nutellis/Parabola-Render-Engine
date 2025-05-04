@@ -1,25 +1,21 @@
 #pragma once
 
-#include <Core/RenderCore.h>
-
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <chrono>
 #include <ctime>    
 
-#include <Typedefs.h>
-
 #include <Core/SingletonBase.h>
-#include <Managers/ManagerBase.h>
 #include <Utilities/Containers/Array.h>	
 
 #include <Vector3.h>
+#include <ImGUI/imgui.h>
 
 #define FORMAT(msg, ...) GLogManager::getInstance().ArgParser(msg, ##__VA_ARGS__);
 #define WRITE(sev) GLogManager::getInstance().WriteLog(sev)
 #define LOG(sev,msg,...) FORMAT(msg, ##__VA_ARGS__) WRITE(sev)
-
+#define CHECK_GL_ERROR() GLogManager::getInstance().CheckGLError(__FILE__, __LINE__) && (__debugbreak(), 1);
 
 #define CMD(msg,...) LOG(CMD,msg, ##__VA_ARGS__)
 #define DEBUG(msg,...) LOG(DEBUG,msg, ##__VA_ARGS__)
@@ -83,7 +79,7 @@ struct GuiLog
 };
 
 
-class GLogManager : SingletonBase<GLogManager>, ManagerBase
+class GLogManager : SingletonManagerBase<GLogManager>
 {
 public:
 
@@ -103,6 +99,7 @@ public:
 	void WriteLog(ImportanceEnum lvl);
 
 	const char * ArgParser(const char * msg);
+	bool CheckGLError(const char* file, int line);
 
 	//templates must be defined inside the header
 	template<typename T, typename ...Args>
@@ -127,6 +124,7 @@ public:
 		//Error! Extra arguments provided!
 		return "!!ERROR!! Extra arguments provided!\n";
 	}
+
 
 	virtual void Init() override;
 	virtual void Terminate() override;

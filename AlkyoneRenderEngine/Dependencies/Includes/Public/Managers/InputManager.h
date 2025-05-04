@@ -9,8 +9,6 @@
 
 
 #include <Core/SingletonBase.h>
-#include <Managers/ManagerBase.h>
-
 
 #include <Managers/WindowManager.h>
 
@@ -18,7 +16,7 @@
 #include <Components/RenderWindow.h>
 
 
-class GInputManager : SingletonBase<GInputManager>, ManagerBase
+class GInputManager : SingletonManagerBase<GInputManager>
 {
 public:
 

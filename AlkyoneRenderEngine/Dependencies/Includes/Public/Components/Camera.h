@@ -36,27 +36,27 @@ public:
 	~Camera();
 
 	//Matrix4f LookAt(const Vector4f & Eye, const Vector4f & At, const Vector4f & Up = Vector4f(0.0f, 1.0f, 0.0f));
-	void LookAt(const Vector4f & Eye, const Vector4f & At,const Vector4f & Up = Vector4f(0.0f, 1.0f, 0.0f)); 
-	
+	//void LookAt(const Vector4f & Eye, const Vector4f & At,const Vector4f & Up = Vector4f(0.0f, 1.0f, 0.0f)); 
+	//
 	void SetProjection(Projection_Type Type);
 	
 	/*Matrix4f Perspective(const float & FieldOfView, const float & AspectRatio,
 		const float & ZNear = 0.1f, const float & ZFar = 100.0f);*/
 	
-	void Perspective(const float & FieldOfView, const float & AspectRatio,
-		const float & ZNear = 0.1f, const float & ZFar = 100.0f);
-	
+	//void Perspective(const float & FieldOfView, const float & AspectRatio,
+	//	const float & ZNear = 0.1f, const float & ZFar = 100.0f);
+	//
 	//Matrix4f Ortho(
 	//	const float & Left, const float &  Right,
 	//	const float &  Top, const float &  Bottom,
 	//	const float & ZNear = 0.1f, const float & ZFar = 100.0f
 	//);
 
-	void Ortho(
-		const float & Left, const float &  Right,
-		const float &  Top, const float &  Bottom,
-		const float & ZNear = 0.1f, const float & ZFar = 100.0f
-	);
+	//void Ortho(
+	//	const float & Left, const float &  Right,
+	//	const float &  Top, const float &  Bottom,
+	//	const float & ZNear = 0.1f, const float & ZFar = 100.0f
+	//);
 
 	Matrix4f GetViewMatrix();
 

@@ -19,7 +19,7 @@ inline  TVector2<Type>::TVector2(const TVector3<U> & inVec3) : X((inVec3.X)), Y(
 {}
 
 template <typename Type>
-inline Type  TVector2<Type>::length() const
+inline Type  TVector2<Type>::Length() const
 {
 	return SMath::Sqrt((X*X) + (Y*Y));
 }
@@ -28,7 +28,7 @@ inline void TVector2<Type>::Normalize()
 {
 	//SSE EQUIVALENT FIX
 
-	Type invLength = 1 / length();
+	Type invLength = 1 / Length();
 	X = X * invLength;
 	Y = Y * invLength;
 }
@@ -158,14 +158,14 @@ inline void TVector2<Type>::Set(Type InX, Type InY)
 template <typename Type>
 inline Type & TVector2<Type>::operator[](int32 i)
 {
-	assert(i >= 0 && i < VectorLength);
+	assert(i >= 0 && i < 2);
 	return  (&X)[i];
 }
 
 template <typename Type>
 inline Type const & TVector2<Type>::operator[](int32 i) const
 {
-	assert(i >= 0 && i < VectorLength);
+	assert(i >= 0 && i < 2);
 	return  (&X)[i];
 }
 

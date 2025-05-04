@@ -27,30 +27,30 @@ Camera::Camera()
 Camera::~Camera()
 {}
 
-void Camera::LookAt(const Vector4f & Eye, const Vector4f & At,const  Vector4f & Up)
-{
-	Vector4f F = Normalize(At - Eye);
-	Vector4f S = Normalize(F.Cross(Up));
-	Vector4f U = S.Cross(F);
-
-	Vector4f T = Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
-
-	Matrix4f Result = Matrix4f(S, U, -F, T);
-
-	Matrix4f Translation;
-	Translation = Matrix4f::IDENTITY;
-
-	Translation = Translate(-Eye, Matrix4f::IDENTITY);
-
-	//Translation[0][3] = - Eye.X;
-	//Translation[1][3] = - Eye.Y;
-	//Translation[2][3] = - Eye.Z;
-
-	Result = Result * Translation;
-
-	View =  Result;
-
-}
+//void Camera::LookAt(const Vector4f & Eye, const Vector4f & At,const  Vector4f & Up)
+//{
+//	Vector4f F = Normalize(At - Eye);
+//	Vector4f S = Normalize(F.Cross(Up));
+//	Vector4f U = S.Cross(F);
+//
+//	Vector4f T = Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
+//
+//	Matrix4f Result = Matrix4f(S, U, -F, T);
+//
+//	Matrix4f Translation;
+//	Translation = Matrix4f::IDENTITY;
+//
+//	Translation = Translate(-Eye, Matrix4f::IDENTITY);
+//
+//	//Translation[0][3] = - Eye.X;
+//	//Translation[1][3] = - Eye.Y;
+//	//Translation[2][3] = - Eye.Z;
+//
+//	Result = Result * Translation;
+//
+//	View =  Result;
+//
+//}
 
 //void Camera::LookAt(const Vector4f & Eye, const Vector4f & Center, const Vector4f & Up)
 //{
@@ -82,46 +82,46 @@ void Camera::SetProjection(Projection_Type Type)
 //Depth buffer precision is affected by the values specified for zNear and zFar.
 //The greater the ratio of zFar to zNear is, the less effective the depth buffer will be at distinguishing between surfaces that are near each other.
 //zNear must never be set to 0
-void Camera::Perspective(
-	const float & FieldOfView, const float & AspectRatio,
-	const float & ZNear, const float & ZFar)
-{
-	Matrix4f Result = Matrix4f::ZERO;
-	if (ZNear <= 0) {
-
-	}
-	else {
-
-		float F = SMath::Cotan(DegreesToRadians(FieldOfView)*0.5f);
-
-		Result[0][0] = F / AspectRatio;
-		Result[1][1] = F;
-		Result[2][2] = (ZFar + ZNear) / (ZNear - ZFar);
-		Result[2][3] = -1;
-		Result[3][2] = (2 * ZFar * ZNear) / (ZNear - ZFar);
-		
-	}
-	Projection =  Result;
-}
-
-void Camera::Ortho(
-	const float & Left, const float &  Right, 
-	const float &  Top, const float &  Bottom,
-	const float & ZNear, const float & ZFar
-	)
-{
-	Matrix4f Result = Matrix4f::IDENTITY;
-	
-	Result[0][0] = 2.0f / (Right - Left);
-	Result[1][1] = 2.0f / (Top - Bottom );
-	Result[2][2] = -2.0f / (ZFar - ZNear);
-	
-	Result[3][0] = -(Right + Left) / (Right - Left);
-	Result[3][1] = -(Top + Bottom) / (Top - Bottom );
-	Result[3][2] = -(ZFar + ZNear) / (ZFar - ZNear);
-	
-	Projection = Result;
-}
+//void Camera::Perspective(
+//	const float & FieldOfView, const float & AspectRatio,
+//	const float & ZNear, const float & ZFar)
+//{
+//	Matrix4f Result = Matrix4f::ZERO;
+//	if (ZNear <= 0) {
+//
+//	}
+//	else {
+//
+//		float F = SMath::Cotan(DegreesToRadians(FieldOfView)*0.5f);
+//
+//		Result[0][0] = F / AspectRatio;
+//		Result[1][1] = F;
+//		Result[2][2] = (ZFar + ZNear) / (ZNear - ZFar);
+//		Result[2][3] = -1;
+//		Result[3][2] = (2 * ZFar * ZNear) / (ZNear - ZFar);
+//		
+//	}
+//	Projection =  Result;
+//}
+//
+//void Camera::Ortho(
+//	const float & Left, const float &  Right, 
+//	const float &  Top, const float &  Bottom,
+//	const float & ZNear, const float & ZFar
+//	)
+//{
+//	Matrix4f Result = Matrix4f::IDENTITY;
+//	
+//	Result[0][0] = 2.0f / (Right - Left);
+//	Result[1][1] = 2.0f / (Top - Bottom );
+//	Result[2][2] = -2.0f / (ZFar - ZNear);
+//	
+//	Result[3][0] = -(Right + Left) / (Right - Left);
+//	Result[3][1] = -(Top + Bottom) / (Top - Bottom );
+//	Result[3][2] = -(ZFar + ZNear) / (ZFar - ZNear);
+//	
+//	Projection = Result;
+//}
 
 Matrix4f Camera::GetViewMatrix()
 {

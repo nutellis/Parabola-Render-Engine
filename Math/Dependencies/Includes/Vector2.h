@@ -28,7 +28,7 @@ public:
 	template<typename U>
 	TVector2(const TVector3<U> & inVec3);
 
-	Type length() const;
+	Type Length() const;
 
 	inline void Normalize();
 	inline TVector2 GetNormalized() const;
@@ -71,10 +71,6 @@ public:
 	Type & operator[](int32 i);
 	Type const & operator[](int32 i) const;
 
-
-
-private:
-	int32 VectorLength = 2;
 };
 
 

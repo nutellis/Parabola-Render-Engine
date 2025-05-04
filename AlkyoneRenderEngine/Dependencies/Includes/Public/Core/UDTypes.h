@@ -3,8 +3,8 @@
 #include <Core/PODTypes.h>
 
 template <typename T> class TArray;
-class VertexFormat;
 class Texture;
+struct VertexFormat;
 
 using VertexArray = TArray<VertexFormat>;
 using IndexArray = TArray<uint32>; 

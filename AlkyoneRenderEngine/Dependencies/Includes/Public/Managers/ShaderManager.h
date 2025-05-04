@@ -1,11 +1,11 @@
 #ifndef SHADERMANAGER_H
 #define SHADERMANAGER_H
 
+#include <Core/RenderCore.h>
+
 #include <GL\glew.h>
 
-
 #include <Core/SingletonBase.h>
-#include <Managers/ManagerBase.h>
 
 #include <Utilities/Containers/Array.h>
 
@@ -16,7 +16,7 @@ class Shader;
 
 // typedef std::map<const char*, Shader*> ShaderMap;
 
-class GShaderManager : public SingletonBase<GShaderManager>, ManagerBase
+class GShaderManager : public SingletonManagerBase<GShaderManager>
 {
 private:
 	// ShaderMap s_Shaders;
@@ -41,11 +41,7 @@ public:
 	void Clean();
 
 	void ReloadShader(std::string name);
-	void ReloadShader(const Shader* shader);
-
-
-
-
+	void ReloadShaders();
 
 	virtual void Init() override;
 	virtual void Terminate() override;

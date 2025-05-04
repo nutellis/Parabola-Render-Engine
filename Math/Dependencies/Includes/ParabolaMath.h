@@ -43,9 +43,7 @@ template <typename T>
 static TMatrix4<T> Translate(const TVector3<T> Translation, TMatrix4<T> const& Source)
 {
 	TMatrix4<T> Result = Source;
-	Result[3][0] += Translation.X;
-	Result[3][1] += Translation.Y;
-	Result[3][2] += Translation.Z;
+	Result[3] = Source[0] * Translation.X + Source[1] * Translation.Y + Source[2] * Translation.Z + Source[3];
 
 	return Result;
 }
@@ -88,9 +86,39 @@ static inline TMatrix4<T> Scale(const float Scale, TMatrix4<T> const & Source)
 
 }
 
-// TODO: probably needs to be checked one day.
 template <typename T>
-static TMatrix4<T> Rotate(TVector3<T> RotationAxis, float Angle, TMatrix4<T> const & Source)
+static TMatrix4<T> Rotate(TMatrix4<T> const& M, T Angle, TVector3<T> const& InVector)
+{
+	T a = DegreesToRadians(Angle);
+	const T cosTheta = SMath::Cos(a);
+	const T sinTheta = SMath::Sin(a);
+	const T t = T(1) - cosTheta;
+	TMatrix4<T> Rotate = TMatrix4<T>::IDENTITY;
+	TMatrix4<T> Result;
+
+	TVector3<T> NormalizedRotationAxis = InVector.GetNormalized();
+
+	Rotate[0][0] = t * NormalizedRotationAxis.X * NormalizedRotationAxis.X + cosTheta;
+	Rotate[0][1] = t * NormalizedRotationAxis.X * NormalizedRotationAxis.Y + sinTheta * NormalizedRotationAxis.Z;
+	Rotate[0][2] = t * NormalizedRotationAxis.X * NormalizedRotationAxis.Z - sinTheta * NormalizedRotationAxis.Y;
+
+	Rotate[1][0] = t * NormalizedRotationAxis.X * NormalizedRotationAxis.Y - sinTheta * NormalizedRotationAxis.Z;
+	Rotate[1][1] = t * NormalizedRotationAxis.Y * NormalizedRotationAxis.Y + cosTheta;
+	Rotate[1][2] = t * NormalizedRotationAxis.Y * NormalizedRotationAxis.Z + sinTheta * NormalizedRotationAxis.X;
+
+	Rotate[2][0] = t * NormalizedRotationAxis.X * NormalizedRotationAxis.Z + sinTheta * NormalizedRotationAxis.Y;
+	Rotate[2][1] = t * NormalizedRotationAxis.Y * NormalizedRotationAxis.Z - sinTheta * NormalizedRotationAxis.X;
+	Rotate[2][2] = t * NormalizedRotationAxis.Z * NormalizedRotationAxis.Z + cosTheta;
+
+	Result[0] = M[0] * Rotate[0][0] + M[1] * Rotate[0][1] + M[2] * Rotate[0][2];
+	Result[1] = M[0] * Rotate[1][0] + M[1] * Rotate[1][1] + M[2] * Rotate[1][2];
+	Result[2] = M[0] * Rotate[2][0] + M[1] * Rotate[2][1] + M[2] * Rotate[2][2];
+	Result[3] = M[3];
+	return Result;
+}
+
+template <typename T>
+static TMatrix4<T> Rotate(TVector3<T> RotationAxis, T Angle, TMatrix4<T> const & Source)
 {
 	float a = DegreesToRadians(Angle);
 	const float cosTheta = SMath::Cos(a);
@@ -98,21 +126,36 @@ static TMatrix4<T> Rotate(TVector3<T> RotationAxis, float Angle, TMatrix4<T> con
 	const float t = 1 - cosTheta;
 	TMatrix4<T> Rotate = TMatrix4<T>::IDENTITY;
 
-	RotationAxis.Normalize();
+	TVector3<T> NormalizedRotationAxis = RotationAxis.GetNormalized();
 
-	Rotate[0][0] = t * RotationAxis.X * RotationAxis.X + cosTheta;
-	Rotate[1][0] = t * RotationAxis.X * RotationAxis.Y + sinTheta * RotationAxis.Z;
-	Rotate[2][0] = t * RotationAxis.X * RotationAxis.Z - sinTheta * RotationAxis.Y;
+	Rotate[0][0] = t * NormalizedRotationAxis.X * NormalizedRotationAxis.X + cosTheta;
+	Rotate[1][0] = t * NormalizedRotationAxis.X * NormalizedRotationAxis.Y + sinTheta * NormalizedRotationAxis.Z;
+	Rotate[2][0] = t * NormalizedRotationAxis.X * NormalizedRotationAxis.Z - sinTheta * NormalizedRotationAxis.Y;
 
-	Rotate[0][1] = t * RotationAxis.X * RotationAxis.Y - sinTheta * RotationAxis.Z;
-	Rotate[1][1] = t * RotationAxis.Y * RotationAxis.Y + cosTheta;
-	Rotate[2][1] = t * RotationAxis.Y * RotationAxis.Z + sinTheta * RotationAxis.X;
+	Rotate[0][1] = t * NormalizedRotationAxis.X * NormalizedRotationAxis.Y - sinTheta * NormalizedRotationAxis.Z;
+	Rotate[1][1] = t * NormalizedRotationAxis.Y * NormalizedRotationAxis.Y + cosTheta;
+	Rotate[2][1] = t * NormalizedRotationAxis.Y * NormalizedRotationAxis.Z + sinTheta * NormalizedRotationAxis.X;
 
-	Rotate[0][2] = t * RotationAxis.X * RotationAxis.Z + sinTheta * RotationAxis.Y;
-	Rotate[1][2] = t * RotationAxis.Y * RotationAxis.Z - sinTheta * RotationAxis.X;
-	Rotate[2][2] = t * RotationAxis.Z * RotationAxis.Z + cosTheta;
+	Rotate[0][2] = t * NormalizedRotationAxis.X * NormalizedRotationAxis.Z + sinTheta * NormalizedRotationAxis.Y;
+	Rotate[1][2] = t * NormalizedRotationAxis.Y * NormalizedRotationAxis.Z - sinTheta * NormalizedRotationAxis.X;
+	Rotate[2][2] = t * NormalizedRotationAxis.Z * NormalizedRotationAxis.Z + cosTheta;
 
 	return Rotate * Source;
+}
+
+template <typename T>
+static TMatrix4<T> Rotate(float Angle, TVector3<T> const & InVector)
+{
+	return Rotate(Matrix4f::IDENTITY, Angle, InVector);
+}
+
+template <typename T>
+static TMatrix4<T> Rotate(TVector3<T> Rotator, TMatrix4<T> const& Source) {
+
+	TMatrix4<T> RotatorX = Rotate(Vector3f(1.0f, 0.0f, 0.0f), Rotator.X, Source);
+	TMatrix4<T> RotatorY = Rotate(Vector3f(0.0f, 1.0f, 0.0f), Rotator.Y, Source);
+	TMatrix4<T> RotatorZ = Rotate(Vector3f(0.0f, 0.0f, 1.0f), Rotator.Z, Source);
+	return RotatorZ * RotatorY * RotatorX * Source;
 }
 
 template <typename Type>
@@ -133,7 +176,7 @@ static TVector3<Type> Normalize(TVector3<Type> inVector)
 {
 	TVector3<Type> Result = TVector3<Type>::ZERO;
 
-	float invLength = 1 / inVector.length();
+	Type invLength = static_cast<Type>(1) / inVector.Length();
 	Result.X = inVector.X * invLength;
 	Result.Y = inVector.Y * invLength;
 	Result.Z = inVector.Z * invLength;
@@ -141,6 +184,82 @@ static TVector3<Type> Normalize(TVector3<Type> inVector)
 	return Result;
 }
 
+template <typename Type>
+static TVector3<Type> Cross(const TVector3<Type>& A, const TVector3<Type>& B)
+{
+	return TVector3<Type>(
+		A.Y * B.Z - A.Z * B.Y,
+		A.Z * B.X - A.X * B.Z,
+		A.X * B.Y - A.Y * B.X
+	);
+}
 
+
+template <typename Type>
+static Type Dot(const TVector3<Type>& A, const TVector3<Type>& B)
+{
+	TVector3<Type> Temp = A * B;
+
+	return(Temp.X + Temp.Y + Temp.Z);
+}
+
+template <typename Type>
+static TMatrix4<Type> Inverse(const TMatrix4<Type>& M)
+{
+	Type Coef00 = M[2][2] * M[3][3] - M[3][2] * M[2][3];
+	Type Coef02 = M[1][2] * M[3][3] - M[3][2] * M[1][3];
+	Type Coef03 = M[1][2] * M[2][3] - M[2][2] * M[1][3];
+
+	Type Coef04 = M[2][1] * M[3][3] - M[3][1] * M[2][3];
+	Type Coef06 = M[1][1] * M[3][3] - M[3][1] * M[1][3];
+	Type Coef07 = M[1][1] * M[2][3] - M[2][1] * M[1][3];
+
+	Type Coef08 = M[2][1] * M[3][2] - M[3][1] * M[2][2];
+	Type Coef10 = M[1][1] * M[3][2] - M[3][1] * M[1][2];
+	Type Coef11 = M[1][1] * M[2][2] - M[2][1] * M[1][2];
+
+	Type Coef12 = M[2][0] * M[3][3] - M[3][0] * M[2][3];
+	Type Coef14 = M[1][0] * M[3][3] - M[3][0] * M[1][3];
+	Type Coef15 = M[1][0] * M[2][3] - M[2][0] * M[1][3];
+
+	Type Coef16 = M[2][0] * M[3][2] - M[3][0] * M[2][2];
+	Type Coef18 = M[1][0] * M[3][2] - M[3][0] * M[1][2];
+	Type Coef19 = M[1][0] * M[2][2] - M[2][0] * M[1][2];
+
+	Type Coef20 = M[2][0] * M[3][1] - M[3][0] * M[2][1];
+	Type Coef22 = M[1][0] * M[3][1] - M[3][0] * M[1][1];
+	Type Coef23 = M[1][0] * M[2][1] - M[2][0] * M[1][1];
+
+	TVector4<Type> Fac0(Coef00, Coef00, Coef02, Coef03);
+	TVector4<Type> Fac1(Coef04, Coef04, Coef06, Coef07);
+	TVector4<Type> Fac2(Coef08, Coef08, Coef10, Coef11);
+	TVector4<Type> Fac3(Coef12, Coef12, Coef14, Coef15);
+	TVector4<Type> Fac4(Coef16, Coef16, Coef18, Coef19);
+	TVector4<Type> Fac5(Coef20, Coef20, Coef22, Coef23);
+
+	TVector4<Type> Vec0(M[1][0], M[0][0], M[0][0], M[0][0]);
+	TVector4<Type> Vec1(M[1][1], M[0][1], M[0][1], M[0][1]);
+	TVector4<Type> Vec2(M[1][2], M[0][2], M[0][2], M[0][2]);
+	TVector4<Type> Vec3(M[1][3], M[0][3], M[0][3], M[0][3]);
+
+	TVector4<Type> Inv0(Vec1 * Fac0 - Vec2 * Fac1 + Vec3 * Fac2);
+	TVector4<Type> Inv1(Vec0 * Fac0 - Vec2 * Fac3 + Vec3 * Fac4);
+	TVector4<Type> Inv2(Vec0 * Fac1 - Vec1 * Fac3 + Vec3 * Fac5);
+	TVector4<Type> Inv3(Vec0 * Fac2 - Vec1 * Fac4 + Vec2 * Fac5);
+
+	TVector4<Type> SignA(+1, -1, +1, -1);
+	TVector4<Type> SignB(-1, +1, -1, +1);
+
+	TMatrix4<Type> Inverse(Inv0 * SignA, Inv1 * SignB, Inv2 * SignA, Inv3 * SignB);
+
+	TVector4<Type> Row0(Inverse[0][0], Inverse[1][0], Inverse[2][0], Inverse[3][0]);
+
+	TVector4<Type> Dot0(M[0] * Row0);
+	Type Dot1 = (Dot0.X + Dot0.Y) + (Dot0.Z + Dot0.W);
+
+	Type OneOverDeterminant = static_cast<Type>(1) / Dot1;
+
+	return Inverse * OneOverDeterminant;
+}
 
 #endif //!PMATH

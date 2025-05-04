@@ -10,17 +10,17 @@
  */
 
 template <typename T>
-class SingletonBase
+class SingletonManagerBase
 {
 public:
-	SingletonBase(SingletonBase<T> const&) = delete;
-	void operator=(SingletonBase<T> const&) = delete;
+	SingletonManagerBase(SingletonManagerBase<T> const&) = delete;
+	void operator=(SingletonManagerBase<T> const&) = delete;
 
-	SingletonBase() {
+	SingletonManagerBase() {
 		//assert
 		// instance = static_cast<T*>(this);
 	}
-	~SingletonBase() {
+	~SingletonManagerBase() {
 		instance = 0;
 	}
 
@@ -34,6 +34,12 @@ public:
 	{
 		return instance;
 	}
+
+	virtual void Init() = 0;
+	virtual void Terminate() = 0;
+
+public:
+	bool bInitSuccessful = false;
 protected:
 	static T* instance;
 };

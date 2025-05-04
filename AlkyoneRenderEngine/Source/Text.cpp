@@ -92,7 +92,7 @@ void Text::RenderText(Shader &shader, std::string text, GLfloat x, GLfloat y, GL
 	
 	//gShaderManager.GetShader("Text");
 	shader.SetMat4("projection", false, projection);
-	shader.setVec3("textColor", color.x, color.y, color.z);
+	shader.SetVec3("textColor", color.x, color.y, color.z);
 	glActiveTexture(GL_TEXTURE0);
 	glBindVertexArray(VAO);
 

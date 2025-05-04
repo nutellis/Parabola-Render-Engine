@@ -8,12 +8,10 @@
 
 #include <Core/SingletonBase.h>
 
-#include <Managers/ManagerBase.h>
 
 
 
-
-class Engine : SingletonBase<Engine>, ManagerBase
+class Engine : SingletonManagerBase<Engine>
 {
 public:
 

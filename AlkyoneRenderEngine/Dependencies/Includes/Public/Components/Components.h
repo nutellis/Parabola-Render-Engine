@@ -36,6 +36,7 @@ public:
 	void SetAbsolute(bool bNewAbsoluteLocation, bool bNewAbsoluteRotation, bool bNewAbsoluteScale);
 
 	Vector3f GetPosition() const;
+	Vector3f GetRotation() const;
 	Vector3f GetScale() const;
 };
 
@@ -53,19 +54,6 @@ class PShapeComponent : public PPrimitiveComponent {
 
 };
 
-class PPointLightComponent : public PSceneComponent
-{
-public:
-	PPointLightComponent(PRenderActor* Parent);
-
-	PPointLightComponent(PSceneComponent *Default);
-
-	~PPointLightComponent();
-
-	void SetupShaderLight(Shader* ActiveShader);
-
-	PointLightAttributes *Attributes;																			//EEEEEEEEEEEEEE OPOINTLIGHTATTRIBUTES
-};
 
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
 enum CameraMovement {
@@ -130,6 +118,11 @@ public:
 	//degrees
 	float Zoom;
 
+	float FieldOfView = 60.0f;
+	float ZNear = 0.5f;
+	float ZFar = 250.0f;
+	float AspectRatio = 16.0f/9.0f;
+
 	//set true for active camera
 	bool IsActiveCamera;
 
@@ -140,28 +133,7 @@ public:
 	// Constructor with scalar values
 	PCameraComponent(float upX, float upY, float upZ, float yaw, float pitch);
 
-	//Matrix4f LookAt(const Vector4f & Eye, const Vector4f & At, const Vector4f & Up = Vector4f(0.0f, 1.0f, 0.0f));
-	void LookAt(const Vector3f& Eye, const Vector3f& Center, const Vector3f& Up = Vector3f(0.0f, 1.0f, 0.0f));
-
 	void SetProjection(ProjectionType Type);
-
-	/*Matrix4f Perspective(const float & FieldOfView, const float & AspectRatio,
-		const float & ZNear = 0.1f, const float & ZFar = 100.0f);*/
-
-	void Perspective(const float& FieldOfView, const float& AspectRatio,
-		const float& ZNear = 0.1f, const float& ZFar = 100.0f);
-
-	//Matrix4f Ortho(
-	//	const float & Left, const float &  Right,
-	//	const float &  Top, const float &  Bottom,
-	//	const float & ZNear = 0.1f, const float & ZFar = 100.0f
-	//);
-
-	void Ortho(
-		const float& Left, const float& Right,
-		const float& Top, const float& Bottom,
-		const float& ZNear = 0.1f, const float& ZFar = 100.0f
-	);
 
 	Matrix4f GetViewMatrix() const;
 
@@ -172,9 +144,10 @@ public:
 
 	void SetDefaults();
 
-
 	// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
 	void ProcessKeyboard(CameraMovement direction, float deltaTime);
+
+	void RotateCamera(float xoffset, float yoffset);
 
 
 	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.

@@ -40,6 +40,7 @@ public:
 		ArraySize(0),
 		StorageSize(0) {}
 
+	//TODO: Should this arraySize be zero ????
 	TArray(const SizeType Count) :
 		First(static_cast<T*>(::operator new(Count * sizeof(T)))),
 		Last(First),
@@ -133,6 +134,24 @@ public:
 			Utilities::Swap(Other.Storage, this->Storage);
 			Utilities::Swap(Other.ArraySize, this->ArraySize);
 			Utilities::Swap(Other.StorageSize, this->StorageSize);
+		}
+		return *this;
+	}
+
+	TArray& operator=(std::initializer_list<T> InitList) {
+		// Resize the array to match the size of the initializer list
+			SizeType NewSize = InitList.size();
+		if (NewSize > 0) {
+			BuySpace(NewSize); // Allocate memory for the new size
+			ArraySize = NewSize;
+
+			// Copy elements from the initializer list to the array
+			Pointer Dest = First;
+			for (const auto& Element : InitList) {
+				new (Dest++) T(Element); // Construct each element in place
+			}
+
+			Last = First + ArraySize; // Update the Last pointer
 		}
 		return *this;
 	}

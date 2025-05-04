@@ -66,7 +66,7 @@ inline TVector3<Type> TVector3<Type>::Ones() const
 
 //Functions
 template <typename Type>
-inline Type TVector3<Type>::length() const
+inline Type TVector3<Type>::Length() const
 {
 	return SMath::Sqrt((X*X) + (Y*Y) + (Z*Z));
 }
@@ -76,7 +76,7 @@ inline void TVector3<Type>::Normalize()
 {
 	//SSE EQUIVALENT FIX
 
-	const Type invLength = 1 / length();
+	const Type invLength = 1 / Length();
 
 	X = X * invLength;
 	Y = Y * invLength;
@@ -115,14 +115,14 @@ inline TVector3<Type> TVector3<Type>::MidPoint(TVector3<Type> Other) const
 template <typename Type>
 inline Type & TVector3<Type>::operator[](int32 i)
 {
-	assert(i >= 0 && i < VectorLength);
+	assert(i >= 0 && i < 3);
 	return  (&X)[i];
 }
 
 template <typename Type>
 inline Type const & TVector3<Type>::operator[](int32 i) const
 {
-	assert(i >= 0 && i < VectorLength);
+	assert(i >= 0 && i < 3);
 	return  (&X)[i];
 }
 
@@ -160,6 +160,23 @@ template <typename Type>
 inline TVector3<Type> TVector3<Type>::operator*(const Type Scalar) const
 {
 	return TVector3(X * Scalar, Y * Scalar, Z * Scalar);
+}
+
+template <typename Type>
+inline TVector3<Type> TVector3<Type>::operator*(const TMatrix4<Type>& InMatrix) const {
+	Type x = X * InMatrix.M[0][0] + Y * InMatrix.M[1][0] + Z * InMatrix.M[2][0] + InMatrix.M[3][0];
+	Type y = X * InMatrix.M[0][1] + Y * InMatrix.M[1][1] + Z * InMatrix.M[2][1] + InMatrix.M[3][1];
+	Type z = X * InMatrix.M[0][2] + Y * InMatrix.M[1][2] + Z * InMatrix.M[2][2] + InMatrix.M[3][2];
+	Type w = X * InMatrix.M[0][3] + Y * InMatrix.M[1][3] + Z * InMatrix.M[2][3] + InMatrix.M[3][3];
+
+	// Convert back to 3D if w is not 1
+	if (InMatrix.W != 0.0f && InMatrix.W != 1.0f) {
+		X /= InMatrix.W;
+		Y /= InMatrix.W;
+		Z /= InMatrix.W;
+	}
+
+	return TVector3<T>(X, Y, Z);
 }
 
 template <typename Type>

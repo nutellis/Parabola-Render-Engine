@@ -13,8 +13,6 @@
 #include <unordered_map>
 
 #include <Core/SingletonBase.h>
-#include <Managers/ManagerBase.h>
-
 
 #include <Utilities/Containers/Array.h>
 
@@ -63,7 +61,7 @@ struct Asset {
 
 //std::unordered_map<VertexFormat, uint32> s_IndexMapping;
 
-class GAssetLoader : ManagerBase, SingletonBase<GAssetLoader>
+class GAssetLoader : SingletonManagerBase<GAssetLoader>
 {
 public:
 	GAssetLoader();

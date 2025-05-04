@@ -8,9 +8,9 @@
 
 #include <Components/Scene.h>
 #include <Components/RenderActor.h>
-#include <Components/RenderComponents/Components.h>
+#include <Components/Components.h>
 
-template<> GInputManager* SingletonBase<GInputManager>::instance = 0;
+template<> GInputManager* SingletonManagerBase<GInputManager>::instance = 0;
 GInputManager & GInputManager::getInstance()
 {
 	//assert?
@@ -68,7 +68,7 @@ void GInputManager::KeyPressCallback(GLFWwindow* Window, int key, int scancode, 
 		cmr->Camera->ProcessKeyboard(DOWN, 0.3f);
 	}
 	if (glfwGetKey(Window, GLFW_KEY_K) == GLFW_PRESS) {
-		cmr->ObjectPosition = Vector3f(-0.0f, 2.0f, -5.0f);
+		cmr->ObjectPosition = Vector3f(-10.0f, 40.0f, 15.0f);
 	}
 
 }
@@ -77,17 +77,17 @@ void GInputManager::MouseCallback(GLFWwindow * Window, double xpos, double ypos)
 {
 	RenderWindow *win = gWindowManager.GetRenderWindow();
 	PRenderActor* cmr = gSceneManager.GetActiveScene()->GetActiveCameraActor();
-	if (glfwGetKey(Window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
-		if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && xpos > 375) {
+	//if (glfwGetKey(Window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
+		if (win->IsMouseDragging) {
 			PRenderActor* cmr = gSceneManager.GetActiveScene()->GetActiveCameraActor();
 			
-			float xoffset = xpos - win->MouseLastX;
-			float yoffset = win->MouseLastY - ypos; // reversed since y-coordinates go from bottom to top
+			int xoffset = xpos - win->MouseLastX;
+			int yoffset = ypos - win->MouseLastY; // reversed since y-coordinates go from bottom to top
 
 			cmr->Camera->ProcessMouseMovement(xoffset, yoffset);
 			
 		}
-			}
+	//		}
 	win->MouseLastY = ypos;
 	win->MouseLastX = xpos;
 
@@ -99,7 +99,19 @@ void GInputManager::MouseButtonCallback(GLFWwindow * Window, int button, int act
 	{
 		RenderWindow *win = gWindowManager.GetRenderWindow();
 
+		win->IsMouseDragging = true;
+		double x;
+		double y;
+		glfwGetCursorPos(win->Window, &x, &y);
+		win->MouseLastX = x;
+		win->MouseLastY = y;
+
 		//std::cout << win->MouseLastX << "\t " << win->MouseLastY << "\n";
+	}
+	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
+	{
+		RenderWindow* win = gWindowManager.GetRenderWindow();
+		win->IsMouseDragging = false;
 	}
 }
 

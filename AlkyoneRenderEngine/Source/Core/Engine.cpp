@@ -16,7 +16,7 @@
 #include <Core/Editor.h>
 
 
-template<> Engine* SingletonBase<Engine>::instance = 0;
+template<> Engine* SingletonManagerBase<Engine>::instance = 0;
 Engine & Engine::getInstance()
 {
 	//assert?

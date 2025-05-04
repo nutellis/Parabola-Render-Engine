@@ -1,6 +1,8 @@
 #include <GL/glew.h>
 
 #include <Components/FBORenderTarget.h>
+#include <Components/Texture.h>
+#include <string>
 
 
 /*
@@ -16,17 +18,17 @@
 
 FBORenderTarget::FBORenderTarget() : RenderTarget()
 {
-	Texture = 0;
-	DepthStencilRBO = 0;
+	ColourAttachment = 0;
+	DepthStencilAttachment = 0;
 	Width = 0;
 	Height = 0;
 
 }
 
-FBORenderTarget::FBORenderTarget(uint32 Width, uint32 Height) : RenderTarget(), Width(Width), Height(Height)
+FBORenderTarget::FBORenderTarget(std::string Name,uint32 Width, uint32 Height) : RenderTarget(Name, Width, Height)
 {
-	Texture = 0;
-	DepthStencilRBO = 0;
+	ColourAttachment = 0;
+	DepthStencilAttachment = 0;
 }
 
 FBORenderTarget::~FBORenderTarget()
@@ -47,24 +49,24 @@ bool FBORenderTarget::Init()
 	glGenFramebuffers(1, &ID);
 	glBindFramebuffer(GL_FRAMEBUFFER, ID);
 
-	glGenTextures(1, &Texture);
-	glBindTexture(GL_TEXTURE_2D, Texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	ColourAttachment = new Texture(Width, Height);
+	ColourAttachment->GenerateColourTexture();
 
 	// attach to framebuffer
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ColourAttachment->TextureID, 0);
 
-	glGenRenderbuffers(1, &DepthStencilRBO);
-	glBindRenderbuffer(GL_RENDERBUFFER, DepthStencilRBO);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, Width, Height);
+	DepthStencilAttachment = new Texture(Width, Height);
+	DepthStencilAttachment->GenerateDepthTexture();
 	
 	// attach to framebuffer
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, DepthStencilRBO);
+	glNamedFramebufferTexture(ID, GL_DEPTH_ATTACHMENT, DepthStencilAttachment->TextureID, 0);
 
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
+	GLenum result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (result == GL_FRAMEBUFFER_COMPLETE) {
 		bIsCompleted = true;
+	}
+	else {
+		
 	}
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -72,6 +74,18 @@ bool FBORenderTarget::Init()
 
 	return bIsCompleted;
 }
+
+uint32 FBORenderTarget::GetTexture() const
+{
+	return ColourAttachment->TextureID;
+
+}
+uint32 FBORenderTarget::GetDepth() const
+{
+	return DepthStencilAttachment->TextureID;
+
+}
+
 
 GLFrameBufferObject::GLFrameBufferObject(uint32 fsaa)
 {

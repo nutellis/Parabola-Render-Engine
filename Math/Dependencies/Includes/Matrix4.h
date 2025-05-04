@@ -24,15 +24,17 @@
 
 //Matrix4 struct 4x4 Matrix
 template <typename T>
+#pragma pack(push, 1)
 struct TMatrix4
 {
 
 private:
-	union {
-		MVS_ALIGN(16) T M[4][4];
-	};
+	TVector4<T> M[4];
+
 public:
 	TMatrix4();
+
+	TMatrix4(const TMatrix4<T>& Other);
 
 	TMatrix4(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23, T m30, T m31, T m32, T m33);
 
@@ -41,17 +43,19 @@ public:
 	template<typename U>
 	TMatrix4(const TVector3<U>& In0, const TVector3<U>& In1, const TVector3<U>& In2, const TVector3<U>& In3);
 
-	template<typename U>
-	TMatrix4(const TVector4<U>& In0, const TVector4<U>& In1, const TVector4<U>& In2, const TVector4<U>& In3);
+	template<typename T>
+	TMatrix4(const TVector4<T>& In0, const TVector4<T>& In1, const TVector4<T>& In2, const TVector4<T>& In3);
 
+	const TVector4<T>& operator[](uint8 i) const;
 
-	const T * operator[](uint8 i) const;
-
-	T * operator[](uint8 i);
+	TVector4<T>& operator[](uint8 i);
 
 	TMatrix4 operator*(const TMatrix4& Other) const;
 
 	TMatrix4 operator*(T Scalar) const;
+
+	TVector3<T> operator*(const TVector3<T>& InVector) const;
+	TVector4<T> operator*(const TVector4<T>& InVector) const;
 
 	template<typename U>
 	TMatrix4 operator*(const TVector4<U>) const;
@@ -61,10 +65,6 @@ public:
 	//TMatrix4 operator+(const Vector& Other) const;
 
 	TMatrix4 GetTransposed() const;
-
-	TVector4<T> GetVector(uint8 i);
-
-	TVector4<T> GetVector(uint8 i) const;
 
 	//void SetIdentity();
 
@@ -90,6 +90,7 @@ public:
 
 	void Print();
 };
+#pragma pack(pop) 
 
 #include <../../Source/Matrix4.inl>
 

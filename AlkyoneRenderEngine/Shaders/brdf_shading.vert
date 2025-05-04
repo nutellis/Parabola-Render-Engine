@@ -9,12 +9,20 @@ layout(location = 2) in vec2 TextureCoord;
 ///////////////////////////////////////////////////////////////////////////////
 // Input uniform variables
 ///////////////////////////////////////////////////////////////////////////////
-uniform mat4 model;
-uniform mat4 projection;
-uniform mat4 view;
-//TODO: pass less uniforms!
+uniform mat4 normalMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 modelViewProjectionMatrix;
 
-uniform mat4 lightMatrix;
+
+///////////////////////////////////////////////////////////////////////////////
+// Cascade Shadow Map Data
+///////////////////////////////////////////////////////////////////////////////
+layout(std430, binding = 0) buffer Cascades {
+    mat4 lightMatrices[];
+};
+uniform int numOfCascades; 
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Output to fragment shader
 ///////////////////////////////////////////////////////////////////////////////
@@ -22,20 +30,17 @@ out vec2 texCoord;
 out vec3 viewSpaceNormal;
 out vec3 viewSpacePosition;
 
-out vec4 shadowMapCoord;
+out vec4 shadowMapCoord[4];
 
 void main()
 {
-	mat4 modelViewMatrix = view * model;
-	mat4 modelViewProjectionMatrix = projection * modelViewMatrix;
-	mat4 normalMatrix = transpose(inverse(mat4(modelViewMatrix)));
-
 	// Output to fragment shader
 	gl_Position = modelViewProjectionMatrix * vec4(VertexPosition, 1.0);
 	texCoord = TextureCoord;
 	viewSpaceNormal = (normalMatrix * vec4(NormalPosition, 0.0)).xyz;
 	viewSpacePosition = (modelViewMatrix * vec4(VertexPosition, 1.0)).xyz;
 
-	shadowMapCoord = lightMatrix * vec4(viewSpacePosition, 1.0);
-
+    for (int i = 0; i < numOfCascades.x; ++i) {
+		shadowMapCoord[i] = lightMatrices[i] * vec4(viewSpacePosition, 1.0);
+    }
 }

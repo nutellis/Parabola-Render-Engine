@@ -6,11 +6,10 @@
 
 #include <Core/RenderCore.h>
 #include <Core/SingletonBase.h>
-#include <Managers/ManagerBase.h>
 
 class Scene;
 
-class GEditor: SingletonBase<GEditor>, ManagerBase {
+class GEditor: SingletonManagerBase<GEditor> {
 public:
 
 	static GEditor& getInstance();

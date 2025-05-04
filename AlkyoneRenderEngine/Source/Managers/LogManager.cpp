@@ -1,7 +1,8 @@
 #include <Managers/LogManager.h>
+#include <GL/glew.h>
 
 
-template<> GLogManager* SingletonBase<GLogManager>::instance = 0;
+template<> GLogManager* SingletonManagerBase<GLogManager>::instance = 0;
 GLogManager & GLogManager::getInstance()
 {
 	//assert?
@@ -18,7 +19,7 @@ GLogManager * GLogManager::getInstancePtr()
 
 GLogManager::GLogManager()
 {
-	bInitSuccessful = 0;
+	bInitSuccessful = false;
 	bErrFileIsOpen = 0;
 	bLogFileIsOpen = 0;
 }
@@ -70,6 +71,26 @@ const char * GLogManager::ArgParser(const char * msg)
 	return Helper.LogMessage.c_str();
 }
 
+bool GLogManager::CheckGLError(const char* file, int line)
+{
+
+	bool wasError = false;
+
+	for (GLenum glErr = glGetError(); glErr != GL_NO_ERROR; glErr = glGetError())
+	{
+		wasError = true;
+		const GLubyte* sError = glewGetErrorString(glErr);
+
+		if (!sError)
+		{
+			sError = reinterpret_cast<const GLubyte*>(" (no message available)");
+		}
+		LOG(ERROR, "GL Error #%d (%s) in File %s at line: %d\n", glErr, sError, file, line);
+
+	}
+	return wasError;
+}
+
 
 void GLogManager::Init()
 {
@@ -85,9 +106,9 @@ void GLogManager::Init()
 	}
 	else
 	{
-		bInitSuccessful = 1;
+		bInitSuccessful = true;
 	}
-	if (bInitSuccessful == INIT_OK)
+	if (bInitSuccessful)
 	{
 #if WITH_EDITOR
 		EditorLog = GuiLog();

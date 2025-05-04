@@ -57,16 +57,16 @@ PStaticMeshComponent::PStaticMeshComponent(PRenderActor* Parent, const char* pat
 void PStaticMeshComponent::SetupBuffers(PVertexComponentCount ComponentCount)
 {
 	VAO.CreateArray(ComponentCount);
+
 	VBO.CreateBuffer(Vertices.SizeOf(), Vertices.Begin());
 
-	uint32 VBOIndex = VBO.GetIndex();
+	VAO.SetupAttribute(VBO.GetIndex(), 0, VAO.ComponentCount.Position, offsetof(VertexFormat, VertexFormat::Position));
 
-	VAO.SetupAttribute(VBOIndex, 0, VAO.ComponentCount.Position, offsetof(VertexFormat, VertexFormat::Position));
-	VAO.SetupAttribute(VBOIndex, 1, VAO.ComponentCount.Normal, offsetof(VertexFormat, VertexFormat::Normal));
-	VAO.SetupAttribute(VBOIndex, 2, VAO.ComponentCount.UVs, offsetof(VertexFormat, VertexFormat::UVs));
+	VAO.SetupAttribute(VBO.GetIndex(), 1, VAO.ComponentCount.Normal, offsetof(VertexFormat, VertexFormat::Normal));
 
+	VAO.SetupAttribute(VBO.GetIndex(), 2, VAO.ComponentCount.UVs, offsetof(VertexFormat, VertexFormat::UVs));
 
-	VAO.AttachVertexBuffer(VBOIndex, VBOIndex, sizeof(VertexFormat));
+	VAO.AttachVertexBuffer(VBO.GetID(), VBO.GetIndex(), sizeof(VertexFormat));
 
 }
 
@@ -80,61 +80,46 @@ void PStaticMeshComponent::SetShaderMaterial(Shader* ActiveShader, PMaterial* Ma
 	bool has_emission_texture = Material->Emissive.HasTexture;
 	if (has_color_texture)
 	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, Material->Diffuse.ChannelTexture->textureID);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, Material->Diffuse.ChannelTexture->TextureID);
 	}
 	if ( has_metalness_texture )
 	{
 		glActiveTexture( GL_TEXTURE2 );
-		glBindTexture( GL_TEXTURE_2D, Material->Metalness.ChannelTexture->textureID);
+		glBindTexture( GL_TEXTURE_2D, Material->Metalness.ChannelTexture->TextureID);
 	}
 	if ( has_fresnel_texture )
 	{
 		glActiveTexture( GL_TEXTURE3 );
-		glBindTexture( GL_TEXTURE_2D, Material->Fresnel.ChannelTexture->textureID);
+		glBindTexture( GL_TEXTURE_2D, Material->Fresnel.ChannelTexture->TextureID);
 	}
 	if ( has_shininess_texture )
 	{
 		glActiveTexture( GL_TEXTURE4 );
-		glBindTexture( GL_TEXTURE_2D, Material->Roughness.ChannelTexture->textureID);
+		glBindTexture( GL_TEXTURE_2D, Material->Roughness.ChannelTexture->TextureID);
 	}
 	if (has_emission_texture)
 	{
 		glActiveTexture(GL_TEXTURE5);
-		glBindTexture(GL_TEXTURE_2D, Material->Emissive.ChannelTexture->textureID);
+		glBindTexture(GL_TEXTURE_2D, Material->Emissive.ChannelTexture->TextureID);
 	}
-	glActiveTexture(GL_TEXTURE0);
+	//glActiveTexture(GL_TEXTURE0);
 
 	
-	ActiveShader->setBool("has_color_texture", has_color_texture);
-	ActiveShader->setBool("has_metalness_texture", has_metalness_texture);
-	ActiveShader->setBool("has_fresnel_texture", has_fresnel_texture);
-	ActiveShader->setBool("has_shininess_texture", has_shininess_texture);
-	ActiveShader->setBool("has_emission_texture", has_emission_texture);
+	ActiveShader->SetBool("has_color_texture", has_color_texture);
+	ActiveShader->SetBool("has_metalness_texture", has_metalness_texture);
+	ActiveShader->SetBool("has_fresnel_texture", has_fresnel_texture);
+	ActiveShader->SetBool("has_shininess_texture", has_shininess_texture);
+	ActiveShader->SetBool("has_emission_texture", has_emission_texture);
 
 	// Set material properties
-	ActiveShader->setVec3("material_color", Material->Diffuse.Colours);
-	ActiveShader->setFloat("material_metalness", Material->Metalness.Colours[0]);
-	ActiveShader->setFloat("material_fresnel", Material->Fresnel.Colours[0]);
-	ActiveShader->setFloat("material_shininess", Material->Roughness.Colours[0]);
-	ActiveShader->setVec3("material_emission", Material->Emissive.Colours);
+	ActiveShader->SetVec3("material_color", Material->Diffuse.Colours);
+	ActiveShader->SetFloat("material_metalness", Material->Metalness.Colours[0]);
+	ActiveShader->SetFloat("material_fresnel", Material->Fresnel.Colours[0]);
+	ActiveShader->SetFloat("material_shininess", Material->Roughness.Colours[0]);
+	ActiveShader->SetVec3("material_emission", Material->Emissive.Colours);
 
 }
-
-void PStaticMeshComponent::SetupModelMatrix(Shader* ActiveShader) {
-
-	ModelMatrix = Matrix4f::IDENTITY;
-
-	ModelMatrix = Scale(GetScale(), ModelMatrix);
-
-	// fix angle parameter (StaticMesh->angle)
-	// ModelMatrix = Rotate(this->ObjectRotation, StaticMesh->angle, ModelMatrix);
-
-	ModelMatrix = Translate(GetPosition(), ModelMatrix);
-
-	ActiveShader->SetMat4(ActiveShader->Uniforms.ModelLocation, false, ModelMatrix);
-}
-
 
 void PStaticMeshComponent::DrawComponent(Shader* ActiveShader) {
 

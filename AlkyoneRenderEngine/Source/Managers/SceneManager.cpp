@@ -4,8 +4,9 @@
 
 #include <Components/Scene.h> 
 #include <Components/RenderActor.h>
+#include <Components/LightComponents/DirectionalLightComponent.h>
 
-template<> GSceneManager* SingletonBase<GSceneManager>::instance = 0;
+template<> GSceneManager* SingletonManagerBase<GSceneManager>::instance = 0;
 GSceneManager & GSceneManager::getInstance()
 {
 	//TODO :assert?
@@ -99,7 +100,7 @@ void GSceneManager::Terminate()
 
 void GSceneManager::DrawSceneGraph()
 {
-	ImGui::SetNextWindowSize(ImVec2(512, 720));
+	ImGui::SetNextWindowSize(ImVec2(600, 600));
 	ImGui::SetNextWindowPos(ImVec2(1290, 0));
 	ImGuiWindowFlags window_flags = 0;
 	window_flags |= ImGuiWindowFlags_NoMove;
@@ -125,8 +126,8 @@ void GSceneManager::DrawSceneGraph()
 			// Selected Details
 			if (selectedIndex != nullptr) {
 				ImGui::BeginGroup();
-				ImGui::BeginChild("Node Details", ImVec2(ImGui::GetContentRegionAvail().x, 360), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY, ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 line below us
-				ImGui::Text("MyObject: %s", selectedIndex->ObjectName.c_str());
+				ImGui::BeginChild("Node Details", ImVec2(ImGui::GetContentRegionAvail().x, 250), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY, ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 line below us
+				ImGui::Text("Object: %s", selectedIndex->ObjectName.c_str());
 				ImGui::Separator();
 				if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None))
 				{
@@ -140,6 +141,9 @@ void GSceneManager::DrawSceneGraph()
 						if (ImGui::InputFloat3("Translation", &selectedIndex->ObjectPosition.X)) {
 							selectedIndex->SetPosition(selectedIndex->ObjectPosition);
 						}
+						if (ImGui::InputFloat3("Rotation", &selectedIndex->ObjectRotation.X)) {
+							selectedIndex->SetRotation(selectedIndex->ObjectRotation);
+						}
 						if (useUniformScaling) {
 							if (ImGui::InputFloat("Scale", &selectedIndex->ObjectScale.X)) {
 								selectedIndex->SetScale(selectedIndex->ObjectScale.X);
@@ -150,9 +154,16 @@ void GSceneManager::DrawSceneGraph()
 								selectedIndex->SetScale(selectedIndex->ObjectScale);
 							}
 						}
-						
 						ImGui::SameLine();
 						ImGui::Checkbox("Uniform Scaling", &useUniformScaling);
+						if (selectedIndex->ActorType == EntityType::LIGHT) {
+							if (ImGui::SliderFloat("Azimuth", &selectedIndex->Light->Azimuth, 0.01, 360.0)) {
+								selectedIndex->Light->SetDirection();
+							}
+							if (ImGui::SliderFloat("Zenith", &selectedIndex->Light->Zenith, 0.01, 180.0)) {
+								selectedIndex->Light->SetDirection();
+							}
+						}
 
 						ImGui::EndTabItem();
 					}

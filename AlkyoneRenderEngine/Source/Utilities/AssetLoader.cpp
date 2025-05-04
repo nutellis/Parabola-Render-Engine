@@ -15,7 +15,7 @@
 
 
 
-template<> GAssetLoader* SingletonBase<GAssetLoader>::instance = 0;
+template<> GAssetLoader* SingletonManagerBase<GAssetLoader>::instance = 0;
 GAssetLoader & GAssetLoader::getInstance()
 {
 	return (*instance);
@@ -1172,10 +1172,13 @@ Asset * ObjLoader::Read(const char * Filepath)
 		material->Diffuse.Colours = Vector4f(m.diffuse[0], m.diffuse[1], m.diffuse[2],1);
 		if (m.diffuse_texname != "")
 		{
+			/*if (m.diffuse_texname.find("lion") != std::string::npos) {
+				__debugbreak();
+			}*/
 			material->Diffuse.HasTexture = true;
 			material->Diffuse.ChannelTexture = new Texture();
 
-			material->Diffuse.ChannelTexture->Generate(m.diffuse_texname.c_str());
+			material->Diffuse.ChannelTexture->Generate(directory + m.diffuse_texname);
 		}
 
 		// Metalness
@@ -1186,7 +1189,7 @@ Asset * ObjLoader::Read(const char * Filepath)
 			material->Metalness.HasTexture = true;
 			material->Metalness.ChannelTexture = new Texture();
 
-			material->Metalness.ChannelTexture->Generate(m.metallic_texname.c_str());
+			material->Metalness.ChannelTexture->Generate(directory + m.metallic_texname);
 		}
 
 		//Fresnel
@@ -1197,7 +1200,7 @@ Asset * ObjLoader::Read(const char * Filepath)
 			material->Fresnel.HasTexture = true;
 			material->Fresnel.ChannelTexture = new Texture();
 
-			material->Fresnel.ChannelTexture->Generate(m.specular_texname.c_str());
+			material->Fresnel.ChannelTexture->Generate(directory + m.specular_texname);
 		}
 
 		//Roughness
@@ -1208,7 +1211,7 @@ Asset * ObjLoader::Read(const char * Filepath)
 			material->Roughness.HasTexture = true;
 			material->Roughness.ChannelTexture = new Texture();
 
-			material->Roughness.ChannelTexture->Generate(m.roughness_texname.c_str());
+			material->Roughness.ChannelTexture->Generate(directory + m.roughness_texname);
 		}
 
 		material->Emissive = PChannel();
@@ -1218,7 +1221,7 @@ Asset * ObjLoader::Read(const char * Filepath)
 			material->Emissive.HasTexture = true;
 			material->Emissive.ChannelTexture = new Texture();
 
-			material->Emissive.ChannelTexture->Generate(m.emissive_texname.c_str());
+			material->Emissive.ChannelTexture->Generate(directory + m.emissive_texname);
 		}
 
 		material->Transparency = m.transmittance[0];

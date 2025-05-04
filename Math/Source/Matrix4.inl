@@ -1,21 +1,30 @@
 
 template <typename T>
 const TMatrix4<T> TMatrix4<T>::ZERO(
-	0, 0, 0, 0,
-	0, 0, 0, 0,
-	0, 0, 0, 0,
-	0, 0, 0, 0);
+  TVector4<T>(0.0f,0,0,0),
+  TVector4<T>(0,0,0,0),
+  TVector4<T>(0,0,0,0),
+  TVector4<T>(0,0,0,0)
+);
 
 template <typename T>
 const TMatrix4<T> TMatrix4<T>::IDENTITY(
-	1.0f, 0, 0, 0,
-	0, 1, 0, 0,
-	0, 0, 1, 0,
-	0, 0, 0, 1);
+  TVector4<T>(1.0f,0,0,0),
+  TVector4<T>(0,1,0,0),
+  TVector4<T>(0,0,1,0),
+  TVector4<T>(0,0,0,1)
+);
 
 template <typename T>
 inline TMatrix4<T>::TMatrix4()
 {
+}
+
+template <typename T>
+inline TMatrix4<T>::TMatrix4(const TMatrix4<T>& Other) {
+	for (int i = 0; i < 4; ++i) {
+		M[i] = Other.M[i];
+	}
 }
 
 template <typename T>
@@ -56,23 +65,25 @@ template <typename T>
 template <typename U>
 inline TMatrix4<T>::TMatrix4(const TVector4<U>& In0, const TVector4<U>& In1, const TVector4<U>& In2, const TVector4<U>& In3)
 {
-	M[0][0] = In0.X; M[0][1] = In0.Y;  M[0][2] = In0.Z;  M[0][3] = In0.W;
-	M[1][0] = In1.X; M[1][1] = In1.Y;  M[1][2] = In1.Z;  M[1][3] = In1.W;
-	M[2][0] = In2.X; M[2][1] = In2.Y;  M[2][2] = In2.Z;  M[2][3] = In2.W;
-	M[3][0] = In3.X; M[3][1] = In3.Y;  M[3][2] = In3.Z;  M[3][3] = In3.W;
+	M[0] = In0;
+	M[1] = In1;
+	M[2] = In2;
+	M[3] = In3;
 }
 
 template <typename T>
-inline const T* TMatrix4<T>::operator[](uint8 i) const
+inline const TVector4<T>& TMatrix4<T>::operator[](uint8 i) const
 {
 	return M[i];
 }
 
 template <typename T>
-inline 	T* TMatrix4<T>::operator[](uint8 i)
+inline 	TVector4<T>& TMatrix4<T>::operator[](uint8 i)
 {
 	return M[i];
 }
+
+
 
 template <typename T>
 inline TMatrix4<T> TMatrix4<T>::GetTransposed() const
@@ -98,19 +109,6 @@ inline TMatrix4<T> TMatrix4<T>::GetTransposed() const
 
 	return Result;
 }
-
-template <typename T>
-inline TVector4<T> TMatrix4<T>::GetVector(uint8 i)
-{
-	return TVector4<T>(M[i][0], M[i][1], M[i][2], M[i][3]);
-}
-
-template <typename T>
-inline TVector4<T> TMatrix4<T>::GetVector(uint8 i) const
-{
-	return TVector4<T>(M[i][0], M[i][1], M[i][2], M[i][3]);
-}
-
 
 template <typename T>
 inline float TMatrix4<T>::Determinant() const
@@ -241,23 +239,23 @@ template <typename T>
 inline TMatrix4<T> TMatrix4<T>::operator*(const TMatrix4& Other) const
 {
 
-	TVector4<T> const SrcA0 = GetVector(0);
-	TVector4<T> const SrcA1 = GetVector(1);
-	TVector4<T> const SrcA2 = GetVector(2);
-	TVector4<T> const SrcA3 = GetVector(3);
+	TVector4<T> const SrcA0 = M[0];
+	TVector4<T> const SrcA1 = M[1];
+	TVector4<T> const SrcA2 = M[2];
+	TVector4<T> const SrcA3 = M[3];
 
-	TVector4<T> const SrcB0 = Other.GetVector(0);
-	TVector4<T> const SrcB1 = Other.GetVector(1);
-	TVector4<T> const SrcB2 = Other.GetVector(2);
-	TVector4<T> const SrcB3 = Other.GetVector(3);
+	TVector4<T> const SrcB0 = Other.M[0];
+	TVector4<T> const SrcB1 = Other.M[1];
+	TVector4<T> const SrcB2 = Other.M[2];
+	TVector4<T> const SrcB3 = Other.M[3];
 
 
-	TMatrix4<T> Result = TMatrix4<T>(
-		SrcA0 * SrcB0[0] + SrcA1 * SrcB0[1] + SrcA2 * SrcB0[2] + SrcA3 * SrcB0[3],
-		SrcA0 * SrcB1[0] + SrcA1 * SrcB1[1] + SrcA2 * SrcB1[2] + SrcA3 * SrcB1[3],
-		SrcA0 * SrcB2[0] + SrcA1 * SrcB2[1] + SrcA2 * SrcB2[2] + SrcA3 * SrcB2[3],
-		SrcA0 * SrcB3[0] + SrcA1 * SrcB3[1] + SrcA2 * SrcB3[2] + SrcA3 * SrcB3[3]
-	);
+	TMatrix4<T> Result;
+	Result[0] = SrcA0 * SrcB0[0] + SrcA1 * SrcB0[1] + SrcA2 * SrcB0[2] + SrcA3 * SrcB0[3];
+	Result[1] = SrcA0 * SrcB1[0] + SrcA1 * SrcB1[1] + SrcA2 * SrcB1[2] + SrcA3 * SrcB1[3];
+	Result[2] = SrcA0 * SrcB2[0] + SrcA1 * SrcB2[1] + SrcA2 * SrcB2[2] + SrcA3 * SrcB2[3];
+	Result[3] = SrcA0 * SrcB3[0] + SrcA1 * SrcB3[1] + SrcA2 * SrcB3[2] + SrcA3 * SrcB3[3];
+	
 
 	return Result;
 }
@@ -272,6 +270,33 @@ inline TMatrix4<T> TMatrix4<T>::operator*(T Scalar) const
 		Scalar * M[1][0], Scalar * M[1][1], Scalar * M[1][2], Scalar * M[1][3],
 		Scalar * M[2][0], Scalar * M[2][1], Scalar * M[2][2], Scalar * M[2][3],
 		Scalar * M[3][0], Scalar * M[3][1], Scalar * M[3][2], Scalar * M[3][3]);
+}
+
+template <typename T>
+inline TVector3<T> TMatrix4<T>::operator*(const TVector3<T>& InVector) const {
+	T X = M[0][0] * InVector.X + M[0][1] * InVector.Y + M[0][2] * InVector.Z + M[0][3];
+	T Y = M[1][0] * InVector.X + M[1][1] * InVector.Y + M[1][2] * InVector.Z + M[1][3];
+	T Z = M[2][0] * InVector.X + M[2][1] * InVector.Y + M[2][2] * InVector.Z + M[2][3];
+	T W = M[3][0] * InVector.X + M[3][1] * InVector.Y + M[3][2] * InVector.Z + M[3][3];
+
+	// Convert back to 3D if w is not 1
+	if (W != 0.0f && W != 1.0f) {
+		X /= W;
+		Y /= W;
+		Z /= W;
+	}
+
+	return TVector3<T>(X, Y, Z);
+}
+
+template <typename T>
+inline TVector4<T> TMatrix4<T>::operator*(const TVector4<T>& InVector) const {
+	T X = M[0][0] * InVector.X + M[1][0] * InVector.Y + M[2][0] * InVector.Z + M[3][0] * InVector.W;
+	T Y = M[0][1] * InVector.X + M[1][1] * InVector.Y + M[2][1] * InVector.Z + M[3][1] * InVector.W;
+	T Z = M[0][2] * InVector.X + M[1][2] * InVector.Y + M[2][2] * InVector.Z + M[3][2] * InVector.W;
+	T W = M[0][3] * InVector.X + M[1][3] * InVector.Y + M[2][3] * InVector.Z + M[3][3] * InVector.W;
+
+	return TVector4<T>(X, Y, Z, W);
 }
 
 template <typename T>

@@ -30,6 +30,14 @@ template<typename Type>
 inline TVector4<Type>::TVector4(const Type inX, const Type inY, const Type inZ) : X(inX), Y(inY), Z(inZ), W(0)
 {}
 
+template<typename Type>
+template <typename U>
+inline  TVector4<Type>::TVector4(const TVector4<U>& Other)
+	: X(static_cast<Type>(Other.X)),
+	Y(static_cast<Type>(Other.Y)),
+	Z(static_cast<Type>(Other.Z)),
+	W(static_cast<Type>(Other.W)) {
+}
 
 //Vector3
 template <typename Type>
@@ -85,7 +93,7 @@ inline const TVector4<Type> TVector4<Type>::Ones()
 
 //Functions
 template <typename Type>
-inline Type TVector4<Type>::length() const
+inline Type TVector4<Type>::Length() const
 {
 	return SMath::Sqrt((X*X) + (Y*Y) + (Z*Z) + (W*W));
 }
@@ -95,7 +103,7 @@ inline void TVector4<Type>::Normalize()
 {
 	//SSE EQUIVALENT FIX
 
-	float invLength = 1 / length();
+	float invLength = 1 / Length();
 	X = X * invLength;
 	Y = Y * invLength;
 	Z = Z * invLength;
@@ -131,14 +139,14 @@ inline size_t TVector4<Type>::Hash()
 template <typename Type>
 inline Type & TVector4<Type>::operator[](int32 i)
 {
-	assert(i >= 0 && i < VectorLength);
+	assert(i >= 0 && i < 4);
 	return  (&X)[i];
 }
 
 template <typename Type>
 inline Type const & TVector4<Type>::operator[](int32 i) const
 {
-	assert(i >= 0 && i < VectorLength);
+	assert(i >= 0 && i < 4);
 	return  (&X)[i];
 }
 

@@ -1,6 +1,8 @@
 #include <Components\RenderActor.h>
 #include <Components\RenderComponents\StaticMeshComponent.h>
 #include <ParabolaMath.h>
+#include <Utilities/CameraUtiltities.h>
+#include <Components/LightComponents/DirectionalLightComponent.h>
 
 PRenderActor::PRenderActor()
 {
@@ -14,31 +16,18 @@ PRenderActor::PRenderActor(const char* NodeName): ObjectName(NodeName)
     ObjectRotation = Vector3f::ZERO;
     ObjectScale = Vector3f::ONE;
 
+    IsMovable = true;
+
 }
 
 void PRenderActor::AddLight()
 {
 
     //StaticMesh = ObjectInitializer::CreateSubObject<PStaticMeshComponent>("Assets/ball.asset", this);//new PStaticMeshComponent("ball.asset", RootComponent, false);
-    // 
-    //RootComponent->RelativeLocation.x = 0.0;
-    //RootComponent->RelativeLocation.y = 0.5;
-    //RootComponent->RelativeLocation.z = 1.0;
-
-
-   // SetPosition(Vector3f(0.0, 0.5, 1.0));
-
-    Light = new PPointLightComponent(this);
+    
+    Light = new PDirectionalLightComponent(this);
 
     ActorType = EntityType::LIGHT;
-
-    //StaticMesh->RelativeLocation = RootComponent->RelativeLocation;
-    //StaticMesh->RelativeScale = glm::vec3(0.1f, 0.1f, 0.1f);
-
-    //StaticMesh->GetMaterial()->mDiffuse->ch_Colour = glm::vec4(0.5f, 1.0f, 1.0f, 1.0f);
-    //std::cout << "X " << StaticMesh->GetMaterial()->mDiffuse->ch_Colour.x << std::endl;
-    //std::cout << "Y " << StaticMesh->GetMaterial()->mDiffuse->ch_Colour.y << std::endl;
-    //std::cout << "Z " << StaticMesh->GetMaterial()->mDiffuse->ch_Colour.z << std::endl;
 }
 
 void PRenderActor::AddMesh(const char* path)
@@ -50,13 +39,7 @@ void PRenderActor::AddMesh(const char* path)
 
 void PRenderActor::AddCamera()
 {
-   // RootComponent->RelativeLocation = Vector3f(0.0f, 0.0f, 3.f);
-
     Camera = new PCameraComponent(this);
-
-    //Camera->LookAt(ObjectPosition, Vector3f(0.0f, 0.0f, 5.0f), Camera->Up);
-
-    //Camera->Perspective(Camera->Zoom, (float)1280 / (float)720, 0.1f, 100.0f);
 
     ActorType = EntityType::CAMERA;
 }
@@ -86,17 +69,18 @@ Vector3f PRenderActor::GetPosition()
 
 void PRenderActor::SetPosition(Vector3f inPosition)
 {
-    if (Parent == nullptr) {
-        ObjectPosition = Vector3f(0.0, 0.0, 0.0) + inPosition;
-    }
-    else {
-        ObjectPosition = Parent->ObjectPosition + inPosition;
-    }
+    if (IsMovable) {
+        if (Parent == nullptr) {
+            ObjectPosition = inPosition;
+        }
+        else {
+            ObjectPosition = Parent->ObjectPosition + inPosition;
+        }
 
-    for (auto i = 0; i < Children.Size(); i++) {
-        Children[i]->SetPosition(ObjectPosition);
+        for (auto i = 0; i < Children.Size(); i++) {
+            Children[i]->SetPosition(ObjectPosition);
+        }
     }
-
 }
 
 Vector3f PRenderActor::GetRotation()
@@ -106,8 +90,21 @@ Vector3f PRenderActor::GetRotation()
 
 void PRenderActor::SetRotation(Vector3f inRotation)
 {
-    //TODO: nope. Fix dis
     ObjectRotation = inRotation;
+
+    //TODO: please make this better, it is ugly
+    if (ActorType == EntityType::CAMERA) {
+		this->Camera->RotateCamera(inRotation.X, inRotation.Y);
+    }
+
+    //TODO: need to care about children
+}
+
+void PRenderActor::AddRotation(Vector3f inRotation)
+{
+    ObjectRotation += inRotation;
+
+    //TODO: need to care about children
 }
 
 void PRenderActor::resetOrientation()
@@ -132,11 +129,6 @@ void PRenderActor::SetScale(float inScale)
     ObjectScale = inScale;
 }
 
-void PRenderActor::Scaling(Vector3f Scaling)
-{
-    ObjectScale = Scaling;
-}
-
 void PRenderActor::DrawMeshChildren(Shader * ActiveShader) {
     if (StaticMesh != nullptr && ActorType == MODEL) {
         
@@ -157,10 +149,29 @@ void PRenderActor::DrawMeshChildren(Shader * ActiveShader) {
     }
 }
 
+void PRenderActor::SetupModelMatrix(Shader* ActiveShader) {
+
+    ModelMatrix = Matrix4f::IDENTITY;
+
+    ModelMatrix = Scale(GetScale(), ModelMatrix);
+
+    // fix angle parameter (StaticMesh->angle)
+//	ModelMatrix = Rotate(GetRotation(), ModelMatrix);
+
+    ModelMatrix = Translate(GetPosition(), ModelMatrix);
+
+    //ActiveShader->SetMat4(ActiveShader->Uniforms.ModelLocation, false, ModelMatrix);
+
+}
+
 
 void PRenderActor::ControlCamera(uint32 Width, uint32 Height) {
 
-    Camera->Perspective(45.0f, (float)Width / (float)Height, 5.0f, 2000.0f);
 
-    Camera->LookAt(ObjectPosition, ObjectPosition + Camera->CameraDirection, Camera->WorldUp);
+    //TODO: do some checking ?
+	Camera->AspectRatio = (float)Width / (float)Height;
+
+    Camera->Projection = Perspective(Camera->FieldOfView, (float)Width / (float)Height, Camera->ZNear, Camera->ZFar);
+
+    Camera->View = LookAt(ObjectPosition, ObjectPosition + Camera->CameraDirection, Camera->WorldUp);
 }

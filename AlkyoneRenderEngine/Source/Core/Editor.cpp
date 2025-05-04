@@ -6,7 +6,7 @@
 
 #include <Managers/GUIManager.h>
 
-template<> GEditor* SingletonBase<GEditor>::instance = 0;
+template<> GEditor* SingletonManagerBase<GEditor>::instance = 0;
 GEditor& GEditor::getInstance()
 {
 	return (*instance);

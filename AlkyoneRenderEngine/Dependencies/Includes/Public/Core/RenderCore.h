@@ -7,10 +7,9 @@
 #include <ImGUI\imgui_impl_opengl3.h>
 
 #include <Core/UDTypes.h>
+#include <Managers/LogManager.h>
 
 #define WITH_EDITOR 1
-
-class GLogManager;
 
 class GRenderManager;
 class GWindowManager;

@@ -4,31 +4,34 @@
 
 #include <Managers/WindowManager.h>
 #include <Managers/ShaderManager.h>
+#include <Managers/GUIManager.h>
+#include <Managers/SceneManager.h>
+#include <Utilities/AssetLoader.h>
 
-#include <Components/Shader.h>
-
-#include <ParabolaMath.h>
 
 #include<Core/Time.h>
 
 #include <unordered_map>
 
-
 #include <glm/glm.hpp>
 
-#include <Utilities/OBJ_Loader.h>
-#include <Managers/GUIManager.h>
-#include <Managers/SceneManager.h>
+#include <Components/Shader.h>
 #include <Components/Scene.h>
 #include <Components/RenderActor.h>
 #include <Components/SkyBox.h>
-#include <Components/Material.h>
+
+
 #include<Components/RenderComponents/StaticMeshComponent.h>
 
 #include <Components/FBORenderTarget.h>
+#include <Components/CascadeShadowMap.h>
+#include <Components/LightComponents/DirectionalLightComponent.h>
+#include <Utilities/CameraUtiltities.h>
+
+#include <ParabolaMath.h>
 
 
-template<> GRenderManager* SingletonBase<GRenderManager>::instance = 0;
+template<> GRenderManager* SingletonManagerBase<GRenderManager>::instance = 0;
 GRenderManager & GRenderManager::getInstance()
 {
 	//assert?
@@ -52,8 +55,6 @@ GRenderManager::GRenderManager()
 
 	AssetLoader = GAssetLoader::getInstancePtr();
 
-	vao = VertexArrayObject();
-
 }
 
 GRenderManager::~GRenderManager()
@@ -74,20 +75,6 @@ RenderSystem * GRenderManager::GetContext()
 	return OpenGLSystem;
 }
 
-//void GRenderManager::SetCommonUniforms(const PCameraComponent& Camera) {
-//
-//	//get active shader (TEMP)
-//	Shader* tempActiveShader = new Shader();
-//
-//	// Set view and projection matrices
-//	Matrix4f ViewMatrix = Camera.GetViewMatrix();
-//	Matrix4f ProjectionMatrix = Camera.GetProjectionMatrix();
-//
-//	tempActiveShader->SetMat4(tempActiveShader->Uniforms.ViewLocation, ViewMatrix);
-//	tempActiveShader->SetMat4(tempActiveShader->Uniforms.ProjectionLocation, ProjectionMatrix);
-//}
-
-
 //Per Frame Rendering :
 //
 //Fetch Scene Data :
@@ -101,106 +88,182 @@ RenderSystem * GRenderManager::GetContext()
 //Camera Information : Camera position and orientation.
 //Issue the draw call.
 
-float lightX;
-float lightZ;
+
 void GRenderManager::Render(double DeltaTime)
 {
 
-	//change to framebuffer
-	gGuiManager.BindRenderTarget();
-
-	glViewport(0, 0, gGuiManager.GetRenderTarget()->Width, gGuiManager.GetRenderTarget()->Height);
-	glClearColor(0.2f, 0.2f, 0.8f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	ActiveScene = gSceneManager.GetActiveScene();
-	
-	ActiveScene->GetActiveCameraActor()->ControlCamera(gGuiManager.GetRenderTarget()->Width, gGuiManager.GetRenderTarget()->Height);
 
-	DrawSkyBox();
-	DrawScene();
+	ActiveScene->GetActiveCameraActor()->ControlCamera(1280, 720);
 
+	ShadowMapPass();
+
+	RenderPass();
 
 	// Draw GUI
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	glViewport(0, 0, 1920, 1080);
-
+	glClearColor(0.3f, 0.2f, 0.8f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	gGuiManager.Draw();
 
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glUseProgram(0);	
 }
 
-void GRenderManager::DrawSkyBox() {
-	
-	Shader* shader = gShaderManager.GetShader("SkyBoxShader");
-	shader->Enable();
-	
-	Matrix4f viewMatrix = ActiveScene->GetActiveCameraActor()->Camera->GetViewMatrix();
-	Matrix4f projectionMatrix = ActiveScene->GetActiveCameraActor()->Camera->GetProjectionMatrix();
+void GRenderManager::ShadowMapPass() {
+	Shader* DepthShader = gShaderManager.GetShader("DepthShader");
+	DepthShader->Enable();
 
-	glActiveTexture(GL_TEXTURE6);
-	glBindTexture(GL_TEXTURE_2D, ActiveScene->GetSkyBox()->EnviromentMap->textureID);
-	glActiveTexture(GL_TEXTURE7);
-	glBindTexture(GL_TEXTURE_2D, ActiveScene->GetSkyBox()->IrradianceMap->textureID);
-	glActiveTexture(GL_TEXTURE8);
-	glBindTexture(GL_TEXTURE_2D, ActiveScene->GetSkyBox()->ReflectionMap->textureID);
-	glActiveTexture(GL_TEXTURE0);
+	if (ShadowMap == nullptr) {
+		ShadowMap = new PCascadeShadowMap(
+			4,
+			ActiveScene->GetActiveCameraActor()->Camera->FieldOfView,
+			ActiveScene->GetActiveCameraActor()->Camera->AspectRatio,
+			ActiveScene->GetActiveCameraActor()->Camera->ZNear,
+			ActiveScene->GetActiveCameraActor()->Camera->ZFar);
 
-	float environment_multiplier = 1.3f;
-	shader->setFloat("environment_multiplier", environment_multiplier);
-	shader->SetMat4("inv_PV", false, (projectionMatrix * viewMatrix).Inverse());
-	shader->setVec3("camera_pos", ActiveScene->GetActiveCameraActor()->GetPosition());
+		//set shader
 
-	ActiveScene->GetSkyBox()->Draw();
+		DepthShader->SetFloat("near_plane", ActiveScene->GetActiveCameraActor()->Camera->ZNear);
+		DepthShader->SetFloat("far_plane", ActiveScene->GetActiveCameraActor()->Camera->ZFar);
 
-	shader->Disable();
+		ShadowMap->Init();
+
+	}
+
+	for (int i = 0; i < 4; i++) {
+		FBORenderTarget* ShadowMapRenderTarget = ShadowMap->GetCascade(i).CascadeFBO;
+		ShadowMapRenderTarget->Bind();
+
+		glViewport(0, 0, ShadowMap->GetCascade(i).Resolution, ShadowMap->GetCascade(i).Resolution);
+		glClearColor(1.0, 1.0, 1.0, 1.0);
+		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+			
+		ShadowMap->CalculateLightProjection(i, ActiveScene->GetActiveCameraActor()->Camera, ActiveScene->SceneLights.Front()->Light);
+
+		DrawScene(DepthShader, ShadowMap->GetCascade(i).LightViewMatrix, ShadowMap->GetCascade(i).LightProjectionMatrix);
+
+	}
+
+	glUseProgram(0);
 }
 
-void GRenderManager::DrawScene()
+void GRenderManager::RenderPass()
 {
-	std::unordered_map<uint32, TArray<PStaticMeshComponent*>> ShaderPerMeshMap;
+	FBORenderTarget* MainRenderTarget = RenderTargets.FindFirst([](const FBORenderTarget* At) {
+		return At->Name == "Main";
+		});
 
-	if (ActiveScene != nullptr) {
+	if (MainRenderTarget) {
+		MainRenderTarget->Bind();
+
+		glViewport(0, 0, MainRenderTarget->Width, MainRenderTarget->Height);
+		glClearColor(0.2f, 0.2f, 0.8f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		Shader* SkyBoxShader = gShaderManager.GetShader("SkyBoxShader");
+		SkyBoxShader->Enable();
+		DrawSkyBox(SkyBoxShader);
+
+		Shader* BrdfShader = gShaderManager.GetShader("BRDF_Default");
+		BrdfShader->Enable();
 
 		//get Camera
 		PCameraComponent* Camera = ActiveScene->GetActiveCameraActor()->Camera;
 
 		//for now get light but later we will need lights!
 		TArray<PRenderActor*> Lights = ActiveScene->SceneLights;
+		Lights.Front()->Light->SetupShaderLight(BrdfShader);
+
+		//Prepare shadow Data
+		ShadowMap->PrepareForDraw(BrdfShader, Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
+		//CHECK_GL_ERROR();	
+
+		DrawScene(BrdfShader, Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
+
+		ShadowMap->UnbindBuffers();
+	}
+}
+
+void GRenderManager::DrawSkyBox(Shader* SkyBoxShader) {
+	
+
+	Matrix4f viewMatrix = ActiveScene->GetActiveCameraActor()->Camera->GetViewMatrix();
+	Matrix4f projectionMatrix = ActiveScene->GetActiveCameraActor()->Camera->GetProjectionMatrix();
+
+	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_2D, ActiveScene->GetSkyBox()->EnviromentMap->TextureID);
+	glActiveTexture(GL_TEXTURE7);
+	glBindTexture(GL_TEXTURE_2D, ActiveScene->GetSkyBox()->IrradianceMap->TextureID);
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, ActiveScene->GetSkyBox()->ReflectionMap->TextureID);
+
+	float environment_multiplier = 1.3f;
+	SkyBoxShader->SetFloat("environment_multiplier", environment_multiplier);
+	SkyBoxShader->SetMat4("inv_PV", false, Inverse(projectionMatrix * viewMatrix));
+	SkyBoxShader->SetVec3("camera_pos", ActiveScene->GetActiveCameraActor()->GetPosition());
+
+	ActiveScene->GetSkyBox()->Draw();
+
+	SkyBoxShader->Disable();
+}
+
+void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix4f ProjectionMatrix)
+{
+	std::unordered_map<uint32, TArray<PStaticMeshComponent*>> ShaderPerMeshMap;
+
+	if (ActiveScene != nullptr) {
 
 		//get visible meshes. For now just get all meshes.
 		TArray<PRenderActor *> VisibleMeshes = ActiveScene->SceneMeshes;
+
+		
 		for (int i = 0; i < VisibleMeshes.Size(); i++) {
-			PStaticMeshComponent * MeshToRender = VisibleMeshes[i]->StaticMesh;
+			VisibleMeshes[i]->SetupModelMatrix(ShaderToUse);
+
+			Matrix4f ModelViewMatrix = ViewMatrix * VisibleMeshes[i]->ModelMatrix;
+			Matrix4f ModelViewProjectionMatrix = ProjectionMatrix * ModelViewMatrix;
+
+			ShaderToUse->SetMat4("modelViewMatrix", false, ModelViewMatrix);
+
+			ShaderToUse->SetMat4("modelViewProjectionMatrix", false, ModelViewProjectionMatrix);
+
+			ShaderToUse->SetMat4("normalMatrix", false, Inverse(ModelViewMatrix.GetTransposed()));
+			ShaderToUse->SetMat4("viewInverse", false, Inverse(ViewMatrix));
 			
-			//TODO: for now we are using hardcoded BRDF_Default for all the meshes
-			if (MeshToRender != nullptr) {
-				uint32 ShaderUsed = gShaderManager.GetShader("BRDF_Default")->ID;
-				ShaderPerMeshMap[ShaderUsed].PushBack(MeshToRender);
-			}
+			VisibleMeshes[i]->StaticMesh->DrawComponent(ShaderToUse);
 		}
 
-		for (const auto& Pair : ShaderPerMeshMap) {
-			Shader* ShaderToUse = gShaderManager.GetShader(Pair.first);
-			TArray <PStaticMeshComponent*> MeshesToRender = Pair.second;
-			
-			ShaderToUse->Enable();
-			//camera
-			Camera->SetupShaderCamera(ShaderToUse);
 
-			// set lights
-			// Lights.Front()->SetPosition(Vector3f(lightX, 1.5, lightZ));
-			Lights.Front()->Light->SetupShaderLight(ShaderToUse);
+		//for (int i = 0; i < VisibleMeshes.Size(); i++) {
+		//	PStaticMeshComponent * MeshToRender = VisibleMeshes[i]->StaticMesh;
+		//	
+		//	//TODO: for now we are using hardcoded BRDF_Default for all the meshes
+		//	if (MeshToRender != nullptr) {
+		//		uint32 ShaderUsed = gShaderManager.GetShader("BRDF_Default")->ID;
+		//		ShaderPerMeshMap[ShaderUsed].PushBack(MeshToRender);
+		//	}
+		//}
 
-			for (int i = 0; i < MeshesToRender.Size(); i++) {
-				MeshesToRender[i]->SetupModelMatrix(ShaderToUse);
-				MeshesToRender[i]->DrawComponent(ShaderToUse);
-			}
-		}
+		//for (const auto& Pair : ShaderPerMeshMap) {
+		//	Shader* ShaderToUse = gShaderManager.GetShader(Pair.first);
+		//	TArray <PStaticMeshComponent*> MeshesToRender = Pair.second;
+		//	
+		//	ShaderToUse->Enable();
+		//	//camera
+		//	Camera->SetupShaderCamera(ShaderToUse);
+
+		//	// set lights
+		//	// Lights.Front()->SetPosition(Vector3f(lightX, 1.5, lightZ));
+		//	Lights.Front()->Light->SetupShaderLight(ShaderToUse);
+
+		//	for (int i = 0; i < MeshesToRender.Size(); i++) {
+		//		MeshesToRender[i]->SetupModelMatrix(ShaderToUse);
+		//		MeshesToRender[i]->DrawComponent(ShaderToUse);
+		//	}
+		//}
 	}
 }
 
@@ -211,7 +274,6 @@ void GRenderManager::Init()
 	//init context
 	OpenGLSystem->Init();
 
-
 	//init shaders, gbuffers etc i aint know
 
 	GShaderManager::getInstance().Init();
@@ -219,14 +281,23 @@ void GRenderManager::Init()
 	GAssetLoader::getInstance().Init();
 	
 	LOG(INFO, "RENDER_MANAGER INITIATED\n");
+
+
+	// init render targets
+	FBORenderTarget * MainRenderTarget = new FBORenderTarget("Main", 1280, 720);
+	FBORenderTarget * ShadowMapTarget = new FBORenderTarget("ShadowMap",1024, 1024);
+
+	MainRenderTarget->Init();
+	ShadowMapTarget->Init();
+
+	RenderTargets.PushBack(MainRenderTarget);
+	RenderTargets.PushBack(ShadowMapTarget);
+
+
 }
 
 void GRenderManager::Terminate()
 {
-	
-
-	GWindowManager::getInstance().Terminate();
-
 	GShaderManager::getInstance().Terminate();
 
 	GAssetLoader::getInstance().Terminate();
@@ -234,121 +305,76 @@ void GRenderManager::Terminate()
 	LOG(DEBUG, "RENDER_MANAGER Terminated");
 }
 
+void GRenderManager::DrawOptions() {
 
+	ImGui::SetNextWindowSize(ImVec2(600, 400));
+	ImGui::SetNextWindowPos(ImVec2(1290, 601));
+	ImGuiWindowFlags window_flags = 0;
+	window_flags |= ImGuiWindowFlags_NoMove;
+	window_flags |= ImGuiWindowFlags_NoCollapse;
+	window_flags |= ImGuiWindowFlags_NoResize;
+	window_flags |= ImGuiWindowFlags_NoScrollbar;
 
-//
-//Renderer::Renderer()
-//{
-//	s = Shader("H:/Users/Nutellis/Documents/Projects/OpenGLEngine/Engine-core/Shaders/vertexshader.vs", "H:/Users/Nutellis/Documents/Projects/OpenGLEngine/Engine-core/Shaders/fragmentshader.fs");
-//
-//	l = Shader("H:/Users/Nutellis/Documents/Projects/OpenGLEngine/Engine-core/Shaders/lamp.vs", "H:/Users/Nutellis/Documents/Projects/OpenGLEngine/Engine-core/Shaders/lightshader.fs");
-//
-//	t = Shader("H:/Users/Nutellis/Documents/Projects/OpenGLEngine/Engine-core/Shaders/TextShader.vs", "H:/Users/Nutellis/Documents/Projects/OpenGLEngine/Engine-core/Shaders/TextFragShader.fs");
-//
-//	//lampShader = Shader("C:/Users/Nutellis/Documents/Visual Studio 2015/Projects/OpenGLTutorial/Engine-core/lamp.vs", "C:/Users/Nutellis/Documents/Visual Studio 2015/Projects/OpenGLTutorial/Engine-core/lamp.fs");
-//camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
-//	
-//
-//	light = new Actor();
-//	light->AddLight();
-//	
-//	camera = new Actor();
-//
-//	camera->AddCamera();
-//
-//	object = new Actor();
-//	object->ObjectS();
-//	object->SetOuter(scene);
-//
-//	object2= new Actor();
-//	object2->SetOuter(scene);
-//	
-//	
-//	object2->RootComponent->RelativeLocation = glm::vec3(1.3f, 0.6f, -1.1f);
-//	object2->ObjectS();
-//	object2->RootComponent->RelativeLocation = glm::vec3(1.3f, 0.6f, -1.1f);
-//	object2->StaticMesh->RelativeLocation = glm::vec3(1.3f, 0.6f, -1.1f);
-//	object2->StaticMesh->GetMaterial()->mDiffuse->Colour = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-//	scene = new Scene();
-//
-//	scene->AddActor(ActorType::LIGHT, light);
-//	
-//	scene->AddActor(ActorType::CAMERA, camera);
-//
-//	scene->AddActor(ActorType::ACTOR, object);
-//	
-//	scene->AddActor(ActorType::ACTOR, object2);
-//
-//
-//	//std::cout << mesh->GetMaterial();
-//	//s.enable();
-//	//s.setMaterial(mesh->GetMaterial());
-//	angle = 45.0f;
-//	glEnable(GL_DEPTH_TEST);
-//	glEnable(GL_BLEND);
-//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//
-//	text = new Text();
-//	
-//}
-//
-//
-//void Renderer::Draw(double time)
-//{
-//
-//	//----------------TEMP
-//
-//	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//
-//	glm::mat4 rotation = glm::mat4();
-//	rotation = glm::rotate(rotation, 0.01f, glm::vec3(0, 1, 0));
-//	light->RootComponent->RelativeLocation = rotation * glm::vec4(light->RootComponent->RelativeLocation,1);
-//	light->StaticMesh->RelativeLocation = light->RootComponent->RelativeLocation;
-//
-//	scene->Draw(s,l);
-//	//if (time > 59.0) {
-//		text->RenderText(t, "fps" + std::to_string(time), 15, 5, 1, glm::vec3(1, 1, 1));
-//	//}
-//	//text->RenderText(t, std::to_string(object->StaticMesh->angle), 400, 6, 1, glm::vec3(0.1, 0.6, 0.8));
-//	//glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)800 / (float)600, 0.1f, 100.0f);
-//	//glm::mat4 view = camera->Camera->GetViewMatrix();
-//	//s.setMat4("projection", projection);
-//	//s.setMat4("view", view);
-//
-//	//angle += 0.010f;
-//	//// draw mesh
-//	//glm::mat4 model;
-//	//model = glm::mat4();
-//	//model =
-//		//glm::scale(model, glm::vec3(0.5f));
-//	//
-//	//s.setMat4("model", model);
-//	//s.setVec3("pLight.position", glm::vec3(0.5f, 0.5f, 0.5f));
-//
-//	//mesh->GetMesh()->Draw(s);
-//	//object->StaticMesh->GetMesh()->Draw(s);
-//	//
-//	//lampShader.enable();
-//	//lampShader.setMat4("projection", projection);
-//	//lampShader.setMat4("view", view);
-//	//
-//
-//	//
-//	//glm::mat4 model;
-//	//model = glm:: mat4();
-//	//model = glm::translate(model,light->RootComponent->Location);
-//	//model = glm::scale(model, glm::vec3(0.09f));
-//	//lampShader.setMat4("model", model);
-//
-//	//light->StaticMesh->GetMesh()->Draw(s);
-//
-//	//glBindVertexArray(vao);
-//	//glDrawElements(GL_TRIANGLES, mesh->GetMesh()->indices.size(), GL_UNSIGNED_INT, 0);
-//	//glBindVertexArray(0);
-//
-//
-//	//---------------!TEMP
-//
-//}
-//
+	ImGui::Begin("Options", 0, window_flags);
+	{
+		ImGui::RadioButton("Main", &TargetToRender, 0);
+		ImGui::RadioButton("Shadow Map Near", &TargetToRender, 1);
+		ImGui::RadioButton("Shadow Map Middle", &TargetToRender, 2);
+		ImGui::RadioButton("Shadow Map Far", &TargetToRender, 3);
+		ImGui::Separator();
+		if(ImGui::Button("Reload Shaders")) {
+			gShaderManager.ReloadShaders();
+		}
+	}
+	ImGui::End();
+}
+
+void GRenderManager::DrawPreview()
+{
+	uint32 RenderTarget = 0;
+	if (TargetToRender == 0) {
+		RenderTarget = RenderTargets[TargetToRender]->GetTexture();
+		if (RenderTarget != 0) {
+			ImGui::SetNextWindowSize(ImVec2(1280, 720));
+			ImGui::SetNextWindowPos(ImVec2(0, 0));
+			ImGuiWindowFlags window_flags = 0;
+			window_flags |= ImGuiWindowFlags_NoMove;
+			window_flags |= ImGuiWindowFlags_NoCollapse;
+			window_flags |= ImGuiWindowFlags_NoResize;
+
+			ImGui::Begin("Editor", 0, window_flags);
+			{
+				ImGui::Image(
+					(ImTextureID)RenderTarget,
+					ImGui::GetContentRegionAvail(),
+					ImVec2(0, 1),
+					ImVec2(1, 0)
+				);
+			}
+			ImGui::End();
+		}
+	}
+	else {
+		DrawDepthMap(ShadowMap->GetCascade(TargetToRender - 1).CascadeFBO);
+	}
+}
+
+void GRenderManager::DrawDepthMap(FBORenderTarget * DepthMap) {
+	ImGui::SetNextWindowSize(ImVec2(DepthMap->Width,DepthMap->Height));
+	ImGui::SetNextWindowPos(ImVec2(0, 0));
+	ImGuiWindowFlags window_flags = 0;
+	window_flags |= ImGuiWindowFlags_NoMove;
+	window_flags |= ImGuiWindowFlags_NoCollapse;
+	window_flags |= ImGuiWindowFlags_NoResize;
+
+	ImGui::Begin("DepthMap", 0, window_flags);
+	{
+		ImGui::Image(
+			(ImTextureID)DepthMap->GetTexture(),
+			ImGui::GetContentRegionAvail(),
+			ImVec2(0, 1),
+			ImVec2(1, 0)
+		);
+	}
+	ImGui::End();
+}

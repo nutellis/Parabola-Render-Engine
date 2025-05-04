@@ -6,16 +6,16 @@
 
 /*4 element generic Vector*/
 template <typename Type> 
+
+#pragma pack(push, 1)
 struct TVector4
 {
 public:
-
 	union {
-		MVS_ALIGN(16) struct {  Type X, Y, Z, W; };
-		MVS_ALIGN(16) struct {  Type R, G, B, A; };
-		MVS_ALIGN(16) struct {  Type S, T, P, Q; };
+		struct {  Type X, Y, Z, W; };
+		struct {  Type R, G, B, A; };
+		struct {  Type S, T, P, Q; };
 	};
-
 
 public:
 	TVector4();
@@ -25,6 +25,9 @@ public:
 	TVector4(const Type inX, const Type inY, const Type inZ);
 
 	TVector4(const TVector4 & inVec4);
+
+	template <typename U>
+	TVector4(const TVector4<U>& Other);
 
 	template<typename U>
 	TVector4(const TVector3<U> & inVec3, const Type inW);
@@ -48,7 +51,7 @@ public:
 	const TVector4 Ones();
 
 
-	Type length() const;
+	Type Length() const;
 
 	void Normalize();
 
@@ -89,9 +92,6 @@ public:
 
 	TVector4 operator - () const;
 
-protected:
-	int32 VectorLength = 4;
-
 public:
 	static const TVector4 ZERO;
 
@@ -100,7 +100,7 @@ public:
 	void Print() const;
 
 };
-
+#pragma pack(pop)
 
 template<typename T>
 struct std::hash<TVector4<T>>

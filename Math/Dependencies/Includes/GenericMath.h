@@ -5,6 +5,7 @@
 #include <functional>
 
 typedef signed long long int64;
+typedef unsigned __int64 uint64;
 typedef signed int int32;
 typedef unsigned int uint32;
 typedef unsigned char uint8;
@@ -120,6 +121,15 @@ struct SMath
 	// 1.0 / Loge(2) = 1.4426950f
 	static inline float Log2(float Value) { return Loge(Value) * 1.4426950f; }
 
+	static inline uint64 HighestPowerOf2(uint64 Value) {
+		if (Value == 0) return 0;
 
+		uint64 Power = 1;
+		while (Power << 1 <= Value) {
+			Power <<= 1;
+		}
+
+		return Power;
+	}
 
 };

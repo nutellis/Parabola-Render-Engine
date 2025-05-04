@@ -110,6 +110,7 @@ public:
 	float MouseLastX;
 	float MouseLastY;
 	bool FirstMouse;
+	bool IsMouseDragging; 
 
 
 };

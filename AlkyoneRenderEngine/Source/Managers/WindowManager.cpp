@@ -18,7 +18,7 @@
 
 
 
-template<> GWindowManager* SingletonBase<GWindowManager>::instance = 0;
+template<> GWindowManager* SingletonManagerBase<GWindowManager>::instance = 0;
 GWindowManager & GWindowManager::getInstance()
 {
 	//assert?
@@ -36,7 +36,7 @@ GWindowManager * GWindowManager::getInstancePtr()
 
 GWindowManager::GWindowManager() 
 {
-	bInitSuccessful = 0;
+	bInitSuccessful = false;
 }
 
 //GWindowManager::GWindowManager(const WindowInfo & Winfo,const ContextInfo & Cinfo)

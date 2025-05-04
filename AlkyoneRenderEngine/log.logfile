@@ -1,0 +1,35 @@
+[Sun May  4 21:11:59 2025] ::[INFO]:: Log is open for bussiness
+
+[Sun May  4 21:11:59 2025] ::[INFO]:: Initiating WINDOW_MANAGER
+
+[Sun May  4 21:11:59 2025] ::[INFO]:: GLFW: Initialized
+[Sun May  4 21:12:00 2025] ::[INFO]:: WINDOW: Initialized 	 Width: 1920 Height : 1080 Title : Parabola Engine
+[Sun May  4 21:12:00 2025] ::[INFO]:: WINDOW_MANAGER INITIATED
+
+[Sun May  4 21:12:00 2025] ::[INFO]:: INITIATING OPENGL
+[Sun May  4 21:12:00 2025] ::[INFO]:: ARB Extension is supported
+[Sun May  4 21:12:00 2025] ::[INFO]:: ARB Bindless Texture is supported
+[Sun May  4 21:12:00 2025] ::[INFO]:: GL_NV_gpu_shader5 is supported
+[Sun May  4 21:12:00 2025] ::[INFO]:: GL_ARB_gpu_shader_int64 is supported
+[Sun May  4 21:12:00 2025] ::[INFO]:: Depth Test = ENABLED
+[Sun May  4 21:12:00 2025] ::[INFO]:: Face Culling ENABLED
+[Sun May  4 21:12:00 2025] ::[INFO]:: OPENGL MESSAGE SYSTEM = ENABLED
+[Sun May  4 21:12:00 2025] ::[INFO]:: ************************              ************************
+[Sun May  4 21:12:00 2025] ::[INFO]:: 			      GPU INFO START
+[Sun May  4 21:12:00 2025] ::[INFO]:: Vendor : NVIDIA Corporation
+[Sun May  4 21:12:00 2025] ::[INFO]:: Renderer : NVIDIA GeForce RTX 2060/PCIe/SSE2
+[Sun May  4 21:12:00 2025] ::[INFO]:: OpenGl version: 4.5.0 NVIDIA 560.94
+[Sun May  4 21:12:00 2025] ::[INFO]:: GLSL version: 4.50 NVIDIA
+[Sun May  4 21:12:00 2025] ::[INFO]:: 			      GPU  INFO  END
+[Sun May  4 21:12:00 2025] ::[INFO]:: ************************              ************************
+
+[Sun May  4 21:12:00 2025] ::[INFO]:: ASSETLOADER INITIATED
+
+[Sun May  4 21:12:00 2025] ::[INFO]:: RENDER_MANAGER INITIATED
+
+[Sun May  4 21:12:00 2025] ::[INFO]:: INPUT_MANAGER INITIATED
+
+[Sun May  4 21:12:02 2025] ::[INFO]:: EDITOR INITIATED
+
+[Sun May  4 21:12:02 2025] ::[INFO]:: Engine is Running Full SPEEED :)
+

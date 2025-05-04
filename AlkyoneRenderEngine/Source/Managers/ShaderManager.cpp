@@ -6,7 +6,7 @@
 
 #include <Managers/LogManager.h>
 
-template<> GShaderManager* SingletonBase<GShaderManager>::instance = 0;
+template<> GShaderManager* SingletonManagerBase<GShaderManager>::instance = 0;
 GShaderManager & GShaderManager::getInstance()
 {
 	//assert?
@@ -115,9 +115,10 @@ void GShaderManager::Clean()
 
 void GShaderManager::ReloadShader(std::string name)
 {
+
 	for (auto& shader : Shaders) {
 		if (shader->Name == name) {
-			Shader * ReloadedShader = CompileProgram(shader->Name, shader->GetVertexPath(), shader->GetFragmentPath());
+			Shader* ReloadedShader = CompileProgram(shader->Name, shader->GetVertexPath(), shader->GetFragmentPath());
 			if (ReloadedShader->ID != -1) {
 				shader = Utilities::Move(ReloadedShader);
 			}
@@ -126,22 +127,20 @@ void GShaderManager::ReloadShader(std::string name)
 			}
 		}
 	}
+
 }
 
-void GShaderManager::ReloadShader(const Shader* shader)
+void GShaderManager::ReloadShaders()
 {
-	//for (int i = 0; i < s_Shaders.size(); i++)
-	//{
-	//	if (s_Shaders[i] == shader)
-	//	{
-	//		//String name = shader->GetName();
-	//	//	String path = shader->GetFilePath();
-	//		s_Shaders[i]->~Shader();
-	//		//	s_Shaders[i] = API::Shader::CreateFromFile(name, path, s_Shaders[i]);
-	//		return;
-	//	}
-	//}
-	//	SP_WARN("Could not find specified shader to reload.");
+	for (auto& shader : Shaders) {
+		Shader* ReloadedShader = CompileProgram(shader->Name, shader->GetVertexPath(), shader->GetFragmentPath());
+		if (ReloadedShader->ID != -1) {
+			shader = Utilities::Move(ReloadedShader);
+		}
+		else {
+			LOG(ERROR, "Failed to reload shader: %s", shader->Name.c_str());
+		}
+	}
 }
 
 void GShaderManager::CheckShaderCompileErrors(GLuint shader, const char* type, const char * ShaderName)
@@ -169,6 +168,7 @@ void GShaderManager::CheckProgramCompileErrors(GLuint shader, const char* type, 
 	if (!success)
 	{
 		LOG(ERROR, "PROGRAM LINKING ERROR OF TYPE: %s on Program %s \n %s-- --------------------------------------------------- --", type, ShaderName, infoLog);
+		__debugbreak();
 	}
 	else
 	{
@@ -195,21 +195,32 @@ void GShaderManager::Init()
 	Shader* LightShader = CompileProgram("Light", "Shaders/lamp.vs", "Shaders/lamp.fs");
 	if (LightShader->ID == 0)
 	{
-		LOG(ERROR, "Failed to compile BRDF_Default shader\n");
+		LOG(ERROR, "Failed to compile Light shader\n");
 	}
 	else
 	{
 		Shaders.PushBack(LightShader);
 	}
-	//TEXT
+	//Sky
 	Shader* SkyBoxShader = CompileProgram("SkyBoxShader", "Shaders/skybox.vert", "Shaders/skybox.frag");
 	if (SkyBoxShader->ID == 0)
 	{
-		LOG(ERROR, "Failed to compile BRDF_Default shader\n");
+		LOG(ERROR, "Failed to compile SkyBoxShader shader\n");
 	}
 	else
 	{
 		Shaders.PushBack(SkyBoxShader);
+	}
+
+	//Depth
+	Shader* DepthShader = CompileProgram("DepthShader", "Shaders/depth.vert", "Shaders/depth.frag");
+	if (DepthShader->ID == 0)
+	{
+		LOG(ERROR, "Failed to compile DepthShader shader\n");
+	}
+	else
+	{
+		Shaders.PushBack(DepthShader);
 	}
 
 	//probably read some standard shaders that need to load. For now do nothing. hoho

@@ -29,6 +29,7 @@ void Scene::AddToRoot(PRenderActor* Root)
 {
 	if (Root != nullptr) {
 		this->Root = Root;
+		Root->IsMovable = false;
 	}
 }
 
@@ -65,9 +66,16 @@ void Scene::InitScene() {
 		"Assets/envmaps/001_irradiance.hdr", 
 		filenames);
 
+	PRenderActor* terrain = new PRenderActor("terrain");
+	this->AddChild(terrain);
+
+	terrain->SetPosition(Vector3f(0.0, 0.0, 0.0));
+	terrain->SetScale(10.0f);
+	terrain->AddMesh("Assets/SnowTerrain.obj");
+	SortChild(terrain);
 
 	// init scene from a previous saved one. for now just init one for testing
-	PRenderActor* triangle = new PRenderActor("triangle");
+	//PRenderActor* triangle = new PRenderActor("triangle");
 	//this->AddChild(triangle);
 
 	//triangle->SetPosition(Vector3f(-1.0, 0.0, 0.0));
@@ -75,17 +83,46 @@ void Scene::InitScene() {
 	////pyramid->SetScale(Vector3f(0.02));
 	//SortChild(triangle);
 
+	//PRenderActor* sponza = new PRenderActor("sponza");
+	//this->AddChild(sponza);
+
+	//sponza->SetPosition(Vector3f(1.0, 0.0, 0.0));
+	//sponza->SetScale(0.1f);
+	//sponza->AddMesh("Assets/sponza.obj");
+
+	//SortChild(sponza);
+
+
 	PRenderActor* plane = new PRenderActor("spaceship");
 	this->AddChild(plane);
 
-	plane->SetPosition(Vector3f(1.0, 0.0, 0.0));
+	plane->SetPosition(Vector3f(0.0, 10.0, 0.0));
 	plane->AddMesh("Assets/space-ship.obj");
 	SortChild(plane);
+
+
+
+	PRenderActor* plane1 = new PRenderActor("spaceship_1");
+	this->AddChild(plane1);
+
+	plane1->SetPosition(Vector3f(15.0, 14.0, -25.0));
+	plane1->AddMesh("Assets/space-ship.obj");
+	SortChild(plane1);
+
+
+
+	PRenderActor* plane2 = new PRenderActor("spaceship_2");
+	this->AddChild(plane2);
+
+	plane2->SetPosition(Vector3f(-150.0, 13.0, 15.0));
+	plane2->AddMesh("Assets/space-ship.obj");
+	SortChild(plane2);
 
 	PRenderActor* camera = new PRenderActor("camera");
 	this->AddChild(camera);
 
-	camera->SetPosition(Vector3f(-70.0f, 50.0f, 70.0f));
+	camera->SetPosition(Vector3f(-5.0f, 30.0f, 10.0f));
+	// camera->SetRotation(Vector3f(0.0f, 0.0f, 0.0f));
 	camera->AddCamera();
 	SortChild(camera);
 	
@@ -93,7 +130,7 @@ void Scene::InitScene() {
 	PRenderActor* light = new PRenderActor("light");
 	this->AddChild(light);
 
-	light->SetPosition(Vector3f(3.0, 0.5, 1.0));
+	light->SetPosition(Vector3f(0.2f, 0.99f, 0.0f));
 
 	light->AddLight();
 	SortChild(light);

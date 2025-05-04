@@ -32,7 +32,8 @@
 //	}
 //};
 
-class VertexFormat {
+#pragma pack(push,1)
+struct VertexFormat {
 public:
 	// position
 	Vector3f Position;
@@ -75,7 +76,7 @@ public:
 		return Position == other.Position && Normal == other.Normal && UVs == other.UVs /*&& Color == other.Color  && Binormal == other.Binormal && Tangent == other.Tangent*/;
 	}
 };
-
+#pragma pack(pop)
 
 template<>
 struct std::hash<VertexFormat>

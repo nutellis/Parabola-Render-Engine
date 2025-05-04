@@ -10,7 +10,7 @@
 
 #include <Components/Lights.h>
 #include <Utilities/Containers/Array.h>
-#include <Components/RenderComponents/Components.h>
+#include <Components/Components.h>
 #include <Components/VertexBuffers.h>
 
 
