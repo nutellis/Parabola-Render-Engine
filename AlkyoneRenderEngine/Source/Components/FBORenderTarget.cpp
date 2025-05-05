@@ -42,7 +42,7 @@ void FBORenderTarget::Bind()
 	glBindFramebuffer(GL_FRAMEBUFFER,ID);
 }
 
-bool FBORenderTarget::Init()
+bool FBORenderTarget::Init(bool IsForShadowMapping)
 {
 	bool bIsCompleted = false;
 
@@ -56,7 +56,7 @@ bool FBORenderTarget::Init()
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ColourAttachment->TextureID, 0);
 
 	DepthStencilAttachment = new Texture(Width, Height);
-	DepthStencilAttachment->GenerateDepthTexture();
+	DepthStencilAttachment->GenerateDepthTexture(IsForShadowMapping);
 	
 	// attach to framebuffer
 	glNamedFramebufferTexture(ID, GL_DEPTH_ATTACHMENT, DepthStencilAttachment->TextureID, 0);

@@ -96,25 +96,30 @@ void Scene::InitScene() {
 	PRenderActor* plane = new PRenderActor("spaceship");
 	this->AddChild(plane);
 
-	plane->SetPosition(Vector3f(0.0, 10.0, 0.0));
+	plane->SetPosition(Vector3f(150.0, 10.0, 0.0));
 	plane->AddMesh("Assets/space-ship.obj");
 	SortChild(plane);
 
 
+	/*PRenderActor* landingpad1 = new PRenderActor("landingpad_1");
+	this->AddChild(landingpad1);
+
+	landingpad1->SetPosition(Vector3f(15.0, 14.0, -25.0));
+	landingpad1->AddMesh("Assets/landingpad.obj");
+	SortChild(landingpad1);*/
 
 	PRenderActor* plane1 = new PRenderActor("spaceship_1");
 	this->AddChild(plane1);
 
-	plane1->SetPosition(Vector3f(15.0, 14.0, -25.0));
+	plane1->SetPosition(Vector3f(0.0, 20.0, 0.0));
 	plane1->AddMesh("Assets/space-ship.obj");
 	SortChild(plane1);
-
 
 
 	PRenderActor* plane2 = new PRenderActor("spaceship_2");
 	this->AddChild(plane2);
 
-	plane2->SetPosition(Vector3f(-150.0, 13.0, 15.0));
+	plane2->SetPosition(Vector3f(15.0, 25.0, -35.0));
 	plane2->AddMesh("Assets/space-ship.obj");
 	SortChild(plane2);
 

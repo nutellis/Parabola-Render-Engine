@@ -110,6 +110,7 @@ void GSceneManager::DrawSceneGraph()
 
 	static PRenderActor* selectedIndex = nullptr;
 	static bool useUniformScaling = true;
+	static bool useRelativeTranslation = true;
 	ImGui::Begin("SceneGraph", 0, window_flags);
 	{
 		Scene* ActiveScene = GetActiveScene();
@@ -138,9 +139,15 @@ void GSceneManager::DrawSceneGraph()
 					}*/
 					if (ImGui::BeginTabItem("Details"))
 					{
-						if (ImGui::InputFloat3("Translation", &selectedIndex->ObjectPosition.X)) {
-							selectedIndex->SetPosition(selectedIndex->ObjectPosition);
-						}
+						//if (useRelativeTranslation) {
+							Vector3f LocalTranslation = selectedIndex->ObjectPosition;
+							if (ImGui::InputFloat3("Translation", &LocalTranslation[0], "%.3f", ImGuiInputTextFlags_EnterReturnsTrue)) {
+								selectedIndex->SetPosition(LocalTranslation);
+							}
+						/*}
+						ImGui::SameLine();
+						ImGui::Checkbox("Relative Translation", &useRelativeTranslation);*/
+
 						if (ImGui::InputFloat3("Rotation", &selectedIndex->ObjectRotation.X)) {
 							selectedIndex->SetRotation(selectedIndex->ObjectRotation);
 						}

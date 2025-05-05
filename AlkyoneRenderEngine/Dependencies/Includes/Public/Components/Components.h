@@ -118,9 +118,9 @@ public:
 	//degrees
 	float Zoom;
 
-	float FieldOfView = 60.0f;
+	float FieldOfView = 45.0f;
 	float ZNear = 0.5f;
-	float ZFar = 250.0f;
+	float ZFar = 1000.0f;
 	float AspectRatio = 16.0f/9.0f;
 
 	//set true for active camera

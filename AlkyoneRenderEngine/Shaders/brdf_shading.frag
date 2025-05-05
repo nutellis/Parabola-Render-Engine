@@ -3,7 +3,8 @@
 #extension GL_NV_gpu_shader5 : enable
 #extension GL_ARB_gpu_shader_int64: enable
 
-// #define SOLUTION_USE_BUILTIN_SHADOW_TEST 0
+#define USE_HARDWARE_SHADOWS 0
+
 // required by GLSL spec Sect 4.5.3 (though nvidia does not, amd does)
 precision highp float;
 
@@ -69,6 +70,9 @@ uniform vec3 viewSpaceLightDir;
 layout(std430, binding = 0) buffer TextureHandles {
     uint64_t handles[]; // Array of texture handles
 };
+// textures 10 to 13
+uniform sampler2DShadow shadowMap[4];
+
 
 in vec4 shadowMapCoord[4];
 uniform vec4 FragmentDistance;
@@ -81,8 +85,6 @@ layout(binding = 16) uniform sampler2D ssaoTexture;
 ///////////////////////////////////////////////////////////////////////////////
 layout(location = 0) out vec4 fragmentColor;
 
-
-
 float shadowCoef()
 {
 	int index = 3;
@@ -94,18 +96,40 @@ float shadowCoef()
 		index = 1;
 	else if(gl_FragCoord.z < FragmentDistance.z)
 		index = 2;
+
 	
 	// get the texture handle of the shadow map
-	 uint64_t shadowHandle = handles[0];
-	 sampler2D shadowTexture = sampler2D(shadowHandle);
+	 uint64_t shadowHandle = handles[index];
 
-	vec3 shadowUV = shadowMapCoord[0].xyz / shadowMapCoord[0].w;
+	vec3 shadowUV = shadowMapCoord[index].xyz / shadowMapCoord[index].w;
 
-	float shadowDepth = texture(shadowTexture, shadowMapCoord[index].xy / shadowMapCoord[0].w).x;
-	float diff = (shadowDepth >= (shadowMapCoord[0].z / shadowMapCoord[0].w)) ? 1.0 : 0.0;
-	// shadowDepth - shadowMapCoord[0].z / shadowMapCoord[0].w;
+	float shadowDepth = 0;
+//	#if defined(USE_HARDWARE_SHADOWS)
+//		shadowDepth = textureProj(shadowMap[index], shadowMapCoord[index]);
+//	#else
+		shadowDepth = textureProj(shadowMap[index], shadowMapCoord[index]);
+	//#endif
 
-	return diff ; //clamp(diff * 250.0 + 1.0, 0.0, 1.0);
+	//float bias = 0.002;
+	float diff = shadowDepth - shadowUV.z; // - bias;
+	 
+	return clamp(diff * 250.0 + 1.0, 0.0, 1.0);
+}
+
+vec4 debugShadows() {
+	int index = 3;
+	
+	// find the appropriate depth map to look up in based on the depth of this fragment
+	if(gl_FragCoord.z < FragmentDistance.x)
+		index = 0;
+	else if(gl_FragCoord.z < FragmentDistance.y)
+		index = 1;
+	else if(gl_FragCoord.z < FragmentDistance.z)
+		index = 2;
+
+	vec3 uvw = shadowMapCoord[index].xyz / shadowMapCoord[index].w;
+	return vec4(uvw.xy, 0.0, 1.0); // just visualize light-space UV
+
 }
 
 
@@ -189,15 +213,7 @@ void main()
 {
 
 	float visibility = 1.0;
-
-//	#if SOLUTION_USE_BUILTIN_SHADOW_TEST // SOLUTION_CODE >= 8
-//		visibility = textureProj(shadowMapTex, shadowMapCoord);
-//	#else
-	//	float depth = texture(shadowMapTex, shadowMapCoord.xy / shadowMapCoord.w).r;
-		//visibility = (depth >= (shadowMapCoord.z / shadowMapCoord.w)) ? 1.0 : 0.0;
-//	#endif // ~ USE_BUILTIN_SHADOW_TEST
-//
-	float ssao = 1.0; // Default to fully visible
+	float ssao = 1.0;
 //    if (enableSSAO == 1) {
 //        ssao = texture(ssaoTexture, gl_FragCoord.xy / textureSize(ssaoTexture, 0).xy).r; // Fetch SSAO value
 //    }
@@ -209,7 +225,8 @@ void main()
 	{
 		base_color = base_color * texture(colorMap, texCoord).rgb;
 	}
-	visibility = shadowCoef();
+	const float shadow_ambient = 0.9;
+	visibility = shadow_ambient * shadowCoef();
 	// Direct illumination
 	vec3 direct_illumination_term = visibility * calculateDirectIllumiunation(wo, n, base_color);
 
@@ -227,7 +244,7 @@ void main()
 
 	vec3 shading = direct_illumination_term + indirect_illumination_term + emission_term; // (ssao * )
 	
-	fragmentColor = vec4(shading, 1.0);
+	fragmentColor =  vec4(shading, 1.0); //debugShadows(); //
 
 	return;
 }

@@ -16,7 +16,8 @@ public:
 
 	void Bind();
 
-	bool Init();
+	bool Init(bool IsForShadowMapping = false);
+
 
 	uint32 GetTexture() const;
 	uint32 GetDepth() const;

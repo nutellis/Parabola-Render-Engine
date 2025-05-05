@@ -40,7 +40,7 @@ void main()
 	viewSpaceNormal = (normalMatrix * vec4(NormalPosition, 0.0)).xyz;
 	viewSpacePosition = (modelViewMatrix * vec4(VertexPosition, 1.0)).xyz;
 
-    for (int i = 0; i < numOfCascades.x; ++i) {
+    for (int i = 0; i < numOfCascades; ++i) {
 		shadowMapCoord[i] = lightMatrices[i] * vec4(viewSpacePosition, 1.0);
     }
 }

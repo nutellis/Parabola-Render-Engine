@@ -9,7 +9,6 @@
 #include <Managers/ShaderManager.h>
 #include <Components/LightComponents/DirectionalLightComponent.h>
 
-
 PCascadeShadowMap::PCascadeShadowMap()
 {
 }
@@ -66,15 +65,16 @@ void PCascadeShadowMap::Init()
 	ShadowMapTextureHandles = new uint64[NumCascades];
 	for (uint32 i = 0; i < NumCascades; i++)
 	{
-		Cascades[i].CascadeFBO->Init();
-
+		Cascades[i].CascadeFBO->Init(true);
+		
 		ShadowMapTextureHandles[i] = Cascades[i].CascadeFBO->DepthStencilAttachment->TextureHandle;
 		
 		glMakeTextureHandleResidentARB(ShadowMapTextureHandles[i]);
 	}
 	// Init shadow map texture buffer
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ShadowMapSSBO);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(uint64) * NumCascades, ShadowMapTextureHandles, GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(uint64) * NumCascades, &ShadowMapTextureHandles, GL_DYNAMIC_DRAW);
+	
 	// init cascade MVP buffer
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, CascadesMVPBuffer);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Matrix4f) * NumCascades, nullptr, GL_DYNAMIC_DRAW);
@@ -105,6 +105,7 @@ void PCascadeShadowMap::CalculateLightProjection(uint32 Index, PCameraComponent 
 	}
 
 	Matrix4f LightProjectionMatrix = Ortho(-1.0, 1.0, -1.0, 1.0, -Max.Z, -Min.Z);
+
 	Matrix4f LightViewProjectionMatrix = LightProjectionMatrix * LightViewMatrix;
 
 
@@ -127,9 +128,9 @@ void PCascadeShadowMap::CalculateLightProjection(uint32 Index, PCameraComponent 
 	float OffsetX = -0.5f * (Max.X + Min.X) * ScaleX;
 	float OffsetY = -0.5f * (Max.Y + Min.Y) * ScaleY;
 
-	Matrix4f CropMatrix = Scale(Vector3f(ScaleX, ScaleY, 1.0f), Matrix4f::IDENTITY);
+	Matrix4f CropMatrix = Translate(Vector3f(OffsetX, OffsetY, 0.0f), Matrix4f::IDENTITY);
 	
-	CropMatrix = Translate(Vector3f(OffsetX, OffsetY, 0.0f), CropMatrix);
+	CropMatrix = Scale(Vector3f(ScaleX, ScaleY, 1.0f), CropMatrix);
 
 	Cascades[Index].CropMatrix = CropMatrix;
 
@@ -141,6 +142,7 @@ void PCascadeShadowMap::CalculateLightProjection(uint32 Index, PCameraComponent 
 	// shad_modelview = lightview
 	// shad_mvp = lightprojection * lightview
 	// shad_proj = crop * projection
+	// shad_cpm = crop * projection * view
 }
 
 void PCascadeShadowMap::UpdateCascadeBuffer(Matrix4f CameraViewMatrix) {
@@ -148,16 +150,15 @@ void PCascadeShadowMap::UpdateCascadeBuffer(Matrix4f CameraViewMatrix) {
 
 	Matrix4f* CascadeMatrices = (Matrix4f*)glMapBufferRange(
 		GL_SHADER_STORAGE_BUFFER, 0,
-		sizeof(Matrix4f) * NumCascades, 
+		sizeof(Matrix4f) * NumCascades,
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
-	Matrix4f TextureSpaceMatrix = Translate(Vector3f(0.5), Scale(0.5, Matrix4f::IDENTITY));
+	Matrix4f TextureSpaceMatrix = Scale(0.5, Translate(Vector3f(0.5), Matrix4f::IDENTITY));
 
 	//In texture space!
 	for (uint32 i = 0; i < NumCascades; i++)
 	{
-		Matrix4f LightProjectionViewMatrix = Cascades[i].LightProjectionMatrix;
-		CascadeMatrices[i] = TextureSpaceMatrix * LightProjectionViewMatrix * Inverse(CameraViewMatrix);
+		CascadeMatrices[i] = TextureSpaceMatrix * Cascades[i].CascadeCPVMatrix * Inverse(CameraViewMatrix);
 	}
 
 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
@@ -177,10 +178,33 @@ void PCascadeShadowMap::UnbindBuffers()
 
 void PCascadeShadowMap::PrepareForDraw(Shader* ActiveShader, Matrix4f CameraViewMatrix, Matrix4f CameraProjectionMatrix)
 {
-	UpdateCascadeBuffer(CameraViewMatrix);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, CascadesMVPBuffer);
+
+	Matrix4f* CascadeMatrices = (Matrix4f*)glMapBufferRange(
+		GL_SHADER_STORAGE_BUFFER, 0,
+		sizeof(Matrix4f) * NumCascades,
+		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+
+	Matrix4f TextureSpaceMatrix = Scale(0.5, Translate(Vector3f(0.5), Matrix4f::IDENTITY));
+
+	//In texture space!
+	for (uint32 i = 0; i < NumCascades; i++)
+	{
+		CascadeMatrices[i] = TextureSpaceMatrix * Cascades[i].CascadeCPVMatrix * Inverse(CameraViewMatrix);
+		
+		//Bind Textures
+		glActiveTexture(GL_TEXTURE10 + i);
+		glBindTexture(GL_TEXTURE_2D, Cascades[i].CascadeFBO->DepthStencilAttachment->TextureID);
+		std::string index = "shadowMap[" + std::to_string(i) + "]";
+		ActiveShader->SetInt(index.c_str(), 10 + i);
+	
+	}
+
+	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
 	ActiveShader->SetInt("numOfCascades", NumCascades);
 
+	// set far distance of each cascade.
 	ActiveShader->SetVec4("FragmentDistance", 
 		Vector4f(
 			0.5f * (-Cascades[0].Frustrum.FarPlane * CameraProjectionMatrix[2][2] + CameraProjectionMatrix[3][2]) / Cascades[0].Frustrum.FarPlane + 0.5f,
@@ -192,13 +216,13 @@ void PCascadeShadowMap::PrepareForDraw(Shader* ActiveShader, Matrix4f CameraView
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, CascadesMVPBuffer);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ShadowMapSSBO);
-
 }
 
 PCascade PCascadeShadowMap::GetCascade(uint32 Index)
 {
 	return Cascades[Index];
 }
+
 
 void PFrustrum::CalculateFrustrumCorners(PCameraComponent* Camera)
 {

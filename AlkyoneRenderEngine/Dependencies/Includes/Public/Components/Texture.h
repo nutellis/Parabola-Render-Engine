@@ -16,7 +16,7 @@ public:
 
 	void GenerateTextureLayers(TArray<std::string> filenames, bool IsHDRImage = false);
 
-	void GenerateDepthTexture();
+	void GenerateDepthTexture(bool IsForShadows = false);
 
 	void GenerateColourTexture();
 

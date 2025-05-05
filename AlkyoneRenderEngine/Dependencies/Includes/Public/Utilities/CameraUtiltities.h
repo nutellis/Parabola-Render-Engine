@@ -34,8 +34,8 @@ inline Matrix4f LookAt(const Vector3f& Eye, const Vector3f& Center, const Vector
 
 inline Matrix4f Ortho(
 	const float& Left, const float& Right,
-	const float& Top, const float& Bottom,
-	const float& ZNear = 0.1f, const float& ZFar = 100.0f
+	const float& Bottom, const float& Top,
+	const float& ZNear = 0.1f, const float& ZFar = 1000.0f
 )
 {
 	Matrix4f Result = Matrix4f::IDENTITY;

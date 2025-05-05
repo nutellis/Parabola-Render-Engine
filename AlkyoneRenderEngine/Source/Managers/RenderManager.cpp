@@ -140,11 +140,11 @@ void GRenderManager::ShadowMapPass() {
 		glViewport(0, 0, ShadowMap->GetCascade(i).Resolution, ShadowMap->GetCascade(i).Resolution);
 		glClearColor(1.0, 1.0, 1.0, 1.0);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-			
+		glCullFace(GL_FRONT);
 		ShadowMap->CalculateLightProjection(i, ActiveScene->GetActiveCameraActor()->Camera, ActiveScene->SceneLights.Front()->Light);
 
 		DrawScene(DepthShader, ShadowMap->GetCascade(i).LightViewMatrix, ShadowMap->GetCascade(i).LightProjectionMatrix);
-
+		glCullFace(GL_BACK);
 	}
 
 	glUseProgram(0);
@@ -152,6 +152,7 @@ void GRenderManager::ShadowMapPass() {
 
 void GRenderManager::RenderPass()
 {
+	CHECK_GL_ERROR();
 	FBORenderTarget* MainRenderTarget = RenderTargets.FindFirst([](const FBORenderTarget* At) {
 		return At->Name == "Main";
 		});
@@ -179,7 +180,6 @@ void GRenderManager::RenderPass()
 
 		//Prepare shadow Data
 		ShadowMap->PrepareForDraw(BrdfShader, Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
-		//CHECK_GL_ERROR();	
 
 		DrawScene(BrdfShader, Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
 
@@ -219,7 +219,8 @@ void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix
 		//get visible meshes. For now just get all meshes.
 		TArray<PRenderActor *> VisibleMeshes = ActiveScene->SceneMeshes;
 
-		
+		ShaderToUse->SetMat4("viewInverse", false, Inverse(ViewMatrix));
+
 		for (int i = 0; i < VisibleMeshes.Size(); i++) {
 			VisibleMeshes[i]->SetupModelMatrix(ShaderToUse);
 
@@ -231,7 +232,6 @@ void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix
 			ShaderToUse->SetMat4("modelViewProjectionMatrix", false, ModelViewProjectionMatrix);
 
 			ShaderToUse->SetMat4("normalMatrix", false, Inverse(ModelViewMatrix.GetTransposed()));
-			ShaderToUse->SetMat4("viewInverse", false, Inverse(ViewMatrix));
 			
 			VisibleMeshes[i]->StaticMesh->DrawComponent(ShaderToUse);
 		}
@@ -317,10 +317,11 @@ void GRenderManager::DrawOptions() {
 
 	ImGui::Begin("Options", 0, window_flags);
 	{
-		ImGui::RadioButton("Main", &TargetToRender, 0);
-		ImGui::RadioButton("Shadow Map Near", &TargetToRender, 1);
-		ImGui::RadioButton("Shadow Map Middle", &TargetToRender, 2);
-		ImGui::RadioButton("Shadow Map Far", &TargetToRender, 3);
+		ImGui::RadioButton("Main", &TargetToRender, 100);
+		for (int i = 0; i < ShadowMap->NumCascades; i++) {
+			std::string CascadeTitle = "CSM Level " + std::to_string(i);
+			ImGui::RadioButton(CascadeTitle.c_str(), &TargetToRender, i);
+		}
 		ImGui::Separator();
 		if(ImGui::Button("Reload Shaders")) {
 			gShaderManager.ReloadShaders();
@@ -332,8 +333,8 @@ void GRenderManager::DrawOptions() {
 void GRenderManager::DrawPreview()
 {
 	uint32 RenderTarget = 0;
-	if (TargetToRender == 0) {
-		RenderTarget = RenderTargets[TargetToRender]->GetTexture();
+	if (TargetToRender == 100) {
+		RenderTarget = RenderTargets[0]->GetTexture();
 		if (RenderTarget != 0) {
 			ImGui::SetNextWindowSize(ImVec2(1280, 720));
 			ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -355,7 +356,7 @@ void GRenderManager::DrawPreview()
 		}
 	}
 	else {
-		DrawDepthMap(ShadowMap->GetCascade(TargetToRender - 1).CascadeFBO);
+		DrawDepthMap(ShadowMap->GetCascade(TargetToRender).CascadeFBO);
 	}
 }
 

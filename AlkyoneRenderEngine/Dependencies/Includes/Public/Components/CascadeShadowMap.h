@@ -66,7 +66,6 @@ public:
 	void Init();
 	void CalculateLightProjection(uint32 Index, PCameraComponent* Camera, PDirectionalLightComponent* Light);
 	void UpdateCascadeBuffer(Matrix4f CameraViewMatrix);
-	void PrepareForDraw(uint32 Index);
 	void Draw(uint32 Index);
 	void BindSSBO(uint32 Slot);
 	void UnbindBuffers();
@@ -75,12 +74,13 @@ public:
 
 	PCascade GetCascade(uint32 Index);
 
-private:
+public:
 	uint32 NumCascades;
 	TArray<PCascade> Cascades;
 
 	float Lambda = 0.75f;
 
+private:
 	uint32 ShadowMapSSBO;
 	uint32 CascadesMVPBuffer;
 	uint64 * ShadowMapTextureHandles;

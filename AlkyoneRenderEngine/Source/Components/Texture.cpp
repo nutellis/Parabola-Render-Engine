@@ -116,16 +116,26 @@ void Texture::GenerateTextureLayers(TArray<std::string> filenames, bool IsHDRIma
     }
 }
 
-void Texture::GenerateDepthTexture() {
+void Texture::GenerateDepthTexture(bool IsForShadows) {
     glCreateTextures(Target, 1, &TextureID);
 
-    glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, FilterMin);
-    glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, FilterMag);
-    glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-    glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
+    if (IsForShadows) {
+        glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+        glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+    else {
 
-    glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, WrapS);
-    glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, WrapT);
+        glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, FilterMin);
+        glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, FilterMag);
+        glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+        glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
+        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, WrapS);
+        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, WrapT);
+    }
 
     glTextureStorage2D(TextureID, 1, GL_DEPTH_COMPONENT32, Width, Height);
 
