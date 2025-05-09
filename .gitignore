@@ -270,15 +270,12 @@ ModelManifest.xml
 /Engine-core/Tools/algebra3.h
 /AlkyoneRenderEngine/Dependencies/Includes/Generated
 /AlkyoneRenderEngine/Source/Unreal files
-/AlkyoneRenderEngine/Assets
 /AlkyoneRenderEngine/specular.png
 /AlkyoneRenderEngine/diffuse.png
 /AlkyoneRenderEngine/cube.fbx
 /AlkyoneRenderEngine/ball.asset
 /AlkyoneRenderEngine/Dependencies/Includes/Private/assimp
 /AlkyoneRenderEngine/Dependencies/Includes/Private/fbxsdk
-/AlkyoneRenderEngine/Dependencies/Includes/Private
-/AlkyoneRenderEngine/Dependencies/Libraries
 /Engine-core/Dependencies/Includes/Private
 /Engine-core/Dependencies/Libraries
 /AlkyoneRenderEngine/Source/Win32
