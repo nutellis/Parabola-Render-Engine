@@ -137,7 +137,7 @@ void Texture::GenerateDepthTexture(bool IsForShadows) {
         glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, WrapT);
     }
 
-    glTextureStorage2D(TextureID, 1, GL_DEPTH_COMPONENT32, Width, Height);
+    glTextureStorage2D(TextureID, 1, GL_DEPTH_COMPONENT32F, Width, Height);
 
     TextureHandle = glGetTextureHandleARB(TextureID);
 	CHECK_GL_ERROR();

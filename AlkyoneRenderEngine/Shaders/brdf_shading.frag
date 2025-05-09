@@ -193,17 +193,17 @@ float PCF(float bias, float filterRadius, int index, float stepSize) {
 float PCSS(float bias, int index, float stepSize) {
 
 	// Step 1: Blocker step
-	float avgBlockerDepth = 0;
+	float zBlocker = 0;
 
 	float blockerSum = 0.0;
     int numBlockers = 0;
 
 	float zReceiver = shadowMapCoord[index].z;
 
-	float searchWidth = (lightSize/lightFrustrumWidth[index]) *(zReceiver - nearPlanes[index]) / zReceiver;
+	float searchWidth = (lightSize/lightFrustrumWidth[index]) * (zReceiver - nearPlanes[index]) / zReceiver;
 
-	for(int i = 0; i < 16; i++) {
-		vec2 offset = shadowMapCoord[index].xy + stepSize * poisson[i];
+	for(int i = 0; i < 16; ++i) {
+		vec2 offset = shadowMapCoord[index].xy + (stepSize * searchWidth * poisson[i]);
 		float shadowMapDepth = texture(shadowMap[index], offset).r;
 		if ( shadowMapDepth < zReceiver ) {
 			blockerSum += shadowMapDepth;
@@ -214,11 +214,11 @@ float PCSS(float bias, int index, float stepSize) {
     if (numBlockers < 1)
         return 1.0;
 
-	float zBlocker = avgBlockerDepth = blockerSum / numBlockers;
+	zBlocker = blockerSum / numBlockers;
 
 	// Step 2: Penumbra size estimation 
 	float penumbraRatio = (zReceiver - zBlocker) / zBlocker;
-    float filterRadius = penumbraRatio * (lightSize/lightFrustrumWidth[index]) * nearPlanes[index] / zReceiver;
+    float filterRadius = stepSize * penumbraRatio * (lightSize/lightFrustrumWidth[index]) * nearPlanes[index] / zReceiver;
 
 	return filterRadius;
 	// Step 3: PCF filtering
@@ -241,7 +241,7 @@ float calculateShadowsCoef(vec3 n, vec3 wi)
 	float bias = 0.005 * (1.0 - dot(n, wi));
 	bias = clamp(bias, 0.0, 0.01);
 
-    float stepSize = 1.0 / texelSize[index]; // Assuming square texture
+    float stepSize = 1.0 / texelSize[index];
 
 	if(usePCSS == 1) {
 		return PCSS(bias, index, stepSize);
@@ -259,7 +259,7 @@ vec3 calculateDirectIllumiunation(vec3 wo, vec3 n, vec3 base_color)
 	//const float distance_to_light = length(viewSpaceLightPosition - viewSpacePosition);
 	//const float falloff_factor = 1.0 / (distance_to_light * distance_to_light);
 	   // constant across the scene
-
+	// Directional Light
 	vec3 Li = point_light_intensity_multiplier * point_light_color; // * falloff_factor;
 	vec3  wi = LightDirection;
 
@@ -364,8 +364,8 @@ void main()
 
 	vec3 shading = direct_illumination_term + indirect_illumination_term + emission_term; // (ssao * )
 	
-	
-	fragmentColor =  vec4(vec3(calculateShadowsCoef(n, LightDirection)), 1.0);
+	// vec3(calculateShadowsCoef(n, LightDirection))
+	fragmentColor =  vec4(shading, 1.0);
 
 	return;
 }

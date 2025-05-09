@@ -15,6 +15,12 @@
 #include <Core/Time.h>
 #include <Core/Editor.h>
 
+#include <windows.h>
+
+extern "C" {
+	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001; // Optimus: force switch to discrete GPU
+	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1; //AMD
+}
 
 template<> Engine* SingletonManagerBase<Engine>::instance = 0;
 Engine & Engine::getInstance()
