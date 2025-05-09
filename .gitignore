@@ -275,7 +275,6 @@ ModelManifest.xml
 /AlkyoneRenderEngine/cube.fbx
 /AlkyoneRenderEngine/ball.asset
 /AlkyoneRenderEngine/Dependencies/Includes/Private/assimp
-/AlkyoneRenderEngine/Dependencies/Includes/Private/fbxsdk
 /Engine-core/Dependencies/Includes/Private
 /Engine-core/Dependencies/Libraries
 /AlkyoneRenderEngine/Source/Win32
