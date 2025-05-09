@@ -1,7 +1,4 @@
 #version 450
-#extension GL_ARB_bindless_texture : enable
-#extension GL_NV_gpu_shader5 : enable
-#extension GL_ARB_gpu_shader_int64: enable
 
 #define USE_HARDWARE_SHADOWS 0
 
@@ -42,9 +39,6 @@ uniform vec3 viewSpaceLightDir;
 ///////////////////////////////////////////////////////////////////////////////
 // Shadow Information
 ///////////////////////////////////////////////////////////////////////////////
-layout(std430, binding = 0) buffer TextureHandles {
-    uint64_t handles[]; // Array of texture handles
-};
 // textures 10 to 13
 uniform sampler2D shadowMap[4];
 
