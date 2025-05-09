@@ -42,7 +42,7 @@ GInputManager::~GInputManager()
 
 void GInputManager::KeyPressCallback(GLFWwindow* Window, int key, int scancode, int action, int mods)
 {
-	PRenderActor* cmr = gSceneManager.GetActiveScene()->GetActiveCameraActor();
+	PCameraComponent* cmr = gSceneManager.GetActiveScene()->GetActiveCameraActor();
 	if (glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
 		LOG(INFO, "Attempt to close the window");
@@ -50,25 +50,25 @@ void GInputManager::KeyPressCallback(GLFWwindow* Window, int key, int scancode, 
 	}
 
 	if (glfwGetKey(Window, GLFW_KEY_W) == GLFW_PRESS) {
-		cmr->Camera->ProcessKeyboard(FORWARD, 0.3f);
+		cmr->ProcessKeyboard(FORWARD, 0.3f);
 	}
 	if (glfwGetKey(Window, GLFW_KEY_S) == GLFW_PRESS) {
-		cmr->Camera->ProcessKeyboard(BACKWARD, 0.3f);
+		cmr->ProcessKeyboard(BACKWARD, 0.3f);
 	}
 	if (glfwGetKey(Window, GLFW_KEY_A) == GLFW_PRESS) {
-		cmr->Camera->ProcessKeyboard(LEFT, 0.3f);
+		cmr->ProcessKeyboard(LEFT, 0.3f);
 	}
 	if (glfwGetKey(Window, GLFW_KEY_D) == GLFW_PRESS) {
-		cmr->Camera->ProcessKeyboard(RIGHT, 0.3f);
+		cmr->ProcessKeyboard(RIGHT, 0.3f);
 	}
 	if (glfwGetKey(Window, GLFW_KEY_R) == GLFW_PRESS) {
-		cmr->Camera->ProcessKeyboard(UP, 0.3f);
+		cmr->ProcessKeyboard(UP, 0.3f);
 	}
 	if (glfwGetKey(Window, GLFW_KEY_F) == GLFW_PRESS) {
-		cmr->Camera->ProcessKeyboard(DOWN, 0.3f);
+		cmr->ProcessKeyboard(DOWN, 0.3f);
 	}
 	if (glfwGetKey(Window, GLFW_KEY_K) == GLFW_PRESS) {
-		cmr->ObjectPosition = Vector3f(-10.0f, 40.0f, 15.0f);
+		cmr->Parent->ObjectPosition = Vector3f(-10.0f, 40.0f, 15.0f);
 	}
 
 }
@@ -76,15 +76,14 @@ void GInputManager::KeyPressCallback(GLFWwindow* Window, int key, int scancode, 
 void GInputManager::MouseCallback(GLFWwindow * Window, double xpos, double ypos)
 {
 	RenderWindow *win = gWindowManager.GetRenderWindow();
-	PRenderActor* cmr = gSceneManager.GetActiveScene()->GetActiveCameraActor();
 	//if (glfwGetKey(Window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
 		if (win->IsMouseDragging) {
-			PRenderActor* cmr = gSceneManager.GetActiveScene()->GetActiveCameraActor();
+			PCameraComponent* cmr = gSceneManager.GetActiveScene()->GetActiveCameraActor();
 			
 			int xoffset = xpos - win->MouseLastX;
 			int yoffset = ypos - win->MouseLastY; // reversed since y-coordinates go from bottom to top
 
-			cmr->Camera->ProcessMouseMovement(xoffset, yoffset);
+			cmr->ProcessMouseMovement(xoffset, yoffset);
 			
 		}
 	//		}
@@ -117,12 +116,12 @@ void GInputManager::MouseButtonCallback(GLFWwindow * Window, int button, int act
 
 void GInputManager::ScrollCallback(GLFWwindow * Window, double xoffset, double yoffset)
 {
-	PRenderActor* cmr = gSceneManager.GetActiveScene()->GetActiveCameraActor();
-	cmr->Camera->Zoom -= (float)yoffset * 1.5;
-	if (cmr->Camera->Zoom < 1.0f)
-		cmr->Camera->Zoom = 1.0f;
-	if (cmr->Camera->Zoom > 90.0f)
-		cmr->Camera->Zoom = 90.0f;
+	PCameraComponent* cmr = gSceneManager.GetActiveScene()->GetActiveCameraActor();
+	cmr->Zoom -= (float)yoffset * 1.5;
+	if (cmr->Zoom < 1.0f)
+		cmr->Zoom = 1.0f;
+	if (cmr->Zoom > 90.0f)
+		cmr->Zoom = 90.0f;
 
 }
 

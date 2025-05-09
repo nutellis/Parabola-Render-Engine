@@ -13,25 +13,10 @@ class Texture;
 class PCameraComponent;
 class PDirectionalLightComponent;
 class Shader;
+class PFrustrum;
 
 #define MAX_CASCADES 4
 
-
-struct PFrustrum {
-public:
-	Vector3f Corners[8];
-	Vector3f Center;
-	Vector3f Extents;
-	Vector3f Direction;
-	float NearPlane;
-	float FarPlane;
-	float Ratio;
-	float FieldOfView;
-/*	Matrix4f ProjectionMatrix;
-	Matrix4f ViewMatrix*/;
-
-	void CalculateFrustrumCorners(PCameraComponent* Camera);
-};
 
 struct PCascade {
 
@@ -51,7 +36,11 @@ public:
 	Matrix4f LightProjectionMatrix;
 	Matrix4f CropMatrix;
 
-	PFrustrum Frustrum;
+	PFrustrum * Frustrum;
+
+	PCascade();
+	~PCascade();
+	
 
 };
 
@@ -64,21 +53,22 @@ public:
 	//PCascadeShadowMap(uint32 NumCascades = 4);
 	~PCascadeShadowMap();
 	void Init();
+	void UpdateCascadeExtends(float ZNear, float ZFar, float Ratio, float FieldOfView);
 	void CalculateLightProjection(uint32 Index, PCameraComponent* Camera, PDirectionalLightComponent* Light);
 	void UpdateCascadeBuffer(Matrix4f CameraViewMatrix);
 	void Draw(uint32 Index);
 	void BindSSBO(uint32 Slot);
 	void UnbindBuffers();
-	void PrepareForDraw(Shader* ActiveShader, Matrix4f CameraViewMatrix, Matrix4f CameraProjectionMatrix);
+	void PrepareForDraw(Shader* ActiveShader, Matrix4f CameraViewMatrix, Matrix4f CameraProjectionMatrix, bool UsePCSS = false);
 	void SetViewport(uint32 Width, uint32 Height);
 
-	PCascade GetCascade(uint32 Index);
+	PCascade * GetCascade(uint32 Index);
 
 public:
 	uint32 NumCascades;
-	TArray<PCascade> Cascades;
+	TArray<PCascade *> Cascades;
 
-	float Lambda = 0.75f;
+	float Lambda = 0.5f;
 
 private:
 	uint32 ShadowMapSSBO;

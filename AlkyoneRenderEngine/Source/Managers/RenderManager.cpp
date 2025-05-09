@@ -17,6 +17,7 @@
 
 #include <Components/Shader.h>
 #include <Components/Scene.h>
+#include <Components/Camera.h>
 #include <Components/RenderActor.h>
 #include <Components/SkyBox.h>
 
@@ -116,35 +117,56 @@ void GRenderManager::ShadowMapPass() {
 	Shader* DepthShader = gShaderManager.GetShader("DepthShader");
 	DepthShader->Enable();
 
-	if (ShadowMap == nullptr) {
+	if (ShadowMap == nullptr || ShadowMap->NumCascades != Options.NumCascades) {
 		ShadowMap = new PCascadeShadowMap(
-			4,
-			ActiveScene->GetActiveCameraActor()->Camera->FieldOfView,
-			ActiveScene->GetActiveCameraActor()->Camera->AspectRatio,
-			ActiveScene->GetActiveCameraActor()->Camera->ZNear,
-			ActiveScene->GetActiveCameraActor()->Camera->ZFar);
+			Options.NumCascades,
+			ActiveScene->GetActiveCameraActor()->Frustrum.FieldOfView,
+			ActiveScene->GetActiveCameraActor()->Frustrum.Ratio,
+			ActiveScene->GetActiveCameraActor()->Frustrum.NearPlane,
+			ActiveScene->GetActiveCameraActor()->Frustrum.FarPlane);
 
 		//set shader
 
-		DepthShader->SetFloat("near_plane", ActiveScene->GetActiveCameraActor()->Camera->ZNear);
-		DepthShader->SetFloat("far_plane", ActiveScene->GetActiveCameraActor()->Camera->ZFar);
+		DepthShader->SetFloat("near_plane", ActiveScene->GetActiveCameraActor()->Frustrum.NearPlane);
+		DepthShader->SetFloat("far_plane", ActiveScene->GetActiveCameraActor()->Frustrum.FarPlane);
 
 		ShadowMap->Init();
 
 	}
 
-	for (int i = 0; i < 4; i++) {
-		FBORenderTarget* ShadowMapRenderTarget = ShadowMap->GetCascade(i).CascadeFBO;
+	for (int i = 0; i < ShadowMap->NumCascades; i++) {
+		FBORenderTarget* ShadowMapRenderTarget = ShadowMap->GetCascade(i)->CascadeFBO;
 		ShadowMapRenderTarget->Bind();
 
-		glViewport(0, 0, ShadowMap->GetCascade(i).Resolution, ShadowMap->GetCascade(i).Resolution);
+		glViewport(0, 0, ShadowMap->GetCascade(i)->Resolution, ShadowMap->GetCascade(i)->Resolution);
 		glClearColor(1.0, 1.0, 1.0, 1.0);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 		glCullFace(GL_FRONT);
-		ShadowMap->CalculateLightProjection(i, ActiveScene->GetActiveCameraActor()->Camera, ActiveScene->SceneLights.Front()->Light);
 
-		DrawScene(DepthShader, ShadowMap->GetCascade(i).LightViewMatrix, ShadowMap->GetCascade(i).LightProjectionMatrix);
+		glPolygonOffset(1.0f, 1.0f); 
+		glEnable(GL_POLYGON_OFFSET_FILL);
+
+		ShadowMap->UpdateCascadeExtends(
+			ActiveScene->GetActiveCameraActor()->Frustrum.NearPlane,
+			ActiveScene->GetActiveCameraActor()->Frustrum.FarPlane,
+			ActiveScene->GetActiveCameraActor()->Frustrum.Ratio,
+			ActiveScene->GetActiveCameraActor()->Frustrum.FieldOfView
+		);
+
+		ShadowMap->CalculateLightProjection(
+			i, 
+			ActiveScene->GetActiveCameraActor(), 
+			ActiveScene->SceneLights.Front()->Light
+		);
+
+		DrawScene(
+			DepthShader, 
+			ShadowMap->GetCascade(i)->LightViewMatrix, 
+			ShadowMap->GetCascade(i)->LightProjectionMatrix
+		);
+
 		glCullFace(GL_BACK);
+		glDisable(GL_POLYGON_OFFSET_FILL);
 	}
 
 	glUseProgram(0);
@@ -168,20 +190,31 @@ void GRenderManager::RenderPass()
 		SkyBoxShader->Enable();
 		DrawSkyBox(SkyBoxShader);
 
-		Shader* BrdfShader = gShaderManager.GetShader("BRDF_Default");
-		BrdfShader->Enable();
+		Shader* RenderShader;
+		if (Options.ShowShadowMapDebug) {
+			RenderShader = gShaderManager.GetShader("CSM_Debug");
+		}
+		else {
+			RenderShader = gShaderManager.GetShader("BRDF_Default");
+		}
+		RenderShader->Enable();
+		
+		// Shader Options
+		RenderShader->SetBool("usePCSS", Options.UsePCSS);
+		RenderShader->SetFloat("wLight", Options.LightSize);
+
 
 		//get Camera
-		PCameraComponent* Camera = ActiveScene->GetActiveCameraActor()->Camera;
+		PCameraComponent* Camera = ActiveScene->GetActiveCameraActor();
 
 		//for now get light but later we will need lights!
 		TArray<PRenderActor*> Lights = ActiveScene->SceneLights;
-		Lights.Front()->Light->SetupShaderLight(BrdfShader);
+		Lights.Front()->Light->SetupShaderLight(RenderShader);
 
 		//Prepare shadow Data
-		ShadowMap->PrepareForDraw(BrdfShader, Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
+		ShadowMap->PrepareForDraw(RenderShader, Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
 
-		DrawScene(BrdfShader, Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
+		DrawScene(RenderShader, Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
 
 		ShadowMap->UnbindBuffers();
 	}
@@ -190,8 +223,8 @@ void GRenderManager::RenderPass()
 void GRenderManager::DrawSkyBox(Shader* SkyBoxShader) {
 	
 
-	Matrix4f viewMatrix = ActiveScene->GetActiveCameraActor()->Camera->GetViewMatrix();
-	Matrix4f projectionMatrix = ActiveScene->GetActiveCameraActor()->Camera->GetProjectionMatrix();
+	Matrix4f viewMatrix = ActiveScene->GetActiveCameraActor()->GetViewMatrix();
+	Matrix4f projectionMatrix = ActiveScene->GetActiveCameraActor()->GetProjectionMatrix();
 
 	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_2D, ActiveScene->GetSkyBox()->EnviromentMap->TextureID);
@@ -317,11 +350,23 @@ void GRenderManager::DrawOptions() {
 
 	ImGui::Begin("Options", 0, window_flags);
 	{
-		ImGui::RadioButton("Main", &TargetToRender, 100);
+		//Cascade Shadow Map
+		ImGui::SliderInt("Cascades Number", &Options.NumCascades, 1, 4);
+		if (ImGui::SliderFloat("Lambda", &Options.Lambda, 0.0, 1.0)) {
+			ShadowMap->Lambda = Options.Lambda;
+		}
+		ImGui::Text("Cascade Shadow Map");
+		ImGui::Checkbox("CSM Debug View", &Options.ShowShadowMapDebug);
 		for (int i = 0; i < ShadowMap->NumCascades; i++) {
 			std::string CascadeTitle = "CSM Level " + std::to_string(i);
-			ImGui::RadioButton(CascadeTitle.c_str(), &TargetToRender, i);
+			ImGui::Checkbox(CascadeTitle.c_str(), &Options.ShowCascade[i]);
+			ImGui::SameLine();
 		}
+		//-------------------------------------------------------------------
+		ImGui::NewLine();
+		ImGui::Text("Percentage-Close Soft Shadows");
+		ImGui::Checkbox("Enable PCSS", &Options.UsePCSS);
+		ImGui::SliderFloat("Light Size", &Options.LightSize, 0.0f, 1.0f);
 		ImGui::Separator();
 		if(ImGui::Button("Reload Shaders")) {
 			gShaderManager.ReloadShaders();
@@ -333,35 +378,71 @@ void GRenderManager::DrawOptions() {
 void GRenderManager::DrawPreview()
 {
 	uint32 RenderTarget = 0;
-	if (TargetToRender == 100) {
-		RenderTarget = RenderTargets[0]->GetTexture();
-		if (RenderTarget != 0) {
-			ImGui::SetNextWindowSize(ImVec2(1280, 720));
-			ImGui::SetNextWindowPos(ImVec2(0, 0));
-			ImGuiWindowFlags window_flags = 0;
-			window_flags |= ImGuiWindowFlags_NoMove;
-			window_flags |= ImGuiWindowFlags_NoCollapse;
-			window_flags |= ImGuiWindowFlags_NoResize;
+	RenderTarget = RenderTargets[0]->GetTexture();
+	if (RenderTarget != 0) {
+		ImGui::SetNextWindowSize(ImVec2(1280, 720));
+		ImGui::SetNextWindowPos(ImVec2(0, 0));
+		ImGuiWindowFlags window_flags = 0;
+		window_flags =
+			ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoCollapse |
+			ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoFocusOnAppearing |
+			ImGuiWindowFlags_NoBringToFrontOnFocus;
 
-			ImGui::Begin("Editor", 0, window_flags);
-			{
-				ImGui::Image(
-					(ImTextureID)RenderTarget,
-					ImGui::GetContentRegionAvail(),
-					ImVec2(0, 1),
-					ImVec2(1, 0)
-				);
-			}
-			ImGui::End();
+		ImGui::Begin("Editor", 0, window_flags);
+		{
+			ImGui::Image(
+				(ImTextureID)RenderTarget,
+				ImGui::GetContentRegionAvail(),
+				ImVec2(0, 1),
+				ImVec2(1, 0)
+			);
 		}
+		ImGui::End();
 	}
-	else {
-		DrawDepthMap(ShadowMap->GetCascade(TargetToRender).CascadeFBO);
-	}
+
+	DrawDepthMaps();
 }
 
-void GRenderManager::DrawDepthMap(FBORenderTarget * DepthMap) {
-	ImGui::SetNextWindowSize(ImVec2(DepthMap->Width,DepthMap->Height));
+void GRenderManager::DrawDepthMaps() {
+	int CascadesToShow = 0;
+	for (auto& ShowCascade : Options.ShowCascade) {
+		if (ShowCascade)
+			CascadesToShow++;
+	}
+	CascadesToShow = CascadesToShow > Options.NumCascades ? Options.NumCascades : CascadesToShow;
+	if (CascadesToShow > 0) {
+		float Width = (132 * CascadesToShow) + (8 * (CascadesToShow - 1)) + (2 * ImGui::GetStyle().WindowPadding.x);
+		ImGui::SetNextWindowSize(ImVec2(Width, 168));
+		ImGui::SetNextWindowPos(ImVec2(0, 720 - 168));
+		ImGuiWindowFlags window_flags = 0;
+		window_flags =
+			ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoCollapse |
+			ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoFocusOnAppearing;
+
+		ImGui::Begin("CSM Levels", 0, window_flags);
+		{
+			for (int i = 0; i < ShadowMap->NumCascades; i++) {
+				if (Options.ShowCascade[i]) {
+					uint32 Target = ShadowMap->Cascades[i]->CascadeFBO->GetTexture();
+					
+					ImGui::Image(
+						(ImTextureID)Target,
+						ImVec2(132, 132),
+						ImVec2(0, 1),
+						ImVec2(1, 0)
+					);
+					ImGui::SameLine();
+				}
+			}
+
+		}
+		ImGui::End();
+	}
+	/*ImGui::SetNextWindowSize(ImVec2(128,128));
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 	ImGuiWindowFlags window_flags = 0;
 	window_flags |= ImGuiWindowFlags_NoMove;
@@ -377,5 +458,5 @@ void GRenderManager::DrawDepthMap(FBORenderTarget * DepthMap) {
 			ImVec2(1, 0)
 		);
 	}
-	ImGui::End();
+	ImGui::End();*/
 }

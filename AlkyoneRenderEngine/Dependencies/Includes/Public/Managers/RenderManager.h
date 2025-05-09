@@ -21,6 +21,24 @@ class GGUIManager;
 class Shader;
 class FBORenderTarget;
 
+struct RenderOptions {
+public:
+	//Cascade Shadow Mapping
+	bool ShowShadowMapDebug = false;
+	bool ShowCascade[4];
+	bool ToggleShadowView = false;
+	int32 NumCascades = 4;
+	float Lambda = 0.5;
+
+	//Percentage-Closer Soft Shadows
+	bool UsePCSS = false;
+	float LightSize = 0.1;
+
+	int32 TargetToRender = 100;
+
+	RenderOptions() {}
+};
+
 class GRenderManager : SingletonManagerBase<GRenderManager>
 {
 public:
@@ -45,7 +63,7 @@ private:
 
 	TArray<FBORenderTarget* > RenderTargets;
 
-	int32 TargetToRender = 0;
+	RenderOptions Options;
 
 public:
 
@@ -75,7 +93,8 @@ public:
 
 	void DrawPreview();
 
-	void DrawDepthMap(FBORenderTarget * DepthMap);
+	void DrawDepthMaps();
+
 
 };
 

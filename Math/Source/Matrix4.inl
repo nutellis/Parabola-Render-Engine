@@ -1,7 +1,7 @@
 
 template <typename T>
 const TMatrix4<T> TMatrix4<T>::ZERO(
-  TVector4<T>(0.0f,0,0,0),
+  TVector4<T>(0,0,0,0),
   TVector4<T>(0,0,0,0),
   TVector4<T>(0,0,0,0),
   TVector4<T>(0,0,0,0)
@@ -9,10 +9,10 @@ const TMatrix4<T> TMatrix4<T>::ZERO(
 
 template <typename T>
 const TMatrix4<T> TMatrix4<T>::IDENTITY(
-  TVector4<T>(1.0f,0,0,0),
-  TVector4<T>(0,1,0,0),
-  TVector4<T>(0,0,1,0),
-  TVector4<T>(0,0,0,1)
+  TVector4<T>(static_cast<T>(1), 0, 0, 0),
+  TVector4<T>(0, static_cast<T>(1),0,0),
+  TVector4<T>(0,0, static_cast<T>(1),0),
+  TVector4<T>(0,0,0, static_cast<T>(1))
 );
 
 template <typename T>

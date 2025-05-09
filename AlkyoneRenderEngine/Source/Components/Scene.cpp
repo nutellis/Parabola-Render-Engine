@@ -1,6 +1,7 @@
 #include <Components\Scene.h>
 #include <Components/RenderActor.h>
 #include <Components/SkyBox.h>
+#include <Components/Camera.h>
 
 Scene::Scene() {
 }
@@ -70,9 +71,20 @@ void Scene::InitScene() {
 	this->AddChild(terrain);
 
 	terrain->SetPosition(Vector3f(0.0, 0.0, 0.0));
+	//terrain->SetScale(1000.0f);
 	terrain->SetScale(10.0f);
+	//terrain->AddMesh("Assets/ground_plane.obj");
 	terrain->AddMesh("Assets/SnowTerrain.obj");
 	SortChild(terrain);
+
+	//PRenderActor* vertical = new PRenderActor("Plane");
+	//this->AddChild(vertical);
+
+	//vertical->SetPosition(Vector3f(-10.0, 10.0, 0.0));
+	//vertical->SetRotation(Vector3f(0.0, 0.0, 90.0));
+	//vertical->SetScale(50.0f);
+	//vertical->AddMesh("Assets/ground_plane.obj");
+	//SortChild(vertical);
 
 	// init scene from a previous saved one. for now just init one for testing
 	//PRenderActor* triangle = new PRenderActor("triangle");
@@ -93,12 +105,12 @@ void Scene::InitScene() {
 	//SortChild(sponza);
 
 
-	PRenderActor* plane = new PRenderActor("spaceship");
-	this->AddChild(plane);
+	//PRenderActor* plane = new PRenderActor("spaceship");
+	//this->AddChild(plane);
 
-	plane->SetPosition(Vector3f(150.0, 10.0, 0.0));
-	plane->AddMesh("Assets/space-ship.obj");
-	SortChild(plane);
+	//plane->SetPosition(Vector3f(150.0, 10.0, 0.0));
+	//plane->AddMesh("Assets/space-ship.obj");
+	//SortChild(plane);
 
 
 	/*PRenderActor* landingpad1 = new PRenderActor("landingpad_1");
@@ -107,8 +119,16 @@ void Scene::InitScene() {
 	landingpad1->SetPosition(Vector3f(15.0, 14.0, -25.0));
 	landingpad1->AddMesh("Assets/landingpad.obj");
 	SortChild(landingpad1);*/
+	for (int i = 0; i < 15; i++) {
+		PRenderActor* plane1 = new PRenderActor("spaceship_" + std::to_string(i));
+		this->AddChild(plane1);
 
-	PRenderActor* plane1 = new PRenderActor("spaceship_1");
+		plane1->SetPosition(Vector3f(0.0, 20.0,-i * 15));
+		plane1->AddMesh("Assets/space-ship.obj");
+		SortChild(plane1);
+	}
+
+	/*PRenderActor* plane1 = new PRenderActor("spaceship_1");
 	this->AddChild(plane1);
 
 	plane1->SetPosition(Vector3f(0.0, 20.0, 0.0));
@@ -121,7 +141,7 @@ void Scene::InitScene() {
 
 	plane2->SetPosition(Vector3f(15.0, 25.0, -35.0));
 	plane2->AddMesh("Assets/space-ship.obj");
-	SortChild(plane2);
+	SortChild(plane2);*/
 
 	PRenderActor* camera = new PRenderActor("camera");
 	this->AddChild(camera);
@@ -162,7 +182,7 @@ void Scene::ResetScene() {
 	Root = nullptr;
 }
 
-PRenderActor* Scene::GetActiveCameraActor()
+PCameraComponent* Scene::GetActiveCameraActor()
 {
 	PRenderActor* CameraActor = Root->Children.FindFirst([](const PRenderActor* Child) {
 		return (Child->ActorType == EntityType::CAMERA && Child->Camera != nullptr && Child->Camera->IsActiveCamera == true);
@@ -171,7 +191,7 @@ PRenderActor* Scene::GetActiveCameraActor()
 	/*if (CameraActor->Camera != nullptr) {
 		return CameraActor->Camera;
 	}*/
-	return CameraActor;
+	return CameraActor->Camera;
 }
 
 PSkyBox* Scene::GetSkyBox()

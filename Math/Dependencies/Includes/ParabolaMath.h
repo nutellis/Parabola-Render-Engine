@@ -152,9 +152,9 @@ static TMatrix4<T> Rotate(float Angle, TVector3<T> const & InVector)
 template <typename T>
 static TMatrix4<T> Rotate(TVector3<T> Rotator, TMatrix4<T> const& Source) {
 
-	TMatrix4<T> RotatorX = Rotate(Vector3f(1.0f, 0.0f, 0.0f), Rotator.X, Source);
-	TMatrix4<T> RotatorY = Rotate(Vector3f(0.0f, 1.0f, 0.0f), Rotator.Y, Source);
-	TMatrix4<T> RotatorZ = Rotate(Vector3f(0.0f, 0.0f, 1.0f), Rotator.Z, Source);
+	TMatrix4<T> RotatorX = Rotate(Vector3f(1.0f, 0.0f, 0.0f), Rotator.X, TMatrix4<T>::IDENTITY);
+	TMatrix4<T> RotatorY = Rotate(Vector3f(0.0f, 1.0f, 0.0f), Rotator.Y, TMatrix4<T>::IDENTITY);
+	TMatrix4<T> RotatorZ = Rotate(Vector3f(0.0f, 0.0f, 1.0f), Rotator.Z, TMatrix4<T>::IDENTITY);
 	return RotatorZ * RotatorY * RotatorX * Source;
 }
 

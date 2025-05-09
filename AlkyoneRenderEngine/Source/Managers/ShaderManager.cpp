@@ -223,6 +223,17 @@ void GShaderManager::Init()
 		Shaders.PushBack(DepthShader);
 	}
 
+	// Cascade Shadow Map Debug
+	Shader* CSMDebugShader = CompileProgram("CSM_Debug", "Shaders/cascade_debug.vert", "Shaders/cascade_debug.frag");
+	if (CSMDebugShader->ID == 0)
+	{
+		LOG(ERROR, "Failed to compile CSM_Debug shader\n");
+	}
+	else
+	{
+		Shaders.PushBack(CSMDebugShader);
+	}
+
 	//probably read some standard shaders that need to load. For now do nothing. hoho
 	LOG(DEBUG, "SHADER_MANAGER INITIATED\n"); 
 }

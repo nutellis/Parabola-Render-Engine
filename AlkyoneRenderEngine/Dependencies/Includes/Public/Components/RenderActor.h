@@ -10,6 +10,7 @@
 
 class PStaticMeshComponent;
 class PDirectionalLightComponent;
+class PCameraComponent;
 
 enum EntityType {
 	LIGHT,
@@ -22,7 +23,7 @@ class PRenderActor {
 
 public:
 	PRenderActor();
-	PRenderActor(const char* NodeName);
+	PRenderActor(std::string NodeName);
 
 	// std::vector<PRenderActor*> Children; // do i need this? Find out how to access children
 

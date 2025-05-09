@@ -6,6 +6,8 @@ precision highp float;
 layout(location = 0) out vec4 fragmentColor;
 uniform float near_plane;
 uniform float far_plane;
+
+in float depth;
 float LinearizeDepth(float depth)
 {
     float z = depth * 2.0 - 1.0; // back to NDC

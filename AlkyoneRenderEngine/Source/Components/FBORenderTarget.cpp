@@ -75,6 +75,15 @@ bool FBORenderTarget::Init(bool IsForShadowMapping)
 	return bIsCompleted;
 }
 
+bool FBORenderTarget::Init(std::string Name, uint32 Width, uint32 Height, bool IsForShadowMapping)
+{
+	this->Name = Name;
+	this->Width = Width;
+	this->Height = Height;
+
+	return Init(IsForShadowMapping);
+}
+
 uint32 FBORenderTarget::GetTexture() const
 {
 	return ColourAttachment->TextureID;

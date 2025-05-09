@@ -45,7 +45,7 @@ void GGUIManager::Draw(){
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
 
 
 	DrawLog("Editor Log", &open);

@@ -30,7 +30,7 @@ public:
 
 	void ResetScene();
 
-	PRenderActor* GetActiveCameraActor();
+	PCameraComponent* GetActiveCameraActor();
 	PSkyBox* GetSkyBox();
 
 

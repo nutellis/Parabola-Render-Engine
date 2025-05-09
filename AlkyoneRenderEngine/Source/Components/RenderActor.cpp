@@ -1,7 +1,7 @@
 #include <Components\RenderActor.h>
 #include <Components\RenderComponents\StaticMeshComponent.h>
 #include <ParabolaMath.h>
-#include <Utilities/CameraUtiltities.h>
+#include <Components/Camera.h>
 #include <Components/LightComponents/DirectionalLightComponent.h>
 
 PRenderActor::PRenderActor()
@@ -10,7 +10,7 @@ PRenderActor::PRenderActor()
   //  RootComponent = new PSceneComponent();
 }
 
-PRenderActor::PRenderActor(const char* NodeName): ObjectName(NodeName)
+PRenderActor::PRenderActor(std::string NodeName): ObjectName(NodeName)
 {
     ObjectPosition = Vector3f::ZERO;
     ObjectRotation = Vector3f::ZERO;
@@ -153,25 +153,12 @@ void PRenderActor::SetupModelMatrix(Shader* ActiveShader) {
 
     ModelMatrix = Matrix4f::IDENTITY;
 
-    ModelMatrix = Scale(GetScale(), ModelMatrix);
+    Matrix4f S = Scale(GetScale(), Matrix4f::IDENTITY);
+    Matrix4f R = Rotate(GetRotation(), Matrix4f::IDENTITY);
+    Matrix4f T = Translate(GetPosition(), Matrix4f::IDENTITY);
 
-    // fix angle parameter (StaticMesh->angle)
-//	ModelMatrix = Rotate(GetRotation(), ModelMatrix);
-
-    ModelMatrix = Translate(GetPosition(), ModelMatrix);
+    ModelMatrix = T * R * S;
 
     //ActiveShader->SetMat4(ActiveShader->Uniforms.ModelLocation, false, ModelMatrix);
 
-}
-
-
-void PRenderActor::ControlCamera(uint32 Width, uint32 Height) {
-
-
-    //TODO: do some checking ?
-	Camera->AspectRatio = (float)Width / (float)Height;
-
-    Camera->Projection = Perspective(Camera->FieldOfView, (float)Width / (float)Height, Camera->ZNear, Camera->ZFar);
-
-    Camera->View = LookAt(ObjectPosition, ObjectPosition + Camera->CameraDirection, Camera->WorldUp);
 }

@@ -1,81 +1,72 @@
 #pragma once
 
 #include <ParabolaMath.h>
+#include <Components/Components.h>
 
 
+class PCameraComponent;
 
-//A viewpoint from which the scene will be rendered. 
-//Cameras maintain their own aspect ratios, field of view, and frustum,
-//and project co-ordinates into a space measured from -1 to 1 in x and y, and 0 to 1 in z.
-//At render time, the camera will be rendering to a ''Viewport'' 
-//which will translate these parametric co-ordinates into real screen co-ordinates. 
-//Obviously it is advisable that the viewport has the same aspect ratio
-//as the camera to avoid distortion 
-
-enum Projection_Type
-{
-	ORTHO_GRAPHIC, PERS_PECTIVE
+// Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
+enum CameraMovement {
+	FORWARD,
+	BACKWARD,
+	LEFT,
+	RIGHT,
+	UP,
+	DOWN
 };
 
-enum Camera_Movement {
-	FOR_WARD,
-	BACK_WARD,
-	LE_FT,
-	RI_GHT
+enum ProjectionType {
+	ORTHOGRAPHIC, PERSPECTIVE
 };
 
 
-class Camera
+struct PFrustrum {
+public:
+	Vector3f Corners[8];
+	Vector3f Center;
+	Vector3f Extents;
+	Vector3f Direction;
+	float DiagonalLength;
+	float NearPlane;
+	float FarPlane;
+	float Ratio;
+	float FieldOfView;
+
+	PFrustrum(); 
+	~PFrustrum();
+	void CalculateFrustrumCorners(PCameraComponent* Camera);
+};
+
+// Default camera values			//Load them in some way ?? -> .ini file probably
+const float YAW = 90.0f;
+const float PITCH = 0.0f;
+const float SPEED = 5.0f;
+const float SENSITIVTY = 0.2f;
+const float ZOOM = 60.0f;
+
+class PCameraComponent : public PSceneComponent
 {
+	// An abstract camera class that processes input and calculates the corresponding Eular Angles, Vectors and Matrices for use in OpenGL
 public:
 
 	Matrix4f View;
 	Matrix4f Projection;
+	PFrustrum Frustrum;
 
-	Camera();
-	~Camera();
 
-	//Matrix4f LookAt(const Vector4f & Eye, const Vector4f & At, const Vector4f & Up = Vector4f(0.0f, 1.0f, 0.0f));
-	//void LookAt(const Vector4f & Eye, const Vector4f & At,const Vector4f & Up = Vector4f(0.0f, 1.0f, 0.0f)); 
-	//
-	void SetProjection(Projection_Type Type);
-	
-	/*Matrix4f Perspective(const float & FieldOfView, const float & AspectRatio,
-		const float & ZNear = 0.1f, const float & ZFar = 100.0f);*/
-	
-	//void Perspective(const float & FieldOfView, const float & AspectRatio,
-	//	const float & ZNear = 0.1f, const float & ZFar = 100.0f);
-	//
-	//Matrix4f Ortho(
-	//	const float & Left, const float &  Right,
-	//	const float &  Top, const float &  Bottom,
-	//	const float & ZNear = 0.1f, const float & ZFar = 100.0f
-	//);
-
-	//void Ortho(
-	//	const float & Left, const float &  Right,
-	//	const float &  Top, const float &  Bottom,
-	//	const float & ZNear = 0.1f, const float & ZFar = 100.0f
-	//);
-
-	Matrix4f GetViewMatrix();
-
-	void UpdateCameraVectors();
-
-	void SetDefaults();
-
-public:
 	// Camera Attributes
-	Vector3f Position;
 	Vector3f Front;
 	Vector3f Up;
 	Vector3f Right;
 	Vector3f WorldUp;
-	
+
+	Vector3f CameraDirection;
+
+
 	// Euler Angles
 	float Yaw;
 	float Pitch;
-
 
 	// Camera options
 	float MovementSpeed;
@@ -84,40 +75,41 @@ public:
 	//degrees
 	float Zoom;
 
+	//set true for active camera
+	bool IsActiveCamera;
 
-	void ProcessKeyboard(Camera_Movement Direction, float DeltaTime);
+	// Constructor with vectors
+	//PCameraComponent(Vector3f up = Vector3f(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
 
-	void ProcessMouseMovement(float xoffset, float yoffset, uint8 constrainPitch = true);
+	PCameraComponent(PRenderActor* Parent, Vector3f up = Vector3f(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
+	// Constructor with scalar values
+	PCameraComponent(float upX, float upY, float upZ, float yaw, float pitch);
 
+	void SetProjection(ProjectionType Type);
+
+	Matrix4f GetViewMatrix() const;
+
+	Matrix4f GetProjectionMatrix() const;
+
+	// Calculates the front vector from the Camera's (updated) Eular Angles
+	void UpdateCameraVectors();
+
+	void SetDefaults();
+
+	void ControlCamera(uint32 Width, uint32 Height);
+
+	// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
+	void ProcessKeyboard(CameraMovement direction, float deltaTime);
+
+	void RotateCamera(float xoffset, float yoffset);
+
+
+	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
+	void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true);
+
+	// Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
 	void ProcessMouseScroll(float yoffset);
-private:
-	
-	void updateCameraVectors();
 
-	
+	void SetupShaderCamera(Shader* ActiveShader);
 
 };
-
-
-
-	
-
-
-//void perspective(float FieldView, float ProjectionWindow, float ZNear, float ZFar);
-/*
-The perspective projection tranformation will require us to supply 4 parameters:
-
-	The aspect ratio - the ratio between the width and the height of the rectangular area which will be the target of projection.
-	The vertical field of view: the vertical angle of the camera through which we are looking at the world.
-	The location of the near Z plane. This allows us to clip objects that are too close to the camera.
-	The location of the far Z plane. This allows us to clip objects that are too distant from the camera.
-
-*/
-
-
-//SceneManager * 	getSceneManager(void) const
-//Returns a pointer to the SceneManager this camera is rendering through.
-
-//virtual bool 	getUseRenderingDistance(void) const
-//Get whether this camera should use the 'rendering distance' on objects to exclude distant objects from the final image.
-

@@ -65,18 +65,114 @@ uniform vec3 viewSpaceLightPosition;
 uniform vec3 viewSpaceLightDir;
 
 ///////////////////////////////////////////////////////////////////////////////
-// Shadow Information
+//Cascade Shadow Information
 ///////////////////////////////////////////////////////////////////////////////
 layout(std430, binding = 0) buffer TextureHandles {
     uint64_t handles[]; // Array of texture handles
 };
 // textures 10 to 13
-uniform sampler2DShadow shadowMap[4];
+uniform sampler2D shadowMap[4];
+
 
 
 in vec4 shadowMapCoord[4];
-uniform vec4 FragmentDistance;
+uniform vec4 farPlanes;
 
+///////////////////////////////////////////////////////////////////////////////
+// PCSS
+///////////////////////////////////////////////////////////////////////////////
+uniform int usePCSS = 0;
+uniform float lightSize = 0.5; 
+uniform vec4 lightFrustrumWidth; 
+uniform vec4 nearPlanes; 
+uniform vec4 texelSize;
+
+
+const vec2 offsets[16] = vec2[](
+    vec2( -0.94201624, -0.39906216 ),
+    vec2(  0.94558609, -0.76890725 ),
+    vec2( -0.094184101, -0.92938870 ),
+    vec2(  0.34495938,  0.29387760 ),
+    vec2( -0.91588581,  0.45771432 ),
+    vec2( -0.81544232, -0.87912464 ),
+    vec2( -0.38277543,  0.27676845 ),
+    vec2(  0.97484398,  0.75648379 ),
+    vec2(  0.44323325, -0.97511554 ),
+    vec2(  0.53742981, -0.47373420 ),
+    vec2( -0.26496911, -0.41893023 ),
+    vec2(  0.79197514,  0.19090188 ),
+    vec2( -0.24188840,  0.99706507 ),
+    vec2( -0.81409955,  0.91437590 ),
+    vec2(  0.19984126,  0.78641367 ),
+    vec2(  0.14383161, -0.14100790 )
+);
+
+const vec2 poisson[64] = vec2[](
+    vec2( 0.5093, -0.3431 ),
+    vec2( -0.3122,  0.5691 ),
+    vec2( 0.1223,  0.7255 ),
+    vec2( 0.3993,  0.0586 ),
+    vec2( 0.5487, -0.0242 ),
+    vec2( -0.6123, -0.3390 ),
+    vec2( -0.4282,  0.3894 ),
+    vec2( 0.3122,  0.5122 ),
+    vec2( -0.3298, -0.3770 ),
+    vec2( -0.6641,  0.1059 ),
+    vec2( 0.2340, -0.5379 ),
+    vec2( -0.2299, -0.6703 ),
+    vec2( 0.5331, -0.1179 ),
+    vec2( 0.0802,  0.2286 ),
+    vec2( -0.4136, -0.2437 ),
+    vec2( 0.3238,  0.0059 ),
+    vec2( 0.6110, -0.1572 ),
+    vec2( 0.1560,  0.5991 ),
+    vec2( 0.2942, -0.4132 ),
+    vec2( -0.4442,  0.1487 ),
+    vec2( 0.4702,  0.4508 ),
+    vec2( 0.3810, -0.4555 ),
+    vec2( -0.1534,  0.4434 ),
+    vec2( 0.5975,  0.1565 ),
+    vec2( -0.2684,  0.3744 ),
+    vec2( -0.0836, -0.2247 ),
+    vec2( 0.4737, -0.4480 ),
+    vec2( -0.4133,  0.5294 ),
+    vec2( 0.2184, -0.2701 ),
+    vec2( -0.6148,  0.1499 ),
+    vec2( 0.0899, -0.5099 ),
+    vec2( -0.5087, -0.4595 ),
+    vec2( 0.2917, -0.1797 ),
+    vec2( -0.2191,  0.0197 ),
+    vec2( 0.4818,  0.5563 ),
+    vec2( -0.3246,  0.4948 ),
+    vec2( 0.4967, -0.1702 ),
+    vec2( 0.3664, -0.3523 ),
+    vec2( -0.3447, -0.2654 ),
+    vec2( 0.2310, -0.3074 ),
+    vec2( -0.5076, -0.0520 ),
+    vec2( 0.1366, -0.1357 ),
+    vec2( -0.0695,  0.3195 ),
+    vec2( -0.4261, -0.0503 ),
+    vec2( 0.4932, -0.4029 ),
+    vec2( -0.2959,  0.1985 ),
+    vec2( 0.2817, -0.5972 ),
+    vec2( -0.4310,  0.2877 ),
+    vec2( 0.0609,  0.3994 ),
+    vec2( 0.5374, -0.3870 ),
+    vec2( 0.1187,  0.4473 ),
+    vec2( -0.3878,  0.2691 ),
+    vec2( -0.2214,  0.1298 ),
+    vec2( -0.2325, -0.4597 ),
+    vec2( 0.0984, -0.6151 ),
+    vec2( -0.0651,  0.5206 ),
+    vec2( -0.0585,  0.2218 ),
+    vec2( 0.3700,  0.2168 ),
+    vec2( 0.1325,  0.5723 ),
+    vec2( -0.2899, -0.2298 ),
+    vec2( 0.5062,  0.2843 ),
+    vec2( 0.3769,  0.3685 ),
+    vec2( -0.5055,  0.0651 ),
+    vec2( 0.2419,  0.4159 )
+);
 
 layout(binding = 16) uniform sampler2D ssaoTexture;
 
@@ -85,52 +181,81 @@ layout(binding = 16) uniform sampler2D ssaoTexture;
 ///////////////////////////////////////////////////////////////////////////////
 layout(location = 0) out vec4 fragmentColor;
 
-float shadowCoef()
+float PCF(float bias, float filterRadius, int index, float stepSize) {
+    float sum = 0.0;
+
+    for (int x = 0; x < 64; x++) {
+        vec2 offset = shadowMapCoord[index].xy + stepSize * poisson[x] * filterRadius;
+        float depth = texture(shadowMap[index], offset).r;
+        float visibility = (shadowMapCoord[index].z - bias <= depth) ? 1.0 : 0.0;
+        sum += visibility;
+    }
+
+    return sum / 64.0;
+}
+
+// https://developer.download.nvidia.com/whitepapers/2008/PCSS_Integration.pdf
+float PCSS(float bias, int index, float stepSize) {
+
+	// Step 1: Blocker step
+	float avgBlockerDepth = 0;
+
+	float blockerSum = 0.0;
+    int numBlockers = 0;
+
+	float zReceiver = shadowMapCoord[index].z;
+
+	float searchWidth = (lightSize/lightFrustrumWidth[index]) *(zReceiver - nearPlanes[index]) / zReceiver;
+
+	for(int i = 0; i < 16; i++) {
+		vec2 offset = shadowMapCoord[index].xy + stepSize * poisson[i];
+		float shadowMapDepth = texture(shadowMap[index], offset).r;
+		if ( shadowMapDepth < zReceiver ) {
+			blockerSum += shadowMapDepth;
+			numBlockers++;
+		}
+	}
+
+    if (numBlockers < 1)
+        return 1.0;
+
+	float zBlocker = avgBlockerDepth = blockerSum / numBlockers;
+
+	// Step 2: Penumbra size estimation 
+	float penumbraRatio = (zReceiver - zBlocker) / zBlocker;
+    float filterRadius = penumbraRatio * (lightSize/lightFrustrumWidth[index]) * nearPlanes[index] / zReceiver;
+
+	return filterRadius;
+	// Step 3: PCF filtering
+	return PCF(bias, filterRadius, index, stepSize);
+}
+
+
+float calculateShadowsCoef(vec3 n, vec3 wi)
 {
 	int index = 3;
 	
-	// find the appropriate depth map to look up in based on the depth of this fragment
-	if(gl_FragCoord.z < FragmentDistance.x)
+	// find the appropriate depth map based on the depth of this fragment
+	if(gl_FragCoord.z < farPlanes.x)
 		index = 0;
-	else if(gl_FragCoord.z < FragmentDistance.y)
+	else if(gl_FragCoord.z < farPlanes.y)
 		index = 1;
-	else if(gl_FragCoord.z < FragmentDistance.z)
+	else if(gl_FragCoord.z < farPlanes.z)
 		index = 2;
 
-	
-	// get the texture handle of the shadow map
-	 uint64_t shadowHandle = handles[index];
+	float bias = 0.005 * (1.0 - dot(n, wi));
+	bias = clamp(bias, 0.0, 0.01);
 
-	vec3 shadowUV = shadowMapCoord[index].xyz / shadowMapCoord[index].w;
+    float stepSize = 1.0 / texelSize[index]; // Assuming square texture
 
-	float shadowDepth = 0;
-//	#if defined(USE_HARDWARE_SHADOWS)
-//		shadowDepth = textureProj(shadowMap[index], shadowMapCoord[index]);
-//	#else
-		shadowDepth = textureProj(shadowMap[index], shadowMapCoord[index]);
-	//#endif
+	if(usePCSS == 1) {
+		return PCSS(bias, index, stepSize);
+	} 
 
-	//float bias = 0.002;
-	float diff = shadowDepth - shadowUV.z; // - bias;
-	 
-	return clamp(diff * 250.0 + 1.0, 0.0, 1.0);
+	float filterRadius = texelSize[index] / 1024.0;
+	return PCF(bias, filterRadius, index, stepSize);
 }
 
-vec4 debugShadows() {
-	int index = 3;
-	
-	// find the appropriate depth map to look up in based on the depth of this fragment
-	if(gl_FragCoord.z < FragmentDistance.x)
-		index = 0;
-	else if(gl_FragCoord.z < FragmentDistance.y)
-		index = 1;
-	else if(gl_FragCoord.z < FragmentDistance.z)
-		index = 2;
-
-	vec3 uvw = shadowMapCoord[index].xyz / shadowMapCoord[index].w;
-	return vec4(uvw.xy, 0.0, 1.0); // just visualize light-space UV
-
-}
 
 
 vec3 calculateDirectIllumiunation(vec3 wo, vec3 n, vec3 base_color)
@@ -226,7 +351,7 @@ void main()
 		base_color = base_color * texture(colorMap, texCoord).rgb;
 	}
 	const float shadow_ambient = 0.9;
-	visibility = shadow_ambient * shadowCoef();
+	visibility = shadow_ambient * calculateShadowsCoef(n, LightDirection);
 	// Direct illumination
 	vec3 direct_illumination_term = visibility * calculateDirectIllumiunation(wo, n, base_color);
 
@@ -244,7 +369,8 @@ void main()
 
 	vec3 shading = direct_illumination_term + indirect_illumination_term + emission_term; // (ssao * )
 	
-	fragmentColor =  vec4(shading, 1.0); //debugShadows(); //
+	
+	fragmentColor =  vec4(vec3(calculateShadowsCoef(n, LightDirection)), 1.0);
 
 	return;
 }

@@ -17,6 +17,7 @@ public:
 	void Bind();
 
 	bool Init(bool IsForShadowMapping = false);
+	bool Init(std::string Name, uint32 Width, uint32 Height, bool IsForShadowMapping = true);
 
 
 	uint32 GetTexture() const;
