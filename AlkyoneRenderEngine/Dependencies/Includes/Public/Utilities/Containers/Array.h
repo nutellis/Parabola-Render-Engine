@@ -327,6 +327,7 @@ public:
 	void Clear() {
 		//Destroy(&First, &Last);
 		Last = First;
+		ArraySize = 0;
 		//delete First;
 	}
 
@@ -357,6 +358,20 @@ public:
 			Result++;
 		}
 		return nullptr;
+	}
+
+	template <typename Predicate>
+	TArray<T> FindAll(Predicate predicate) {
+		TArray<T> Matches;
+		Pointer Result = First;
+
+		while (Result != Last) {
+			if (predicate(*Result)) {
+				Matches.PushBack(*Result);
+			}
+			++Result;
+		}
+		return Matches;
 	}
 
 private:
@@ -397,7 +412,7 @@ private:
 		this->First = static_cast <ValueType *> (::operator new(NewCapacity * sizeof(ValueType))); // TODO: 
 		this->Last = this->First; // TODO: don't really like this here. Possible bug!
 		this->Storage = this->First + NewCapacity;
-
+		this->StorageSize = NewCapacity;
 		return true;
 	}
 

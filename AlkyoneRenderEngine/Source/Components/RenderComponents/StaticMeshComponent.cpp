@@ -54,11 +54,11 @@ PStaticMeshComponent::PStaticMeshComponent(PRenderActor* Parent, const char* pat
 
 }
 
-void PStaticMeshComponent::SetupBuffers(PVertexComponentCount ComponentCount)
+void PStaticMeshComponent::SetupBuffers(uint32 DrawType, PVertexComponentCount ComponentCount)
 {
 	VAO.CreateArray(ComponentCount);
 
-	VBO.CreateBuffer(Vertices.SizeOf(), Vertices.Begin());
+	VBO.CreateBuffer(DrawType, Vertices.SizeOf(), Vertices.Begin());
 
 	VAO.SetupAttribute(VBO.GetIndex(), 0, VAO.ComponentCount.Position, offsetof(VertexFormat, VertexFormat::Position));
 

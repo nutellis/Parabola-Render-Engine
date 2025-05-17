@@ -26,11 +26,9 @@ public:
 	PStaticMeshComponent(PRenderActor* Parent);
 	PStaticMeshComponent(PRenderActor* Parent, const char* path);
 
-	void SetupBuffers(PVertexComponentCount ComponentCount = PVertexComponentCount());
+	void SetupBuffers(uint32 DrawType = GL_STATIC_DRAW, PVertexComponentCount ComponentCount = PVertexComponentCount());
 
 	void SetShaderMaterial(Shader* ActiveShader, PMaterial* Material) const;
-
-	void SetupModelMatrix(Shader* ActiveShader);
 
 	void SetupVertexBuffers(VertexArray Vertices);
 
@@ -49,6 +47,7 @@ public:
 
 	float angle;
 
+	VertexArray Vertices;
 private:
 	TArray<PStaticMesh*> Meshes;
 	TArray<PMaterial*> Materials;
@@ -57,7 +56,7 @@ private:
 
 	VertexBufferObject VBO, EBO;
 
-	VertexArray Vertices;
+	
 	IndexArray Indices;
 };
 

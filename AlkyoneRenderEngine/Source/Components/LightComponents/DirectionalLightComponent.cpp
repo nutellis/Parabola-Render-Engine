@@ -27,7 +27,7 @@ PDirectionalLightComponent::~PDirectionalLightComponent()
 {
 }
 
-void PDirectionalLightComponent::SetupShaderLight(Shader* ActiveShader) {
+void PDirectionalLightComponent::SetupShaderLight(Shader* ActiveShader, Matrix4f ViewMatrix) {
 
 	//// be sure to activate shader when setting uniforms/drawing objects
 	//ActiveShader->setVec3("light.position", Parent->ObjectPosition);
@@ -46,10 +46,11 @@ void PDirectionalLightComponent::SetupShaderLight(Shader* ActiveShader) {
 	//ActiveShader->setFloat("light.quadratic",Attributes->Quadratic);
 
 
+	Vector3f ViewSpaceLightDirection = ViewMatrix * LightDirection;
+		
 
-	
 	ActiveShader->SetVec3("LightPosition", Parent->ObjectPosition);
-	ActiveShader->SetVec3("LightDirection", Normalize(LightDirection));
+	ActiveShader->SetVec3("LightDirection", Normalize(ViewSpaceLightDirection));
 
 	float environment_multiplier = 1.3f;
 	ActiveShader->SetFloat("environment_multiplier", environment_multiplier);
@@ -74,5 +75,5 @@ void PDirectionalLightComponent::SetDirection()
 	float Y = cos(ZenithRad);
 	float Z = sin(ZenithRad) * sin(AzimuthRad);
 
-	LightDirection = Normalize(Vector3f(X, Y, Z));
+	LightDirection = Normalize(Vector4f(X, Y, Z, 0.0));
 }

@@ -1589,7 +1589,7 @@
     <ClInclude Include="Dependencies\Includes\Private\stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Dependencies\Includes\Public\Components\Camera.h">
+    <ClInclude Include="Dependencies\Includes\Public\Components\CameraComponents\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\Includes\Public\Components\FBORenderTarget.h">

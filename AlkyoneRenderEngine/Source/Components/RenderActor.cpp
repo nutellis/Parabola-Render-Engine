@@ -1,7 +1,7 @@
 #include <Components\RenderActor.h>
 #include <Components\RenderComponents\StaticMeshComponent.h>
 #include <ParabolaMath.h>
-#include <Components/Camera.h>
+#include <Components/CameraComponents/Camera.h>
 #include <Components/LightComponents/DirectionalLightComponent.h>
 
 PRenderActor::PRenderActor()
@@ -35,13 +35,6 @@ void PRenderActor::AddMesh(const char* path)
     StaticMesh = new PStaticMeshComponent(this, path);
 
     ActorType = EntityType::MODEL;
-}
-
-void PRenderActor::AddCamera()
-{
-    Camera = new PCameraComponent(this);
-
-    ActorType = EntityType::CAMERA;
 }
 
 void PRenderActor::AddChild(PRenderActor* Child)
@@ -90,21 +83,23 @@ Vector3f PRenderActor::GetRotation()
 
 void PRenderActor::SetRotation(Vector3f inRotation)
 {
-    ObjectRotation = inRotation;
-
-    //TODO: please make this better, it is ugly
-    if (ActorType == EntityType::CAMERA) {
-		this->Camera->RotateCamera(inRotation.X, inRotation.Y);
+    if (Parent == nullptr) {
+        ObjectRotation = inRotation;
+    }
+    else {
+        ObjectRotation = Parent->ObjectRotation + inRotation;
     }
 
+    for (auto i = 0; i < Children.Size(); i++) {
+        Children[i]->SetRotation(ObjectRotation);
+    }
     //TODO: need to care about children
 }
 
 void PRenderActor::AddRotation(Vector3f inRotation)
 {
-    ObjectRotation += inRotation;
+    ObjectRotation = inRotation;
 
-    //TODO: need to care about children
 }
 
 void PRenderActor::resetOrientation()
@@ -149,7 +144,7 @@ void PRenderActor::DrawMeshChildren(Shader * ActiveShader) {
     }
 }
 
-void PRenderActor::SetupModelMatrix(Shader* ActiveShader) {
+void PRenderActor::SetupModelMatrix() {
 
     ModelMatrix = Matrix4f::IDENTITY;
 
@@ -158,7 +153,5 @@ void PRenderActor::SetupModelMatrix(Shader* ActiveShader) {
     Matrix4f T = Translate(GetPosition(), Matrix4f::IDENTITY);
 
     ModelMatrix = T * R * S;
-
-    //ActiveShader->SetMat4(ActiveShader->Uniforms.ModelLocation, false, ModelMatrix);
 
 }

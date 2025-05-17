@@ -1,7 +1,7 @@
 #include <Components\Scene.h>
 #include <Components/RenderActor.h>
 #include <Components/SkyBox.h>
-#include <Components/Camera.h>
+#include <Components/CameraComponents/Camera.h>
 
 Scene::Scene() {
 }
@@ -37,9 +37,6 @@ void Scene::AddToRoot(PRenderActor* Root)
 void Scene::SortChild(PRenderActor* Child) {
 	switch (Child->ActorType)
 	{
-	case CAMERA:
-		SceneCameras.PushBack(Child);
-		break;
 	case LIGHT:
 		SceneLights.PushBack(Child);
 		break;
@@ -49,6 +46,10 @@ void Scene::SortChild(PRenderActor* Child) {
 	default:
 		break;
 	}
+}
+
+void Scene::SortCamera(PCameraActor* Child) {
+	SceneCameras.PushBack(Child);
 }
 
 void Scene::InitScene() {
@@ -67,50 +68,35 @@ void Scene::InitScene() {
 		"Assets/envmaps/001_irradiance.hdr", 
 		filenames);
 
-	PRenderActor* terrain = new PRenderActor("terrain");
-	this->AddChild(terrain);
-
-	terrain->SetPosition(Vector3f(0.0, 0.0, 0.0));
-	//terrain->SetScale(1000.0f);
-	terrain->SetScale(10.0f);
-	//terrain->AddMesh("Assets/ground_plane.obj");
-	terrain->AddMesh("Assets/SnowTerrain.obj");
-	SortChild(terrain);
-
-	//PRenderActor* vertical = new PRenderActor("Plane");
-	//this->AddChild(vertical);
-
-	//vertical->SetPosition(Vector3f(-10.0, 10.0, 0.0));
-	//vertical->SetRotation(Vector3f(0.0, 0.0, 90.0));
-	//vertical->SetScale(50.0f);
-	//vertical->AddMesh("Assets/ground_plane.obj");
-	//SortChild(vertical);
-
-	// init scene from a previous saved one. for now just init one for testing
-	//PRenderActor* triangle = new PRenderActor("triangle");
-	//this->AddChild(triangle);
-
-	//triangle->SetPosition(Vector3f(-1.0, 0.0, 0.0));
-	//triangle->AddMesh("Assets/triangle.fbx");
-	////pyramid->SetScale(Vector3f(0.02));
-	//SortChild(triangle);
-
 	//PRenderActor* sponza = new PRenderActor("sponza");
 	//this->AddChild(sponza);
 
-	//sponza->SetPosition(Vector3f(1.0, 0.0, 0.0));
-	//sponza->SetScale(0.1f);
+	//sponza->SetPosition(Vector3f(0.0, 0.0, 0.0));
+	//sponza->SetRotation(Vector3f(0.0, 90.0, 0.0));
+	//sponza->SetScale(0.2f);
 	//sponza->AddMesh("Assets/sponza.obj");
 
 	//SortChild(sponza);
 
+	PRenderActor* sponza = new PRenderActor("Scene");
+	this->AddChild(sponza);
 
-	//PRenderActor* plane = new PRenderActor("spaceship");
-	//this->AddChild(plane);
+	sponza->SetPosition(Vector3f(0.0, 0.0, 0.0));
+	sponza->SetRotation(Vector3f(0.0, 0.0, 0.0));
+	sponza->SetScale(1.0f);
+	sponza->AddMesh("Assets/city test/city.obj");
 
-	//plane->SetPosition(Vector3f(150.0, 10.0, 0.0));
-	//plane->AddMesh("Assets/space-ship.obj");
-	//SortChild(plane);
+	SortChild(sponza);
+	
+
+
+	PRenderActor* cube = new PRenderActor("Weastley");
+	this->AddChild(cube);
+
+	cube->SetPosition(Vector3f(0.0f, 17.5f, 0.0));
+	cube->SetScale(10.0);
+	cube->AddMesh("Assets/wheatley.obj");
+	SortChild(cube);
 
 
 	/*PRenderActor* landingpad1 = new PRenderActor("landingpad_1");
@@ -119,14 +105,14 @@ void Scene::InitScene() {
 	landingpad1->SetPosition(Vector3f(15.0, 14.0, -25.0));
 	landingpad1->AddMesh("Assets/landingpad.obj");
 	SortChild(landingpad1);*/
-	for (int i = 0; i < 15; i++) {
+	/*for (int i = 0; i < 15; i++) {
 		PRenderActor* plane1 = new PRenderActor("spaceship_" + std::to_string(i));
 		this->AddChild(plane1);
 
 		plane1->SetPosition(Vector3f(0.0, 20.0,-i * 15));
 		plane1->AddMesh("Assets/space-ship.obj");
 		SortChild(plane1);
-	}
+	}*/
 
 	/*PRenderActor* plane1 = new PRenderActor("spaceship_1");
 	this->AddChild(plane1);
@@ -143,19 +129,25 @@ void Scene::InitScene() {
 	plane2->AddMesh("Assets/space-ship.obj");
 	SortChild(plane2);*/
 
-	PRenderActor* camera = new PRenderActor("camera");
+	PCameraActor* camera = new PCameraActor("Camera");
 	this->AddChild(camera);
 
-	camera->SetPosition(Vector3f(-5.0f, 30.0f, 10.0f));
-	// camera->SetRotation(Vector3f(0.0f, 0.0f, 0.0f));
-	camera->AddCamera();
-	SortChild(camera);
-	
+	camera->SetPosition(Vector3f(-300.0f, 25.0f, 10.0f));
+	 camera->SetRotation(Vector3f(0.0f, 90.0f, 0.0f));
+	SortCamera(camera);
+
+	PCameraActor* secondarycamera = new PCameraActor("Free Camera");
+	this->AddChild(secondarycamera);
+
+	secondarycamera->SetPosition(Vector3f(-280.0f, 111.0f, -290.0f));
+	secondarycamera->SetRotation(Vector3f(-25.0f, 170.0f, 0.0f));
+	SortCamera(secondarycamera);
+	this->SetActiveCamera(camera);
 
 	PRenderActor* light = new PRenderActor("light");
 	this->AddChild(light);
 
-	light->SetPosition(Vector3f(0.2f, 0.99f, 0.0f));
+	light->SetPosition(Vector3f(0.0f, 0.0f, 0.0f));
 
 	light->AddLight();
 	SortChild(light);
@@ -182,22 +174,30 @@ void Scene::ResetScene() {
 	Root = nullptr;
 }
 
-PCameraComponent* Scene::GetActiveCameraActor()
+PCameraActor* Scene::GetActiveCamera()
 {
-	PRenderActor* CameraActor = Root->Children.FindFirst([](const PRenderActor* Child) {
-		return (Child->ActorType == EntityType::CAMERA && Child->Camera != nullptr && Child->Camera->IsActiveCamera == true);
-		});
-
-	/*if (CameraActor->Camera != nullptr) {
-		return CameraActor->Camera;
-	}*/
-	return CameraActor->Camera;
+	for (PCameraActor* CameraActor : SceneCameras) {
+		if (CameraActor->Camera->IsActiveCamera == true) {
+			return CameraActor;
+		}
+	}
 }
 
 PSkyBox* Scene::GetSkyBox()
 {
 	//TODO: add checks, it might fail
 	return static_cast<PSkyBox * >(Root);
+}
+
+void Scene::SetActiveCamera(PCameraActor* Camera)
+{
+	for (PCameraActor* CameraActor : SceneCameras) {
+		if (CameraActor == Camera) {
+			CameraActor->Camera->IsActiveCamera = true;
+		} else {
+			CameraActor->Camera->IsActiveCamera = false;
+		}
+	}
 }
 
 

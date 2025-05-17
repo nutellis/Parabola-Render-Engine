@@ -7,7 +7,7 @@
 #include <Managers/LogManager.h>
 
 #include <Components/Scene.h>
-#include <Components/RenderActor.h>
+#include <Components/CameraComponents/Camera.h>
 #include <Components/Components.h>
 
 template<> GInputManager* SingletonManagerBase<GInputManager>::instance = 0;
@@ -29,8 +29,8 @@ GInputManager * GInputManager::getInstancePtr()
 
 GInputManager::GInputManager()
 {
-	lastX = 1280 / 2.0f;
-	lastY = 720 / 2.0f;
+	lastX = 1366 / 2.0f;
+	lastY = 768 / 2.0f;
 	firstMouse = true;
 }
 
@@ -42,13 +42,14 @@ GInputManager::~GInputManager()
 
 void GInputManager::KeyPressCallback(GLFWwindow* Window, int key, int scancode, int action, int mods)
 {
-	PCameraComponent* cmr = gSceneManager.GetActiveScene()->GetActiveCameraActor();
+	PCameraComponent* cmr = gSceneManager.GetActiveScene()->GetActiveCamera()->Camera;
 	if (glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
 		LOG(INFO, "Attempt to close the window");
 		glfwSetWindowShouldClose(Window, true);
 	}
-
+	if (glfwGetKey(Window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+	}
 	if (glfwGetKey(Window, GLFW_KEY_W) == GLFW_PRESS) {
 		cmr->ProcessKeyboard(FORWARD, 0.3f);
 	}
@@ -78,7 +79,7 @@ void GInputManager::MouseCallback(GLFWwindow * Window, double xpos, double ypos)
 	RenderWindow *win = gWindowManager.GetRenderWindow();
 	//if (glfwGetKey(Window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
 		if (win->IsMouseDragging) {
-			PCameraComponent* cmr = gSceneManager.GetActiveScene()->GetActiveCameraActor();
+			PCameraComponent* cmr = gSceneManager.GetActiveScene()->GetActiveCamera()->Camera;
 			
 			int xoffset = xpos - win->MouseLastX;
 			int yoffset = ypos - win->MouseLastY; // reversed since y-coordinates go from bottom to top
@@ -97,14 +98,15 @@ void GInputManager::MouseButtonCallback(GLFWwindow * Window, int button, int act
 	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) 
 	{
 		RenderWindow *win = gWindowManager.GetRenderWindow();
-
-		win->IsMouseDragging = true;
 		double x;
 		double y;
 		glfwGetCursorPos(win->Window, &x, &y);
-		win->MouseLastX = x;
-		win->MouseLastY = y;
+		if (x < 1081 && y < 721) {
+			win->IsMouseDragging = true;
 
+			win->MouseLastX = x;
+			win->MouseLastY = y;
+		}
 		//std::cout << win->MouseLastX << "\t " << win->MouseLastY << "\n";
 	}
 	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
@@ -116,7 +118,7 @@ void GInputManager::MouseButtonCallback(GLFWwindow * Window, int button, int act
 
 void GInputManager::ScrollCallback(GLFWwindow * Window, double xoffset, double yoffset)
 {
-	PCameraComponent* cmr = gSceneManager.GetActiveScene()->GetActiveCameraActor();
+	PCameraComponent* cmr = gSceneManager.GetActiveScene()->GetActiveCamera()->Camera;
 	cmr->Zoom -= (float)yoffset * 1.5;
 	if (cmr->Zoom < 1.0f)
 		cmr->Zoom = 1.0f;

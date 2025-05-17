@@ -83,14 +83,14 @@ struct SMath
 	template< class T >
 	static inline constexpr T Max(const T A, const T B)
 	{
-		return (A >= B) ? A : B;
+		return (A < B) ? B : A;
 	}
 
 
 	template< class T >
 	static inline constexpr T Min(const T A, const T B)
 	{
-		return (A <= B) ? A : B;
+		return (A > B) ? B : A;
 	}
 
 	static inline float Sin(float Value) { return sin(Value); }

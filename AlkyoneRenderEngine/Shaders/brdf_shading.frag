@@ -181,6 +181,9 @@ float PCF(float bias, float filterRadius, int index, float stepSize) {
 
     for (int x = 0; x < 64; x++) {
         vec2 offset = shadowMapCoord[index].xy + stepSize * poisson[x] * filterRadius;
+
+		offset = clamp(offset, 0.0, 1.0);
+
         float depth = texture(shadowMap[index], offset).r;
         float visibility = (shadowMapCoord[index].z - bias <= depth) ? 1.0 : 0.0;
         sum += visibility;
@@ -229,13 +232,12 @@ float PCSS(float bias, int index, float stepSize) {
 float calculateShadowsCoef(vec3 n, vec3 wi)
 {
 	int index = 3;
-	
 	// find the appropriate depth map based on the depth of this fragment
-	if(gl_FragCoord.z < farPlanes.x)
+	if(abs(viewSpacePosition.z) < farPlanes.x)
 		index = 0;
-	else if(gl_FragCoord.z < farPlanes.y)
+	else if(abs(viewSpacePosition.z) < farPlanes.y)
 		index = 1;
-	else if(gl_FragCoord.z < farPlanes.z)
+	else if(abs(viewSpacePosition.z) < farPlanes.z)
 		index = 2;
 
 	float bias = 0.005 * (1.0 - dot(n, wi));
@@ -261,7 +263,7 @@ vec3 calculateDirectIllumiunation(vec3 wo, vec3 n, vec3 base_color)
 	   // constant across the scene
 	// Directional Light
 	vec3 Li = point_light_intensity_multiplier * point_light_color; // * falloff_factor;
-	vec3  wi = LightDirection;
+	vec3  wi = normalize(LightDirection);
 
 	//vec3 wi = normalize(viewSpaceLightPosition - viewSpacePosition);
 
@@ -340,15 +342,17 @@ void main()
 	vec3 wo = -normalize(viewSpacePosition);
 	vec3 n = normalize(viewSpaceNormal);
 
-	vec3 base_color = material_color;
-	if(has_color_texture == 1)
-	{
-		base_color = base_color * texture(colorMap, texCoord).rgb;
-	}
+	vec3 wi = normalize(LightDirection);
+
+	vec3 base_color = vec3(0.1, 0.85, 0.8); // material_color;
+//	if(has_color_texture == 1)
+//	{
+//		base_color = base_color * texture(colorMap, texCoord).rgb;
+//	}
 	const float shadow_ambient = 0.9;
-	visibility = shadow_ambient * calculateShadowsCoef(n, LightDirection);
+	visibility = shadow_ambient * calculateShadowsCoef(n, wi);
 	// Direct illumination
-	vec3 direct_illumination_term = visibility * calculateDirectIllumiunation(wo, n, base_color);
+	vec3 direct_illumination_term =calculateDirectIllumiunation(wo, n, base_color) * visibility; 
 
 	// Indirect illumination
 	vec3 indirect_illumination_term = calculateIndirectIllumination(wo, n, base_color);
@@ -364,8 +368,9 @@ void main()
 
 	vec3 shading = direct_illumination_term + indirect_illumination_term + emission_term; // (ssao * )
 	
-	// vec3(calculateShadowsCoef(n, LightDirection))
-	fragmentColor =  vec4(shading, 1.0);
+	// vec3(calculateShadowsCoef(n, wi))
+	//
+	fragmentColor =  vec4(vec3(viewSpacePosition.z), 1.0);
 
 	return;
 }

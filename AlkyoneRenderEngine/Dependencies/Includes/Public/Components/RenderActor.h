@@ -28,8 +28,6 @@ public:
 	// std::vector<PRenderActor*> Children; // do i need this? Find out how to access children
 
 	//PSceneComponent* RootComponent; // not sure if this is needed
-	
-	void AddCamera();
 
 	void AddLight();
 
@@ -48,7 +46,6 @@ public:
 
 	//TODO : always relative to the parent SceneNode
 	void SetPosition(Vector3f inPosition);
-
 
 	//You can move the object relative to its current position by using the translate method.
 	//void Translate(Vector3f Translation);
@@ -77,10 +74,7 @@ public:
 
 	void DrawMeshChildren(Shader* ActiveShader);
 
-	void SetupModelMatrix(Shader* ActiveShader);
-
-	void ControlCamera(uint32 Width, uint32 Height);
-
+	void SetupModelMatrix();
 
 public:
 	std::string ObjectName;
@@ -95,8 +89,6 @@ public:
 		PStaticMeshComponent* StaticMesh;
 
 		PDirectionalLightComponent* Light;
-
-		PCameraComponent* Camera;
 	};
 
 	// Stores the position/translation of the node 

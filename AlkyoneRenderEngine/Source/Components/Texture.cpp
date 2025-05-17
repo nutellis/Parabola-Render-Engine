@@ -133,13 +133,13 @@ void Texture::GenerateDepthTexture(bool IsForShadows) {
         glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, FilterMag);
         glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_MODE, GL_NONE);
         glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
-        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, WrapS);
-        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, WrapT);
+        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
 
     glTextureStorage2D(TextureID, 1, GL_DEPTH_COMPONENT32F, Width, Height);
 
-    TextureHandle = glGetTextureHandleARB(TextureID);
+    //TextureHandle = glGetTextureHandleARB(TextureID);
 	CHECK_GL_ERROR();
 
 }

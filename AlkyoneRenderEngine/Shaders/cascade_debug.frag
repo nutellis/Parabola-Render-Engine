@@ -71,7 +71,7 @@ vec3 shadowCoef(int index)
 
 	shadowDepth = texture(shadowMap[index], shadowMapCoord[index].xy).r;
 
-	float visibility = (shadowMapCoord[index].z <= shadowDepth) ? 1.0 : 0.0;
+	float visibility = (shadowMapCoord[index].z <= shadowDepth) ? 1.0 : 0.5;
 
 	return color[index] * visibility;
 }

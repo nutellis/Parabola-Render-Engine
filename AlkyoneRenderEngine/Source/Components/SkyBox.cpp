@@ -37,7 +37,7 @@ PSkyBox::PSkyBox(const char* Name) : PRenderActor(Name)
      }
 
      StaticMesh->SetupVertexBuffers(SkyVertices);
-     StaticMesh->SetupBuffers(PVertexComponentCount(2,3,2));
+     StaticMesh->SetupBuffers(GL_STATIC_DRAW,PVertexComponentCount(2,3,2));
 
 }
 

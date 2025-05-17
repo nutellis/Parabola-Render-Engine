@@ -12,7 +12,6 @@
 
 #include <Managers/WindowManager.h>
 
-#include <Components/Camera.h>
 #include <Components/RenderWindow.h>
 
 

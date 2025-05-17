@@ -702,7 +702,7 @@
     <ClInclude Include="Dependencies\Includes\Private\stb_image.h" />
     <ClInclude Include="Dependencies\Includes\Private\tiny_obj_loader.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\BoundingBox.h" />
-    <ClInclude Include="Dependencies\Includes\Public\Components\Camera.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Components\CameraComponents\Camera.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\CascadeShadowMap.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\Clock.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\LightComponents\DirectionalLightComponent.h" />

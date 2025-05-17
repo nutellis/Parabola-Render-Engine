@@ -21,7 +21,7 @@ public:
 
 	float IndirectContribution;
 
-	Vector3f LightDirection;
+	Vector4f LightDirection = Vector4f(1.0, 0.0, 0.0, 0.0);
 
 	//ArrowShape DirectionArrow;
 
@@ -29,7 +29,7 @@ public:
 	PDirectionalLightComponent(PRenderActor* Parent);
 	PDirectionalLightComponent(PSceneComponent* Default);
 	~PDirectionalLightComponent();
-	void SetupShaderLight(Shader* ActiveShader);
+	void SetupShaderLight(Shader* ActiveShader, Matrix4f ViewMatrix);
 	void SetDirection();
 };
 

@@ -32,7 +32,7 @@ public:
 
 	void Bind();
 
-	void CreateBuffer(size_t Size, const void * Data);
+	void CreateBuffer(uint32 DrawType = GL_STATIC_DRAW, size_t Size = 0, const void* Data = nullptr);
 
 	void WriteBuffer(void * Data);
 

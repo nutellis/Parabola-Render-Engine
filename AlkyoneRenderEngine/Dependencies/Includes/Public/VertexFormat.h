@@ -49,6 +49,7 @@ public:
 	//Vector3f Tangent;
 
 	VertexFormat() : Position(), Normal(), UVs() {}
+	VertexFormat(Vector3f Pos) : Position(Pos), Normal(Vector3f(0, 1, 0)), UVs(Vector2f(0)) {}
 	VertexFormat(Vector3f Pos, Vector3f Norm, Vector2f UV) : Position(Pos), Normal(Norm), UVs(UV) {}
 	VertexFormat(const VertexFormat& Other): 
 		Position(Other.Position),

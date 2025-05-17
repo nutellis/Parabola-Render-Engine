@@ -17,7 +17,7 @@
 
 #include <Components/Shader.h>
 #include <Components/Scene.h>
-#include <Components/Camera.h>
+#include <Components/CameraComponents/Camera.h>
 #include <Components/RenderActor.h>
 #include <Components/SkyBox.h>
 
@@ -30,6 +30,7 @@
 #include <Utilities/CameraUtiltities.h>
 
 #include <ParabolaMath.h>
+
 
 
 template<> GRenderManager* SingletonManagerBase<GRenderManager>::instance = 0;
@@ -95,16 +96,42 @@ void GRenderManager::Render(double DeltaTime)
 
 	ActiveScene = gSceneManager.GetActiveScene();
 
-	ActiveScene->GetActiveCameraActor()->ControlCamera(1280, 720);
+	PCameraActor* ActiveCamera = ActiveScene->GetActiveCamera();
 
-	ShadowMapPass();
 
-	RenderPass();
+	PCameraActor* RenderCamera = ActiveScene->SceneCameras.FindFirst([](const PCameraActor* At) {
+
+		return At->ObjectName == "Camera";
+		});
+		
+	if (ActiveCamera == nullptr || RenderCamera == nullptr) {
+		return;
+	}
+
+	ActiveCamera->ControlCamera(1366, 768);
+	RenderCamera->ControlCamera(1366, 768);
+
+	ShadowMapPass(RenderCamera->Camera);
+
+	RenderPass(ActiveCamera->Camera);
+
+	PDirectionalLightComponent * light = ActiveScene->SceneLights.Front()->Light;
+	int bitMask = Options.ShowCameraPlanes << 1 | Options.ShowCameraEdges;
+	if (Options.ShowCameraFrustrum) {
+		
+		RenderCamera->Camera->Frustrum.RenderDebugFrustrum(bitMask, Vector4f(1.0, 1.0, 1.0, 0.2), ActiveCamera->Camera->Projection, ActiveCamera->Camera->View, light->LightDirection);
+	}
+
+	if (Options.ShowCascadeFrustrumDebug) {
+		for (auto& Cascade : ShadowMap->Cascades) {
+			Cascade->Frustrum->RenderDebugFrustrum(bitMask, Cascade->CascadeDebugColour, ActiveCamera->Camera->Projection, ActiveCamera->Camera->View, light->LightDirection);
+		}
+	}
 
 	// Draw GUI
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	glViewport(0, 0, 1920, 1080);
+	glViewport(0, 0, 2048, 1152);
 	glClearColor(0.3f, 0.2f, 0.8f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -113,22 +140,22 @@ void GRenderManager::Render(double DeltaTime)
 	glUseProgram(0);	
 }
 
-void GRenderManager::ShadowMapPass() {
+void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 	Shader* DepthShader = gShaderManager.GetShader("DepthShader");
 	DepthShader->Enable();
 
 	if (ShadowMap == nullptr || ShadowMap->NumCascades != Options.NumCascades) {
 		ShadowMap = new PCascadeShadowMap(
 			Options.NumCascades,
-			ActiveScene->GetActiveCameraActor()->Frustrum.FieldOfView,
-			ActiveScene->GetActiveCameraActor()->Frustrum.Ratio,
-			ActiveScene->GetActiveCameraActor()->Frustrum.NearPlane,
-			ActiveScene->GetActiveCameraActor()->Frustrum.FarPlane);
+			Camera->Frustrum.FieldOfView,
+			Camera->Frustrum.Ratio,
+			Camera->Frustrum.NearPlane,
+			Camera->Frustrum.FarPlane);
 
 		//set shader
 
-		DepthShader->SetFloat("near_plane", ActiveScene->GetActiveCameraActor()->Frustrum.NearPlane);
-		DepthShader->SetFloat("far_plane", ActiveScene->GetActiveCameraActor()->Frustrum.FarPlane);
+		DepthShader->SetFloat("near_plane",Camera->Frustrum.NearPlane);
+		DepthShader->SetFloat("far_plane", Camera->Frustrum.FarPlane);
 
 		ShadowMap->Init();
 
@@ -141,21 +168,23 @@ void GRenderManager::ShadowMapPass() {
 		glViewport(0, 0, ShadowMap->GetCascade(i)->Resolution, ShadowMap->GetCascade(i)->Resolution);
 		glClearColor(1.0, 1.0, 1.0, 1.0);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-		glCullFace(GL_FRONT);
+		//glCullFace(GL_FRONT);
 
-		glPolygonOffset(1.0f, 1.0f); 
+
+		glPolygonOffset(1.0f, 4.0f); 
 		glEnable(GL_POLYGON_OFFSET_FILL);
 
+		//TODO: add a shouldUpdate here to avoid recalculations
 		ShadowMap->UpdateCascadeExtends(
-			ActiveScene->GetActiveCameraActor()->Frustrum.NearPlane,
-			ActiveScene->GetActiveCameraActor()->Frustrum.FarPlane,
-			ActiveScene->GetActiveCameraActor()->Frustrum.Ratio,
-			ActiveScene->GetActiveCameraActor()->Frustrum.FieldOfView
+			Camera->Frustrum.NearPlane,
+			Camera->Frustrum.FarPlane,
+			Camera->Frustrum.Ratio,
+			Camera->Frustrum.FieldOfView
 		);
 
 		ShadowMap->CalculateLightProjection(
 			i, 
-			ActiveScene->GetActiveCameraActor(), 
+			Camera,
 			ActiveScene->SceneLights.Front()->Light
 		);
 
@@ -168,11 +197,10 @@ void GRenderManager::ShadowMapPass() {
 		glCullFace(GL_BACK);
 		glDisable(GL_POLYGON_OFFSET_FILL);
 	}
-
 	glUseProgram(0);
 }
 
-void GRenderManager::RenderPass()
+void GRenderManager::RenderPass(PCameraComponent* Camera)
 {
 	CHECK_GL_ERROR();
 	FBORenderTarget* MainRenderTarget = RenderTargets.FindFirst([](const FBORenderTarget* At) {
@@ -186,9 +214,7 @@ void GRenderManager::RenderPass()
 		glClearColor(0.2f, 0.2f, 0.8f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		Shader* SkyBoxShader = gShaderManager.GetShader("SkyBoxShader");
-		SkyBoxShader->Enable();
-		DrawSkyBox(SkyBoxShader);
+		DrawSkyBox(Camera);
 
 		Shader* RenderShader;
 		if (Options.ShowShadowMapDebug) {
@@ -203,13 +229,9 @@ void GRenderManager::RenderPass()
 		RenderShader->SetBool("usePCSS", Options.UsePCSS);
 		RenderShader->SetFloat("wLight", Options.LightSize);
 
-
-		//get Camera
-		PCameraComponent* Camera = ActiveScene->GetActiveCameraActor();
-
 		//for now get light but later we will need lights!
 		TArray<PRenderActor*> Lights = ActiveScene->SceneLights;
-		Lights.Front()->Light->SetupShaderLight(RenderShader);
+		Lights.Front()->Light->SetupShaderLight(RenderShader, Camera->GetViewMatrix());
 
 		//Prepare shadow Data
 		ShadowMap->PrepareForDraw(RenderShader, Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
@@ -220,25 +242,29 @@ void GRenderManager::RenderPass()
 	}
 }
 
-void GRenderManager::DrawSkyBox(Shader* SkyBoxShader) {
+void GRenderManager::DrawSkyBox(PCameraComponent* Camera) {
 	
+	PSkyBox* SkyBox = ActiveScene->GetSkyBox();
 
-	Matrix4f viewMatrix = ActiveScene->GetActiveCameraActor()->GetViewMatrix();
-	Matrix4f projectionMatrix = ActiveScene->GetActiveCameraActor()->GetProjectionMatrix();
+	Shader* SkyBoxShader = gShaderManager.GetShader("SkyBoxShader");
+	SkyBoxShader->Enable();
+
+	Matrix4f viewMatrix = Camera->GetViewMatrix();
+	Matrix4f projectionMatrix = Camera->GetProjectionMatrix();
 
 	glActiveTexture(GL_TEXTURE6);
-	glBindTexture(GL_TEXTURE_2D, ActiveScene->GetSkyBox()->EnviromentMap->TextureID);
+	glBindTexture(GL_TEXTURE_2D, SkyBox->EnviromentMap->TextureID);
 	glActiveTexture(GL_TEXTURE7);
-	glBindTexture(GL_TEXTURE_2D, ActiveScene->GetSkyBox()->IrradianceMap->TextureID);
+	glBindTexture(GL_TEXTURE_2D, SkyBox->IrradianceMap->TextureID);
 	glActiveTexture(GL_TEXTURE8);
-	glBindTexture(GL_TEXTURE_2D, ActiveScene->GetSkyBox()->ReflectionMap->TextureID);
+	glBindTexture(GL_TEXTURE_2D, SkyBox->ReflectionMap->TextureID);
 
 	float environment_multiplier = 1.3f;
 	SkyBoxShader->SetFloat("environment_multiplier", environment_multiplier);
 	SkyBoxShader->SetMat4("inv_PV", false, Inverse(projectionMatrix * viewMatrix));
-	SkyBoxShader->SetVec3("camera_pos", ActiveScene->GetActiveCameraActor()->GetPosition());
+	SkyBoxShader->SetVec3("camera_pos", Camera->GetPosition());
 
-	ActiveScene->GetSkyBox()->Draw();
+	SkyBox->Draw();
 
 	SkyBoxShader->Disable();
 }
@@ -255,7 +281,7 @@ void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix
 		ShaderToUse->SetMat4("viewInverse", false, Inverse(ViewMatrix));
 
 		for (int i = 0; i < VisibleMeshes.Size(); i++) {
-			VisibleMeshes[i]->SetupModelMatrix(ShaderToUse);
+			VisibleMeshes[i]->SetupModelMatrix();
 
 			Matrix4f ModelViewMatrix = ViewMatrix * VisibleMeshes[i]->ModelMatrix;
 			Matrix4f ModelViewProjectionMatrix = ProjectionMatrix * ModelViewMatrix;
@@ -264,7 +290,7 @@ void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix
 
 			ShaderToUse->SetMat4("modelViewProjectionMatrix", false, ModelViewProjectionMatrix);
 
-			ShaderToUse->SetMat4("normalMatrix", false, Inverse(ModelViewMatrix.GetTransposed()));
+			ShaderToUse->SetMat4("normalMatrix", false, Inverse(ModelViewMatrix).GetTransposed());
 			
 			VisibleMeshes[i]->StaticMesh->DrawComponent(ShaderToUse);
 		}
@@ -317,7 +343,7 @@ void GRenderManager::Init()
 
 
 	// init render targets
-	FBORenderTarget * MainRenderTarget = new FBORenderTarget("Main", 1280, 720);
+	FBORenderTarget* MainRenderTarget = new FBORenderTarget("Main", 1600, 900);
 	FBORenderTarget * ShadowMapTarget = new FBORenderTarget("ShadowMap",1024, 1024);
 
 	MainRenderTarget->Init();
@@ -341,7 +367,7 @@ void GRenderManager::Terminate()
 void GRenderManager::DrawOptions() {
 
 	ImGui::SetNextWindowSize(ImVec2(600, 400));
-	ImGui::SetNextWindowPos(ImVec2(1290, 601));
+	ImGui::SetNextWindowPos(ImVec2(1440, 601));
 	ImGuiWindowFlags window_flags = 0;
 	window_flags |= ImGuiWindowFlags_NoMove;
 	window_flags |= ImGuiWindowFlags_NoCollapse;
@@ -350,13 +376,21 @@ void GRenderManager::DrawOptions() {
 
 	ImGui::Begin("Options", 0, window_flags);
 	{
+		//General Options
+		ImGui::Text("Camera");
+		ImGui::Checkbox("Show Camera Frustrum", &Options.ShowCameraFrustrum);
+		ImGui::Checkbox("Show Planes", &Options.ShowCameraEdges);
+		ImGui::Checkbox("Show Edges", &Options.ShowCameraPlanes);
+		ImGui::Separator();
 		//Cascade Shadow Map
+		ImGui::Text("Cascade Shadow Map");
 		ImGui::SliderInt("Cascades Number", &Options.NumCascades, 1, 4);
 		if (ImGui::SliderFloat("Lambda", &Options.Lambda, 0.0, 1.0)) {
 			ShadowMap->Lambda = Options.Lambda;
 		}
-		ImGui::Text("Cascade Shadow Map");
+		ImGui::Checkbox("Show Cascade Frustrums", &Options.ShowCascadeFrustrumDebug);
 		ImGui::Checkbox("CSM Debug View", &Options.ShowShadowMapDebug);
+
 		for (int i = 0; i < ShadowMap->NumCascades; i++) {
 			std::string CascadeTitle = "CSM Level " + std::to_string(i);
 			ImGui::Checkbox(CascadeTitle.c_str(), &Options.ShowCascade[i]);
@@ -380,7 +414,7 @@ void GRenderManager::DrawPreview()
 	uint32 RenderTarget = 0;
 	RenderTarget = RenderTargets[0]->GetTexture();
 	if (RenderTarget != 0) {
-		ImGui::SetNextWindowSize(ImVec2(1280, 720));
+		ImGui::SetNextWindowSize(ImVec2(1366, 768));
 		ImGui::SetNextWindowPos(ImVec2(0, 0));
 		ImGuiWindowFlags window_flags = 0;
 		window_flags =
@@ -415,7 +449,7 @@ void GRenderManager::DrawDepthMaps() {
 	if (CascadesToShow > 0) {
 		float Width = (132 * CascadesToShow) + (8 * (CascadesToShow - 1)) + (2 * ImGui::GetStyle().WindowPadding.x);
 		ImGui::SetNextWindowSize(ImVec2(Width, 168));
-		ImGui::SetNextWindowPos(ImVec2(0, 720 - 168));
+		ImGui::SetNextWindowPos(ImVec2(0, 768 - 168));
 		ImGuiWindowFlags window_flags = 0;
 		window_flags =
 			ImGuiWindowFlags_NoMove |

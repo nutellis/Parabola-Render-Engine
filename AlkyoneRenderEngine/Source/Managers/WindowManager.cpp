@@ -6,12 +6,10 @@
 #include <GL/glew.h>
 #include <GLFW\glfw3.h>
 
-
 #include <Components/RenderWindow.h>
 #include <Components/RenderSystem.h>
 
 #include <Managers/LogManager.h>
-
 
 #include <ParabolaMath.h>
 
@@ -68,7 +66,7 @@ void GWindowManager::Init()
 
 
 		Window = new RenderWindow();
-		Window->Create("Parabola Engine", 1920, 1080, false );
+		Window->Create("Parabola Engine", 2048, 1152, false );
 
 		bInitSuccessful = true;
 		LOG(INFO, "WINDOW_MANAGER INITIATED\n");

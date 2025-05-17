@@ -185,27 +185,17 @@ void GShaderManager::Init()
 	Shader * BrdfShader = CompileProgram("BRDF_Default", "Shaders/brdf_shading.vert", "Shaders/brdf_shading.frag");
 	if (BrdfShader->ID == 0)
 	{
-		LOG(ERROR, "Failed to compile BRDF_Default shader\n");
+		LOG(ERROR, "Failed to compile BRDF_Default Shader\n");
 	}
 	else
 	{
 		Shaders.PushBack(BrdfShader);
 	}
-
-	Shader* LightShader = CompileProgram("Light", "Shaders/lamp.vs", "Shaders/lamp.fs");
-	if (LightShader->ID == 0)
-	{
-		LOG(ERROR, "Failed to compile Light shader\n");
-	}
-	else
-	{
-		Shaders.PushBack(LightShader);
-	}
 	//Sky
 	Shader* SkyBoxShader = CompileProgram("SkyBoxShader", "Shaders/skybox.vert", "Shaders/skybox.frag");
 	if (SkyBoxShader->ID == 0)
 	{
-		LOG(ERROR, "Failed to compile SkyBoxShader shader\n");
+		LOG(ERROR, "Failed to compile SkyBox Shader\n");
 	}
 	else
 	{
@@ -213,10 +203,10 @@ void GShaderManager::Init()
 	}
 
 	//Depth
-	Shader* DepthShader = CompileProgram("DepthShader", "Shaders/depth.vert", "Shaders/depth.frag");
+	Shader* DepthShader = CompileProgram("DepthShader", "Shaders/position.vert", "Shaders/depth.frag");
 	if (DepthShader->ID == 0)
 	{
-		LOG(ERROR, "Failed to compile DepthShader shader\n");
+		LOG(ERROR, "Failed to compile Depth Shader \n");
 	}
 	else
 	{
@@ -227,11 +217,21 @@ void GShaderManager::Init()
 	Shader* CSMDebugShader = CompileProgram("CSM_Debug", "Shaders/cascade_debug.vert", "Shaders/cascade_debug.frag");
 	if (CSMDebugShader->ID == 0)
 	{
-		LOG(ERROR, "Failed to compile CSM_Debug shader\n");
+		LOG(ERROR, "Failed to compile CSM_Debug Shader\n");
 	}
 	else
 	{
 		Shaders.PushBack(CSMDebugShader);
+	}
+
+	Shader* LightShader = CompileProgram("SimpleShader", "Shaders/position.vert", "Shaders/colour.frag");
+	if (LightShader->ID == 0)
+	{
+		LOG(ERROR, "Failed to compile Simple Shader\n");
+	}
+	else
+	{
+		Shaders.PushBack(LightShader);
 	}
 
 	//probably read some standard shaders that need to load. For now do nothing. hoho

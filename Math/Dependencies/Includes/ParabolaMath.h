@@ -163,7 +163,7 @@ static TVector4<Type> Normalize(TVector4<Type> inVector)
 {
 	TVector4<Type> Result = TVector4<Type>::ZERO;
 
-	float invLength = 1 / inVector.length();
+	float invLength = static_cast<Type>(1) / inVector.Length();
 	Result.X = inVector.X * invLength;
 	Result.Y = inVector.Y * invLength;
 	Result.Z = inVector.Z * invLength;

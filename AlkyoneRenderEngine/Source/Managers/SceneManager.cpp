@@ -5,6 +5,7 @@
 #include <Components/Scene.h> 
 #include <Components/RenderActor.h>
 #include <Components/LightComponents/DirectionalLightComponent.h>
+#include <Components/CameraComponents/Camera.h>
 
 template<> GSceneManager* SingletonManagerBase<GSceneManager>::instance = 0;
 GSceneManager & GSceneManager::getInstance()
@@ -101,7 +102,7 @@ void GSceneManager::Terminate()
 void GSceneManager::DrawSceneGraph()
 {
 	ImGui::SetNextWindowSize(ImVec2(600, 600));
-	ImGui::SetNextWindowPos(ImVec2(1290, 0));
+	ImGui::SetNextWindowPos(ImVec2(1440, 0));
 	ImGuiWindowFlags window_flags = 0;
 	window_flags |= ImGuiWindowFlags_NoMove;
 	window_flags |= ImGuiWindowFlags_NoCollapse;
@@ -140,19 +141,19 @@ void GSceneManager::DrawSceneGraph()
 					if (ImGui::BeginTabItem("Details"))
 					{
 						//if (useRelativeTranslation) {
-							Vector3f LocalTranslation = selectedIndex->ObjectPosition;
-							if (ImGui::InputFloat3("Translation", &LocalTranslation[0], "%.3f", ImGuiInputTextFlags_EnterReturnsTrue)) {
-								selectedIndex->SetPosition(LocalTranslation);
-							}
+						Vector3f LocalTranslation = selectedIndex->ObjectPosition;
+						if (ImGui::InputFloat3("Translation", &LocalTranslation[0], "%.3f", ImGuiInputTextFlags_EnterReturnsTrue)) {
+							selectedIndex->SetPosition(LocalTranslation);
+						}
 						/*}
 						ImGui::SameLine();
 						ImGui::Checkbox("Relative Translation", &useRelativeTranslation);*/
-
-						if (ImGui::InputFloat3("Rotation", &selectedIndex->ObjectRotation.X)) {
-							selectedIndex->SetRotation(selectedIndex->ObjectRotation);
+						Vector3f LocalRotation = selectedIndex->ObjectRotation;
+						if (ImGui::InputFloat3("Rotation", &LocalRotation[0], "%.3f", ImGuiInputTextFlags_EnterReturnsTrue)) {
+							selectedIndex->SetRotation(LocalRotation);
 						}
 						if (useUniformScaling) {
-							if (ImGui::InputFloat("Scale", &selectedIndex->ObjectScale.X)) {
+							if (ImGui::InputFloat("Scale", &selectedIndex->ObjectScale.X, 1.0, 1.0, "%.1f")) {
 								selectedIndex->SetScale(selectedIndex->ObjectScale.X);
 							}
 						}
@@ -164,11 +165,30 @@ void GSceneManager::DrawSceneGraph()
 						ImGui::SameLine();
 						ImGui::Checkbox("Uniform Scaling", &useUniformScaling);
 						if (selectedIndex->ActorType == EntityType::LIGHT) {
-							if (ImGui::SliderFloat("Azimuth", &selectedIndex->Light->Azimuth, 0.01, 360.0)) {
+							if (ImGui::SliderFloat("Azimuth", &selectedIndex->Light->Azimuth, 0.10f, 360.0f, "%.1f")) {
 								selectedIndex->Light->SetDirection();
 							}
-							if (ImGui::SliderFloat("Zenith", &selectedIndex->Light->Zenith, 0.01, 180.0)) {
+							if (ImGui::SliderFloat("Zenith", &selectedIndex->Light->Zenith, 0.10f, 120.0f, "%.1f")) {
 								selectedIndex->Light->SetDirection();
+							}
+						}
+						if (selectedIndex->ActorType == EntityType::CAMERA) {
+							PCameraActor* Camera = static_cast<PCameraActor*>(selectedIndex);
+							if (Camera != nullptr) {
+								ImGui::Separator();
+								if (ImGui::InputFloat("Camera Speed", &Camera->Camera->MovementSpeed, 1.0, 10.0, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
+								}
+								// Make those one line and fit them
+								if (ImGui::InputFloat("Near Plane", &Camera->Camera->Frustrum.NearPlane, 0.1, 1.0, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
+								}
+								if (ImGui::InputFloat("Far Plane", &Camera->Camera->Frustrum.FarPlane, 1.0, 10.0, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
+								}
+								if (ImGui::InputFloat("Field of View", &Camera->Camera->Frustrum.FieldOfView, 1.0, 10.0, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
+								}
+
+								if (ImGui::Checkbox("Set Active Camera", &Camera->Camera->IsActiveCamera)) {
+									ActiveScene->SetActiveCamera(Camera);
+								}
 							}
 						}
 

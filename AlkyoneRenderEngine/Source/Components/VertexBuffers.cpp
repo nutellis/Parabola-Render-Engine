@@ -108,7 +108,7 @@ void VertexBufferObject::Bind()
 }
 
 //Maybe check the size? nuuuh
-void  VertexBufferObject::CreateBuffer(size_t Size , const void *Data = nullptr)
+void  VertexBufferObject::CreateBuffer(uint32 DrawType, size_t Size, const void* Data)
 {
 	// Create the buffer
 	if (bIsCreated == false) {
@@ -122,13 +122,18 @@ void  VertexBufferObject::CreateBuffer(size_t Size , const void *Data = nullptr)
 		if (Data != nullptr) {
 			//glBufferStorage(GL_ARRAY_BUFFER, Size, Data, GL_DYNAMIC_STORAGE_BIT);
 			//glNamedBufferStorage(ID, Size, Data, GL_DYNAMIC_STORAGE_BIT);
-			glBufferData(GL_ARRAY_BUFFER, Size, Data, GL_STATIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, Size, Data, DrawType);
 		}
 		bIsCreated = true;
 	}
 	else
 	{
-		//LOG(WARNING, "Buffer Already Created");
+		glBindBuffer(GL_ARRAY_BUFFER, ID);
+		if (Data != nullptr) {
+			//glBufferStorage(GL_ARRAY_BUFFER, Size, Data, GL_DYNAMIC_STORAGE_BIT);
+			//glNamedBufferStorage(ID, Size, Data, GL_DYNAMIC_STORAGE_BIT);
+			glBufferData(GL_ARRAY_BUFFER, Size, Data, DrawType);
+		}
 	}
 	
 }

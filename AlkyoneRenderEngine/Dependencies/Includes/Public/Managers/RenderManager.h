@@ -20,10 +20,16 @@ class PCascadeShadowMap;
 class GGUIManager;
 class Shader;
 class FBORenderTarget;
+class PCameraComponent;
 
 struct RenderOptions {
 public:
+	bool ShowCameraFrustrum = false;
+	bool ShowCameraEdges = false;
+	bool ShowCameraPlanes = false;
+
 	//Cascade Shadow Mapping
+	bool ShowCascadeFrustrumDebug = false;
 	bool ShowShadowMapDebug = false;
 	bool ShowCascade[4];
 	bool ToggleShadowView = false;
@@ -75,10 +81,11 @@ public:
 
 	void Render(double currentTime);
 
-	void ShadowMapPass();
-	void RenderPass();
+	void ShadowMapPass(PCameraComponent* Camera);
 
-	void DrawSkyBox(Shader* SkyBoxShader);
+	void RenderPass(PCameraComponent* Camera);
+
+	void DrawSkyBox(PCameraComponent* Camera);
 
 	void DrawScene(Shader* ShaderToUse, Matrix4f ViewMatrix, Matrix4f ProjectionMatrix);
 

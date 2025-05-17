@@ -21,11 +21,6 @@ class PFrustrum;
 struct PCascade {
 
 public:
-	float Min;
-	float Max;
-
-	Vector3f FrustrumCenter;
-
 	uint32 Resolution = 4096;
 	
 	FBORenderTarget* CascadeFBO;
@@ -38,9 +33,11 @@ public:
 
 	PFrustrum * Frustrum;
 
+	Vector4f CascadeDebugColour;
+
 	PCascade();
 	~PCascade();
-	
+	PCascade* CalculateStep();
 
 };
 

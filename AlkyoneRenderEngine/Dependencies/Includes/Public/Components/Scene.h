@@ -3,6 +3,7 @@
 #include <Utilities/Containers/Array.h>
 
 class PRenderActor;
+class PCameraActor;
 class GSceneManager;
 class PCameraComponent;
 class PSkyBox;
@@ -26,12 +27,16 @@ public:
 
 	void SortChild(PRenderActor* Child);
 
+	void SortCamera(PCameraActor* Child);
+
 	void InitScene();
 
 	void ResetScene();
 
-	PCameraComponent* GetActiveCameraActor();
+	PCameraActor* GetActiveCamera();
 	PSkyBox* GetSkyBox();
+
+	void SetActiveCamera(PCameraActor* Camera);
 
 
 	//cull nodes
@@ -45,7 +50,7 @@ public:
 public:
 	TArray<PRenderActor *> SceneMeshes;
 	TArray<PRenderActor *> SceneLights;
-	TArray<PRenderActor *> SceneCameras;
+	TArray<PCameraActor *> SceneCameras;
 private:
 	// SceneManager which created this node
 	GSceneManager* Creator;
