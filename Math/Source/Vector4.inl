@@ -91,6 +91,18 @@ inline const TVector4<Type> TVector4<Type>::Ones()
 	return TVector4<Type>(1, 1, 1, 1);
 }
 
+template <typename Type>
+inline TVector3<Type> TVector4<Type>::XYZ() const
+{
+	return TVector3(X, Y, Z);
+}
+
+template <typename Type>
+inline TVector2<Type> TVector4<Type>::XY() const
+{
+	return TVector2(X, Y);
+}
+
 //Functions
 template <typename Type>
 inline Type TVector4<Type>::Length() const
@@ -261,6 +273,8 @@ inline const size_t std::hash<TVector4<T>>::operator()(const TVector4<T>& key) c
 {
 	return std::hash<T>()(key.X) ^ std::hash<T>()(key.Y) ^ std::hash<T>()(key.Z) ^ std::hash<T>()(key.W);
 }
+
+
 /*
 //---------------------------------------------------------------------------------
 //

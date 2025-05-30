@@ -69,6 +69,7 @@ uniform vec3 viewSpaceLightDir;
 uniform sampler2D shadowMap[4];
 
 
+uniform int numOfCascades; 
 
 in vec4 shadowMapCoord[4];
 uniform vec4 farPlanes;
@@ -81,7 +82,6 @@ uniform float lightSize = 0.5;
 uniform vec4 lightFrustrumWidth; 
 uniform vec4 nearPlanes; 
 uniform vec4 texelSize;
-
 
 const vec2 offsets[16] = vec2[](
     vec2( -0.94201624, -0.39906216 ),
@@ -180,7 +180,9 @@ float PCF(float bias, float filterRadius, int index, float stepSize) {
     float sum = 0.0;
 
     for (int x = 0; x < 64; x++) {
-        vec2 offset = shadowMapCoord[index].xy + stepSize * poisson[x] * filterRadius;
+
+		vec2 projected = shadowMapCoord[index].xy / shadowMapCoord[index].w;
+        vec2 offset =  projected + stepSize * poisson[x] * filterRadius;
 
 		offset = clamp(offset, 0.0, 1.0);
 
@@ -223,7 +225,6 @@ float PCSS(float bias, int index, float stepSize) {
 	float penumbraRatio = (zReceiver - zBlocker) / zBlocker;
     float filterRadius = stepSize * penumbraRatio * (lightSize/lightFrustrumWidth[index]) * nearPlanes[index] / zReceiver;
 
-	return filterRadius;
 	// Step 3: PCF filtering
 	return PCF(bias, filterRadius, index, stepSize);
 }
@@ -231,26 +232,28 @@ float PCSS(float bias, int index, float stepSize) {
 
 float calculateShadowsCoef(vec3 n, vec3 wi)
 {
-	int index = 3;
+	float viewDepth = abs(viewSpacePosition.z);
+
+	int cascadeIndex = 3;
 	// find the appropriate depth map based on the depth of this fragment
 	if(abs(viewSpacePosition.z) < farPlanes.x)
-		index = 0;
+		cascadeIndex = 0;
 	else if(abs(viewSpacePosition.z) < farPlanes.y)
-		index = 1;
+		cascadeIndex = 1;
 	else if(abs(viewSpacePosition.z) < farPlanes.z)
-		index = 2;
+		cascadeIndex = 2;
 
-	float bias = 0.005 * (1.0 - dot(n, wi));
+	float bias = 0.0005 * (1.0 - dot(n, wi));
 	bias = clamp(bias, 0.0, 0.01);
 
-    float stepSize = 1.0 / texelSize[index];
+    float stepSize = 1.0 / texelSize[cascadeIndex];
 
 	if(usePCSS == 1) {
-		return PCSS(bias, index, stepSize);
+		return PCSS(bias, cascadeIndex, stepSize);
 	} 
 
-	float filterRadius = texelSize[index] / 1024.0;
-	return PCF(bias, filterRadius, index, stepSize);
+	float filterRadius = texelSize[cascadeIndex] / 1024.0;
+	return PCF(bias, filterRadius, cascadeIndex, stepSize);
 }
 
 
@@ -344,11 +347,11 @@ void main()
 
 	vec3 wi = normalize(LightDirection);
 
-	vec3 base_color = vec3(0.1, 0.85, 0.8); // material_color;
-//	if(has_color_texture == 1)
-//	{
-//		base_color = base_color * texture(colorMap, texCoord).rgb;
-//	}
+	vec3 base_color = vec3(1, 1, 1);// material_color; // //
+	if(has_color_texture == 1)
+	{
+		base_color = base_color * texture(colorMap, texCoord).rgb;
+	}
 	const float shadow_ambient = 0.9;
 	visibility = shadow_ambient * calculateShadowsCoef(n, wi);
 	// Direct illumination
@@ -368,9 +371,9 @@ void main()
 
 	vec3 shading = direct_illumination_term + indirect_illumination_term + emission_term; // (ssao * )
 	
-	// vec3(calculateShadowsCoef(n, wi))
-	//
-	fragmentColor =  vec4(vec3(viewSpacePosition.z), 1.0);
+	// 
+	//vec3(calculateShadowsCoef(n, wi))
+	fragmentColor =  vec4(shading, 1.0);
 
 	return;
 }

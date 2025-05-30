@@ -51,7 +51,7 @@ public:
 	~PCascadeShadowMap();
 	void Init();
 	void UpdateCascadeExtends(float ZNear, float ZFar, float Ratio, float FieldOfView);
-	void CalculateLightProjection(uint32 Index, PCameraComponent* Camera, PDirectionalLightComponent* Light);
+	void CalculateLightProjection(uint32 Index, PCameraComponent* Camera, PDirectionalLightComponent* Light, bool SquareBox);
 	void UpdateCascadeBuffer(Matrix4f CameraViewMatrix);
 	void Draw(uint32 Index);
 	void BindSSBO(uint32 Slot);
@@ -70,7 +70,6 @@ public:
 private:
 	uint32 ShadowMapSSBO;
 	uint32 CascadesMVPBuffer;
-	uint64 * ShadowMapTextureHandles;
 };
 
 

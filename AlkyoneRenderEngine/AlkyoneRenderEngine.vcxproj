@@ -172,13 +172,14 @@
     <ClCompile Include="Dependencies\Includes\Private\ImGUI\imgui_impl_opengl3.cpp" />
     <ClCompile Include="Dependencies\Includes\Private\ImGUI\imgui_tables.cpp" />
     <ClCompile Include="Dependencies\Includes\Private\ImGUI\imgui_widgets.cpp" />
+    <ClCompile Include="Source\Components\Colliders\BoundingBox.cpp" />
     <ClCompile Include="Source\Components\LightComponents\DirectionalLightComponent.cpp" />
     <ClCompile Include="Source\Components\LightComponents\PointLightComponent.cpp" />
     <ClCompile Include="Source\Utilities\PrimitiveShapes.cpp" />
     <ClCompile Include="Source\Components\CascadeShadowMap.cpp" />
     <ClCompile Include="Source\Components\RenderComponents\StaticMeshComponent.cpp" />
     <ClCompile Include="Dependencies\Includes\Public\Components\RenderComponents\StaticMeshComponent.h" />
-    <ClCompile Include="Source\Components\BoundingBox.cpp" />
+    <ClCompile Include="Source\Components\Colliders\AxisAlignedBoundingBox.cpp" />
     <ClCompile Include="Source\Components\Camera.cpp" />
     <ClCompile Include="Source\Components\Clock.cpp" />
     <ClCompile Include="Source\Components\Components.cpp" />
@@ -701,10 +702,12 @@
     <ClInclude Include="Dependencies\Includes\Private\KHR\khrplatform.h" />
     <ClInclude Include="Dependencies\Includes\Private\stb_image.h" />
     <ClInclude Include="Dependencies\Includes\Private\tiny_obj_loader.h" />
-    <ClInclude Include="Dependencies\Includes\Public\Components\BoundingBox.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Components\Colliders\AxisAlignedBoundingBox.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\CameraComponents\Camera.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\CascadeShadowMap.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\Clock.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Components\Colliders\BoundingHelper.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Components\Colliders\IntersectionTests.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\LightComponents\DirectionalLightComponent.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\LightComponents\PointLightComponent.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\Material.h" />
@@ -759,6 +762,7 @@
     <ClInclude Include="Dependencies\Includes\Public\Utilities\PrimitiveShapes.h" />
     <ClInclude Include="Dependencies\Includes\Public\Win32\Win32RenderWindow.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\SkyBox.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Components\Colliders\BoundingBox.h" />
     <ClInclude Include="Source\Utilities\TestData\TestData.h" />
     <ClInclude Include="Source\Win32\Win32RenderWindow.cpp" />
   </ItemGroup>

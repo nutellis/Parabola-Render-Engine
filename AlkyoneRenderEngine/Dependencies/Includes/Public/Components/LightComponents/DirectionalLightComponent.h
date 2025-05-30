@@ -25,6 +25,14 @@ public:
 
 	//ArrowShape DirectionArrow;
 
+	Matrix4f LightProjectionMatrix;
+	Matrix4f LightViewMatrix;
+
+	float FieldOfView = 60.0f;
+	float AspectRation = 1.7779;
+	float ZNear = 0.5f;
+	float ZFar = 1000.f;
+
 public:
 	PDirectionalLightComponent(PRenderActor* Parent);
 	PDirectionalLightComponent(PSceneComponent* Default);

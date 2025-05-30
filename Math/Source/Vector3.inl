@@ -52,18 +52,6 @@ inline TVector3<Type>::TVector3(const TVector4<U> & inVec4) :
 	X(static_cast<Type>(inVec4.X)), Y(static_cast<Type>(inVec4.Y)), Z(static_cast<Type>(inVec4.Z))
 {}
 
-template <typename Type>
-inline TVector3<Type> TVector3<Type>::Zeros() const
-{
-	return TVector3(0, 0, 0);
-}
-
-template <typename Type>
-inline TVector3<Type> TVector3<Type>::Ones() const
-{
-	return TVector3(1, 1, 1);
-}
-
 //Functions
 template <typename Type>
 inline Type TVector3<Type>::Length() const

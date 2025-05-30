@@ -38,10 +38,6 @@ public:
 	template <typename U>
 	TVector3(const TVector4<U> & inVec4);
 
-	TVector3 Zeros() const;
-
-	TVector3 Ones() const;
-
 	Type Length() const;
 
 	TVector3 GetNormalized() const;

@@ -13,24 +13,29 @@
 #include <Utilities/AssetLoader.h>
 
 class PStaticMeshComponent;
+class PAxisAlignedBoundingBox;
 
 class PDrawableMesh 
 {
-	//empty for now
-};
-
-class PStaticMesh : PDrawableMesh
-{
 public:
-
 	std::string Name;
 
+};
+
+class PStaticMesh : public PDrawableMesh
+{
+public:
 	VertexArray Vertices;
 	IndexArray Indices;
 	uint32 MaterialIndex;
 
 	uint32 IndexStart;
 	uint32 NumVertices;
+
+	PAxisAlignedBoundingBox * LocalBoundingBox;
+	PAxisAlignedBoundingBox * WorldBoundingBox;
+
+	bool IsCastingShadows = true;
 
 public:
 	

@@ -47,8 +47,8 @@ void GGUIManager::Draw(){
 
 	//ImGui::ShowDemoWindow();
 
-
-	DrawLog("Editor Log", &open);
+	//TODO: I have broke the editor... fix this
+	//DrawLog("Editor Log", &open);
 
 	if (GEditor::getInstancePtr() != nullptr) {
 		gRenderManager.DrawPreview();

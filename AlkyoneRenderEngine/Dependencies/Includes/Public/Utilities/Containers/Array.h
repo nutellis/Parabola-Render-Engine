@@ -494,6 +494,28 @@ public:
 			T* m_ptr;
 		};
 
-		Iterator begin() { return Iterator(First); }
-		Iterator end() { return Iterator(Last); }
+		class ConstIterator {
+		public:
+			ConstIterator(const T* ptr) : m_ptr(ptr) {}
+
+			const T& operator*() const { return *m_ptr; }
+			const T* operator->() const { return m_ptr; }
+
+
+			// Prefix increment
+			ConstIterator& operator++() { m_ptr++; return *this; }
+
+			// Postfix increment
+			ConstIterator operator++(int) { ConstIterator tmp = *this; ++(*this); return tmp; }
+
+
+			friend bool operator==(const ConstIterator& a, const ConstIterator& b) { return a.m_ptr == b.m_ptr; }
+			friend bool operator!=(const ConstIterator& a, const ConstIterator& b) { return a.m_ptr != b.m_ptr; }
+
+		private:
+			const T* m_ptr;
+		};
+
+		ConstIterator begin() const { return ConstIterator(First); }
+		ConstIterator end() const { return ConstIterator(Last); }
 };

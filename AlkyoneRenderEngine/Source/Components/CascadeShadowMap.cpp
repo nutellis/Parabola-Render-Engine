@@ -9,6 +9,14 @@
 #include <Managers/ShaderManager.h>
 #include <Components/LightComponents/DirectionalLightComponent.h>
 #include <Components/CameraComponents/Camera.h>
+#include <Managers/SceneManager.h>
+#include <Components/Scene.h>
+#include <Components/RenderActor.h>
+#include <Components/RenderComponents/StaticMeshComponent.h>
+#include <Components/StaticMesh.h>
+#include <Components/Colliders/IntersectionTests.h>
+#include <Components/Colliders/BoundingHelper.h>
+
 
 PCascadeShadowMap::PCascadeShadowMap()
 {
@@ -37,7 +45,7 @@ PCascadeShadowMap::PCascadeShadowMap(
 		float LogStepFar = ZNear * pow((ZFar / ZNear), static_cast<float>(i + 1) / static_cast<float>(NumCascades));
 		float UniStepFar = ZNear + (ZFar - ZNear) * static_cast<float>(i + 1) / static_cast<float>(NumCascades);
 
-		Cascade->Frustrum->FarPlane = Lambda * LogStepFar + (1.0 - Lambda) * UniStepFar;
+		Cascade->Frustrum->FarPlane = Lambda * LogStepFar + (1.0 - Lambda) * UniStepFar * 1.002f;
 
 		uint64 Resolution =  SMath::HighestPowerOf2(4096 / (static_cast<uint64>(i) + 1)); //
 		
@@ -45,7 +53,8 @@ PCascadeShadowMap::PCascadeShadowMap(
 
 		Cascade->Frustrum->Ratio = InAspectRatio;
 		Cascade->Frustrum->FieldOfView = InFieldOfView;
-		Cascade->Frustrum->Center = Vector3f::ZERO;
+		Cascade->Frustrum->FrustrumBox = new PBoundingBox();
+		Cascade->Frustrum->BoundingBox = new AABB();
 
 		Cascade->CascadeDebugColour = Vector4f(
 			0.85f + 0.15f * float(i >= 2),
@@ -61,6 +70,11 @@ PCascadeShadowMap::PCascadeShadowMap(
 
 PCascadeShadowMap::~PCascadeShadowMap()
 {
+	for (PCascade * Cascade : Cascades) {
+		delete Cascade->CascadeFBO;
+	}
+	Cascades.Destroy();
+	glDeleteBuffers(1, &CascadesMVPBuffer);
 }
 
 void PCascadeShadowMap::Init()
@@ -70,7 +84,7 @@ void PCascadeShadowMap::Init()
 
 	for (uint32 i = 0; i < NumCascades; i++)
 	{
-		Cascades[i]->CascadeFBO->Init("Cascade_" + i, Cascades[i]->Resolution, Cascades[i]->Resolution, false);
+		Cascades[i]->CascadeFBO->Init("Cascade_" + i, Cascades[i]->Resolution, Cascades[i]->Resolution, true);
 		
 	}	
 	// init cascade MVP buffer
@@ -94,94 +108,83 @@ void PCascadeShadowMap::UpdateCascadeExtends(float ZNear, float ZFar, float Rati
 		float LogStepFar = ZNear * pow((ZFar / ZNear), static_cast<float>(i + 1) / static_cast<float>(NumCascades));
 		float UniStepFar = ZNear + (ZFar - ZNear) * static_cast<float>(i + 1) / static_cast<float>(NumCascades);
 
-		Cascades[i]->Frustrum->FarPlane = i < NumCascades - 1 ? (Lambda * LogStepFar + (1.0 - Lambda) * UniStepFar) * 1.005f : Lambda * LogStepFar + (1.0 - Lambda) * UniStepFar;
+		Cascades[i]->Frustrum->FarPlane = Lambda * LogStepFar + (1.0 - Lambda) * UniStepFar * 1.002f;
 
 		Cascades[i]->Resolution = static_cast<uint32>(SMath::HighestPowerOf2(4096 / (static_cast<uint64>(i) + 1)));
 		Cascades[i]->Frustrum->Ratio = Ratio;
 		Cascades[i]->Frustrum->FieldOfView = FieldOfView;
 	}
 }
-
-void PCascadeShadowMap::CalculateLightProjection(uint32 Index, PCameraComponent * Camera, PDirectionalLightComponent * Light) {
-
-	Vector3f Min = Vector3f(std::numeric_limits<float>::infinity());
-	Vector3f Max = Vector3f(-std::numeric_limits<float>::infinity());
-
+void PCascadeShadowMap::CalculateLightProjection(
+	uint32 Index,
+	PCameraComponent* Camera,
+	PDirectionalLightComponent* Light,
+	bool SquareBox
+) {
+	float L, R, B, T, N, F;
 
 	// Calculate the Corners in world space!
 	Cascades[Index]->Frustrum->CalculateFrustrumCorners(Camera);
 
-	Vector3f LightPosition = Cascades[Index]->Frustrum->Center + Vector3f(Light->LightDirection) * (Cascades[Index]->Frustrum->FarPlane - Cascades[Index]->Frustrum->NearPlane);
-
-	Matrix4f LightViewMatrix = LookAt(LightPosition, Cascades[Index]->Frustrum->Center, Vector3f(0.0f, 1.0f, 0.0f));
-	//Matrix4f LightViewMatrix = LookAt(Cascades[Index]->Frustrum->Center, Cascades[Index]->Frustrum->Center - Vector3f(Light->LightDirection), Vector3f(0.0f, 1.0f, 0.0f));
-
+	Matrix4f LightViewMatrix = LookAt(Vector3f::ZERO, -Light->LightDirection, Vector3f(0.0f, 1.0f, 0.0f));
 
 	// World Space -> Light Space
-	Vector4f TransformedCorner = LightViewMatrix * Vector4f(Cascades[Index]->Frustrum->Corners[0], 1.0f);
-	Min = TransformedCorner;
-	Max = TransformedCorner;
-
-	for (int i = 1; i < 8; i++)
-	{
-		TransformedCorner = LightViewMatrix * Vector4f(Cascades[Index]->Frustrum->Corners[i], 1.0f);
-
-		Min.Z = SMath::Min(Min.Z, TransformedCorner.Z);
-		Max.Z = SMath::Max(Max.Z, TransformedCorner.Z);
-	}
-
-	float N = Min.Z;
-	float F = Max.Z;
-	Matrix4f LightProjectionMatrix = Ortho(-1, 1, -1, 1, N, F);
-
-	//TODO: Do a tighter bounding by being scene aware 
-
-
-
-	for (int i = 1; i < 8; i++)
-	{
-		TransformedCorner = LightProjectionMatrix * LightViewMatrix * Vector4f(Cascades[Index]->Frustrum->Corners[i], 1.0f);
-		Min.X = SMath::Min(Min.X, TransformedCorner.X);
-		Max.X = SMath::Max(Max.X, TransformedCorner.X);
-		Min.Y = SMath::Min(Min.Y, TransformedCorner.Y);
-		Max.Y = SMath::Max(Max.Y, TransformedCorner.Y);
-	}
-
-	float TexelSize = SMath::Max(Max.X - Min.X, Max.Y - Min.Y) / Cascades[Index]->Resolution;
-
-	float L = std::round(Min.X / TexelSize) * TexelSize;
-	float R = std::round(Max.X / TexelSize) * TexelSize;
-	float B = std::round(Min.Y / TexelSize) * TexelSize;
-	float T = std::round(Max.Y / TexelSize) * TexelSize;
-
-
-	// Texel Snapping (https://www.realtimeshadows.com/sites/default/files/sig2013-course-hardshadows_0.pdf)
-
-	float ScaleX = 2.0f / (R - L);
-	float ScaleY = 2.0f / (T - B);
-
-	//Calculate Crop Matrix  (https://www.realtimeshadows.com/sites/default/files/sig2013-course-hardshadows_0.pdf)
-
-	float OffsetX = - 0.5f * (R + L) * ScaleX;
-	float OffsetY = -0.5f * (T + B) * ScaleY;
-
-
-	Matrix4f CropMatrix = Translate(Vector3f(OffsetX, OffsetY, 0.0f), Matrix4f::IDENTITY);
+	PAxisAlignedBoundingBox* LightSpaceAABB = BoundingHelper::Transform(Cascades[Index]->Frustrum->BoundingBox, LightViewMatrix);
 	
-	CropMatrix = Scale(Vector3f(ScaleX, ScaleY, 1.0f), CropMatrix);
+	L = LightSpaceAABB->Min.X;
+	R = LightSpaceAABB->Max.X;
+	B = LightSpaceAABB->Min.Y;
+	T = LightSpaceAABB->Max.Y;
+	N = LightSpaceAABB->Min.Z;
+	F = LightSpaceAABB->Max.Z;
+
+	TArray<PAxisAlignedBoundingBox*> ShadowCasters = gSceneManager.GetActiveScene()->GetShadowCasters(Cascades[Index]->Frustrum->BoundingBox, Vector3f(Cascades[Index]->CascadeDebugColour));
+	if (ShadowCasters.IsNotEmpty()) {
+		for (int i = 0; i < ShadowCasters.Size(); ++i) {
+			ShadowCasters[i] = BoundingHelper::Transform(ShadowCasters[i], LightViewMatrix);
+		}
+		// get the union of all shadow casters in light space
+		PAxisAlignedBoundingBox* LightSpaceCasters = BoundingHelper::UnionAABB(ShadowCasters);
+
+		N = SMath::Min(LightSpaceAABB->Min.Z, LightSpaceCasters->Min.Z);
+		F = SMath::Max(LightSpaceAABB->Max.Z, LightSpaceCasters->Max.Z);
+	}
+
+	float Extent = SMath::Max(R - L, T - B);
+
+	// Make the box square
+	if (SquareBox) {
+		float W = R - L, H = T - B;
+		float Diff = Extent - H;
+		if (Diff > 0) {
+			T += Diff / 2.0f;
+			B -= Diff / 2.0f;
+		}
+		Diff = Extent - W;
+		if (Diff > 0) {
+			R += Diff / 2.0f;
+			L -= Diff / 2.0f;
+		}
+	}
+	// Texel Snapping (https://www.realtimeshadows.com/sites/default/files/sig2013-course-hardshadows_0.pdf)
+	float TexelSize = Extent / Cascades[Index]->Resolution;
+
+	L = std::round(L / TexelSize) * TexelSize;
+	R = std::round(R / TexelSize) * TexelSize;
+	B = std::round(B / TexelSize) * TexelSize;
+	T = std::round(T / TexelSize) * TexelSize;
+
+
+	Matrix4f LightProjectionMatrix = Ortho(L, R, B, T, -1000, 1000);
+
+	Matrix4f lightSpaceMatrix = LightProjectionMatrix * LightViewMatrix;
 
 	Cascades[Index]->LightViewMatrix = LightViewMatrix;
 
-	Cascades[Index]->CropMatrix = CropMatrix;
+	Cascades[Index]->LightProjectionMatrix = LightProjectionMatrix;
 
-	Cascades[Index]->LightProjectionMatrix = CropMatrix * LightProjectionMatrix;
+	Cascades[Index]->CascadeCPVMatrix = lightSpaceMatrix;
 
-	Cascades[Index]->CascadeCPVMatrix = CropMatrix * LightProjectionMatrix * LightViewMatrix; 
-
-	// shad_modelview = lightview
-	// shad_mvp = lightprojection * lightview
-	// shad_proj = crop * projection
-	// shad_cpm = crop * projection * view
 }
 
 void PCascadeShadowMap::UpdateCascadeBuffer(Matrix4f CameraViewMatrix) {
@@ -229,7 +232,7 @@ void PCascadeShadowMap::PrepareForDraw(
 		sizeof(Matrix4f) * NumCascades,
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
-	Matrix4f TextureSpaceMatrix = Scale(Vector3f(0.5f, 0.5f, 0.5f), Translate(Vector3f(0.5f, 0.5f, 0.5), Matrix4f::IDENTITY));
+	Matrix4f TextureSpaceMatrix = Scale(Vector3f(0.5f, 0.5f, 0.5f), Translate(Vector3f(0.5f, 0.5f, 0.5f), Matrix4f::IDENTITY));
 	Vector4f FarPlanes = Vector4f::ONE;
 	Vector4f NearPlanes = Vector4f::ONE;
 	Vector4f LightFrustrumWidth = Vector4f::ONE;
@@ -256,9 +259,6 @@ void PCascadeShadowMap::PrepareForDraw(
 		// in world space
 		FarPlanes[i] = Cascades[i]->Frustrum->FarPlane;
 		
-		//0.5f * (-Cascades[i]->Frustrum->FarPlane * CameraProjectionMatrix[2][2] +
-			// CameraProjectionMatrix[3][2]) / Cascades[i]->Frustrum->FarPlane + 0.5f;
-
 		//in world space
 		NearPlanes[i] = Cascades[i]->Frustrum->NearPlane;
 	}

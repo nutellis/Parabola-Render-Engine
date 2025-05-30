@@ -1,8 +1,13 @@
 #include <Components\StaticMesh.h>
 
+#include <Components/Colliders/BoundingBox.h>
+#include <Components/Colliders/AxisAlignedBoundingBox.h>
+
 PStaticMesh::PStaticMesh() : Vertices(),
 Indices()
-{}
+{
+	LocalBoundingBox = new AABB();
+}
 
 PStaticMesh::PStaticMesh(Asset* Mesh)
 	: Vertices(), Indices()

@@ -76,6 +76,8 @@ public:
 
 	void SetupModelMatrix();
 
+	void UpdateWorldBoundingBox();
+
 public:
 	std::string ObjectName;
 
@@ -85,11 +87,9 @@ public:
 	//children vector
 	TArray<PRenderActor*> Children;
 
-	union {
-		PStaticMeshComponent* StaticMesh;
+	PStaticMeshComponent* StaticMesh;
 
-		PDirectionalLightComponent* Light;
-	};
+	PDirectionalLightComponent* Light;
 
 	// Stores the position/translation of the node 
 	Vector3f ObjectPosition;
@@ -100,8 +100,6 @@ public:
 
 	// Stores the uniform scaling factor applied to this node
 	Vector3f ObjectScale;
-
-	Matrix4f ModelMatrix;
 
 	bool IsMovable;
 };

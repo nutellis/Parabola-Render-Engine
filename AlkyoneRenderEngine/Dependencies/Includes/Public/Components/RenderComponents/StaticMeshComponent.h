@@ -48,7 +48,7 @@ public:
 	float angle;
 
 	VertexArray Vertices;
-private:
+public:
 	TArray<PStaticMesh*> Meshes;
 	TArray<PMaterial*> Materials;
 

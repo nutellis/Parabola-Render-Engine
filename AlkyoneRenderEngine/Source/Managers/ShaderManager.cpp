@@ -116,7 +116,7 @@ void GShaderManager::Clean()
 void GShaderManager::ReloadShader(std::string name)
 {
 
-	for (auto& shader : Shaders) {
+	for (Shader * shader : Shaders) {
 		if (shader->Name == name) {
 			Shader* ReloadedShader = CompileProgram(shader->Name, shader->GetVertexPath(), shader->GetFragmentPath());
 			if (ReloadedShader->ID != -1) {
@@ -132,7 +132,7 @@ void GShaderManager::ReloadShader(std::string name)
 
 void GShaderManager::ReloadShaders()
 {
-	for (auto& shader : Shaders) {
+	for (Shader* shader : Shaders) {
 		Shader* ReloadedShader = CompileProgram(shader->Name, shader->GetVertexPath(), shader->GetFragmentPath());
 		if (ReloadedShader->ID != -1) {
 			shader = Utilities::Move(ReloadedShader);

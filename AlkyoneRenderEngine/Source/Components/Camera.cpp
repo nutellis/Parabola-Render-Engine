@@ -1,38 +1,28 @@
 #include <Components/CameraComponents/Camera.h>
 #include <Components/RenderActor.h>
 #include <Utilities/CameraUtiltities.h>
-#include <Components/RenderComponents/StaticMeshComponent.h>
-#include <Managers/ShaderManager.h>
-#include <Components/Shader.h>
+
+#include <Components/Colliders/BoundingBox.h>
+#include <Components/Colliders/AxisAlignedBoundingBox.h>
+#include <Components/Colliders/BoundingHelper.h>
+
 
 
 PFrustrum::PFrustrum()
 {
-	Corners = TArray<Vector3f>(8);
-	Center = Vector3f::ZERO;
-	Min = Vector3f::ZERO;
-	Max = Vector3f::ZERO;
-	Extents = Vector3f::ZERO;
-	DiagonalLength = 0.0f;
+	FrustrumBox = new PBoundingBox();
+	BoundingBox = new PAxisAlignedBoundingBox();
 	NearPlane = 0.0f;
 	FarPlane = 0.0f;
 	Ratio = 0.0f;
 	FieldOfView = 0.0f;
 
-	DebugFrustrumMesh = new PStaticMeshComponent(nullptr);
-	if (DebugFrustrumMesh != nullptr) {
-		DebugFrustrumMesh->Vertices = TArray<VertexFormat>(24);
-	}
-
 }
 
 PFrustrum::~PFrustrum()
 {
-	if (DebugFrustrumMesh != nullptr) {
-		delete DebugFrustrumMesh;
-		DebugFrustrumMesh = nullptr;
-	}
-	Corners.Destroy();
+	delete FrustrumBox;
+	delete BoundingBox;
 }
 
 void PFrustrum::CalculateFrustrumCorners(PCameraComponent* Camera)
@@ -51,190 +41,25 @@ void PFrustrum::CalculateFrustrumCorners(PCameraComponent* Camera)
 	Vector3f RightVector = Camera->Right * (WNear * 0.5f);
 	Vector3f UpVector = Camera->Up * (HNear * 0.5f);
 
+	TArray<Vector3f> FrustrumCorners;
 	// Near Plane
-	Corners.Clear();
-	Corners.PushBack(NearCenter + UpVector - RightVector); //top left
-	Corners.PushBack(NearCenter + UpVector + RightVector); //top right
-	Corners.PushBack(NearCenter - UpVector - RightVector); //bottom left
-	Corners.PushBack(NearCenter - UpVector + RightVector); //bottom right
+	FrustrumCorners.PushBack(NearCenter + UpVector - RightVector); //top left
+	FrustrumCorners.PushBack(NearCenter + UpVector + RightVector); //top right
+	FrustrumCorners.PushBack(NearCenter - UpVector - RightVector); //bottom left
+	FrustrumCorners.PushBack(NearCenter - UpVector + RightVector); //bottom right
 
 	RightVector = Camera->Right * (WFar * 0.5f);
 	UpVector = Camera->Up * (HFar * 0.5f);
 
 	// Far Plane
-	Corners.PushBack(FarCenter + UpVector - RightVector); //top left
-	Corners.PushBack(FarCenter + UpVector + RightVector); //top right
-	Corners.PushBack(FarCenter - UpVector - RightVector); //bottom left
-	Corners.PushBack(FarCenter - UpVector + RightVector); //bottom right
+	FrustrumCorners.PushBack(FarCenter + UpVector - RightVector); //top left
+	FrustrumCorners.PushBack(FarCenter + UpVector + RightVector); //top right
+	FrustrumCorners.PushBack(FarCenter - UpVector - RightVector); //bottom left
+	FrustrumCorners.PushBack(FarCenter - UpVector + RightVector); //bottom right
 
-	Min = Corners[0];
-	Max = Corners[0];
-	Center = Corners[0];
-	for (int i = 1; i < Corners.Size(); ++i) {
-		Min = SMath::Min(Min, Corners[i]);
-		Max = SMath::Max(Max, Corners[i]);
-		Center += Corners[i];
-	}
-	Center = Center / Corners.Size();
-
-	DiagonalLength = (Max - Min).Length();
-
+	FrustrumBox->CalculateFromCorners(FrustrumCorners);
+	BoundingBox->CalculateFromCorners(FrustrumCorners);
 }
-
-void PFrustrum::SetupDebugFrustrumEdges(Vector3f LightPosition)
-{
-	DebugFrustrumMesh->Vertices.Clear();
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[0]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[1]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[1]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[3]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[3]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[2]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[2]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[0]));
-
-	// Far plane edges			 							
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[4]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[5]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[5]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[7]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[7]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[6]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[6]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[4]));
-	// Connect near and far planes					
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[0]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[4]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[1]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[5]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[2]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[6]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[3]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[7]));
-
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Center));
-	//DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Center + LightPosition * 10));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Center + LightPosition * (FarPlane - NearPlane)));
-
-
-	DebugFrustrumMesh->SetupBuffers(GL_DYNAMIC_DRAW);
-}
-
-void PFrustrum::SetupDebugFrustrumPlanes()
-{
-	DebugFrustrumMesh->Vertices.Clear();
-
-	// === Near Plane ===
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[0]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[2]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[1]));
-
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[2]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[3]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[1]));
-
-	// === Far Plane ===
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[4]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[5]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[6]));
-
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[6]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[5]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[7]));
-
-	// === Left Plane ===
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[0]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[4]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[2]));
-
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[2]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[4]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[6]));
-
-	// === Right Plane ===
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[1]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[3]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[5]));
-
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[3]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[7]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[5]));
-
-	// === Top Plane ===
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[0]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[1]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[4]));
-
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[1]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[5]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[4]));
-
-	// === Bottom Plane ===
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[2]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[6]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[3]));
-
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[3]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[6]));
-	DebugFrustrumMesh->Vertices.PushBack(VertexFormat(Corners[7]));
-
-	DebugFrustrumMesh->SetupBuffers(GL_DYNAMIC_DRAW);
-}
-
-void PFrustrum::RenderDebugFrustrum(int RenderOption, Vector4f Colour, Matrix4f Projection, Matrix4f View, Vector3f LightPosition)
-{
-	if (DebugFrustrumMesh != nullptr)
-	{
-		Shader* LineShader = gShaderManager.GetShader("SimpleShader");
-		glUseProgram(LineShader->ID);
-
-		LineShader->SetMat4("modelViewProjectionMatrix", false, Projection * View * Matrix4f::IDENTITY);
-		
-		switch (RenderOption)
-		{
-		case 1:
-			SetupDebugFrustrumPlanes();
-			DebugFrustrumMesh->BindVAO();
-			LineShader->SetVec4("uColour", Colour);
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glDisable(GL_CULL_FACE);
-			glDrawArrays(GL_TRIANGLES, 0, 36);
-			glEnable(GL_CULL_FACE);
-			glDisable(GL_BLEND);
-
-			CHECK_GL_ERROR();
-			break;
-		case 2:
-			SetupDebugFrustrumEdges(LightPosition);
-			DebugFrustrumMesh->BindVAO();
-			LineShader->SetVec4("uColour", Vector4f(Vector3f(Colour),1.0));
-			glDrawArrays(GL_LINES, 0, 26);
-			CHECK_GL_ERROR();
-			break;
-		case 3:
-			SetupDebugFrustrumPlanes();
-			DebugFrustrumMesh->BindVAO();
-			LineShader->SetVec4("uColour", Colour);
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glDisable(GL_CULL_FACE);
-			glDrawArrays(GL_TRIANGLES, 0, 36);
-			glEnable(GL_CULL_FACE);
-			glDisable(GL_BLEND);
-
-			SetupDebugFrustrumEdges(LightPosition);
-			DebugFrustrumMesh->BindVAO();
-			LineShader->SetVec4("uColour", Vector4f(Vector3f(Colour), 1.0));
-			glDrawArrays(GL_LINES, 0, 26); 
-			CHECK_GL_ERROR();
-			break;
-		default:
-			break;
-		}
-	}
-}
-
 
 //----------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------
@@ -252,10 +77,11 @@ PCameraComponent::PCameraComponent(PRenderActor* Parent, Vector3f up, float yaw,
 	MovementSpeed = 15.0f;
 	Zoom = 60.0f;
 
-	Frustrum.FieldOfView = 60.0f;
-	Frustrum.NearPlane = 0.5f;
-	Frustrum.FarPlane = 1000.0f;
-	Frustrum.Ratio = 16.0f / 9.0f;
+	Frustrum = new PFrustrum();
+	Frustrum->FieldOfView = 60.0f;
+	Frustrum->NearPlane = 0.5f;
+	Frustrum->FarPlane = 1000.0f;
+	Frustrum->Ratio = 16.0f / 9.0f;
 
 	//RotateCamera(Parent->ObjectRotation.X, Parent->ObjectRotation.Y);
 
@@ -364,6 +190,55 @@ void PCameraComponent::SetupShaderCamera(Shader* ActiveShader) {
 
 }
 
+void PCameraComponent::AdjustPlanesBasedOnObjects(TArray<PAxisAlignedBoundingBox*> Objects)
+{
+	if (Objects.IsEmpty()) {
+		return;
+	}
+
+	// get the union of all objects
+	PAxisAlignedBoundingBox* Union = BoundingHelper::UnionAABB(Objects);
+
+//	Union->RenderDebugBoundingBox(1, Vector4f(1.0, 0.0f, 0.0f, 0.1f), RCamera->Projection, RCamera->View);
+
+	float NewNearPlane = FLT_MAX;
+	float NewFarPlane = -FLT_MAX;
+
+	for (int i = 0; i < 8; ++i) {
+
+		Vector3f PointToCam = Union->Corners[i] - GetPosition();
+		float Z = Dot(PointToCam, this->Front);
+
+		// find boundary values
+		if (Z > NewFarPlane) NewFarPlane = Z;
+		if (Z < NewNearPlane) NewNearPlane = Z;
+	}
+
+	NewNearPlane = SMath::Max(NewNearPlane, ZNearMin);
+	NewFarPlane = SMath::Max(NewFarPlane, ZNearMin + 1.0f);
+
+	Frustrum->NearPlane = NewNearPlane;
+	Frustrum->FarPlane = NewFarPlane;
+
+	UpdateCamera();
+}
+
+void PCameraComponent::UpdateCamera(uint32 Width, uint32 Height) {
+
+	if (Width != 0 && Height != 0) {
+		Frustrum->Ratio = (float)Width / (float)Height;
+	}
+	
+	UpdateCameraVectors();
+
+	Frustrum->CalculateFrustrumCorners(this);
+
+	Projection = Perspective(Frustrum->FieldOfView, Frustrum->Ratio, Frustrum->NearPlane, Frustrum->FarPlane);
+
+	View = LookAt(Parent->ObjectPosition, Parent->ObjectPosition + Front, WorldUp);
+
+}
+
 void PCameraComponent::SetDefaults()
 {
 	const float YAW = 0.0f;
@@ -383,82 +258,13 @@ PCameraActor::PCameraActor(std::string NodeName) : PRenderActor(NodeName)
 	ActorType = EntityType::CAMERA;
 	Camera = new PCameraComponent(this);
 
-	//TODO: move this
+}
+
+void PCameraActor::InitCamera()
+{
 	ControlCamera(1920, 1080);
 }
 
 void PCameraActor::ControlCamera(uint32 Width, uint32 Height) {
-	//TODO: do some checking ?
-	Camera->Frustrum.Ratio = (float)Width / (float)Height;
-
-	Camera->UpdateCameraVectors();
-
-	Camera->Frustrum.CalculateFrustrumCorners(Camera);
-
-	Camera->Projection = Perspective(Camera->Frustrum.FieldOfView, Camera->Frustrum.Ratio, Camera->Frustrum.NearPlane, Camera->Frustrum.FarPlane);
-
-	Camera->View = LookAt(ObjectPosition, ObjectPosition + Camera->Front, Camera->WorldUp);
-
-	//SetupDebugFrustrum();
-}
-
-void PCameraActor::SetupDebugFrustrum()
-{
-	this->StaticMesh = new PStaticMeshComponent(this);
-	this->StaticMesh->Vertices = TArray<VertexFormat>(24);
-	TArray<Vector3f> Corners = this->Camera->Frustrum.Corners;
-
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[0]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[1]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[1])); 
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[3]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[3]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[2]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[2])); 
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[0]));
-								 							
-	// Far plane edges			 							
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[4]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[5]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[5]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[7]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[7]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[6]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[6]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[4]));				
-	// Connect near and far planes					
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[0]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[4]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[1]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[5]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[7]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[2])); 
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[6]));
-	this->StaticMesh->Vertices.PushBack(VertexFormat(Corners[3]));
-
-	/*Matrix4f InverseProjectionView = Inverse(Projection * View);
-	for (int i = 0; i < 8; ++i) {
-		Vector4f WordSpacePosition = InverseProjectionView * Vector4f(this->StaticMesh->Vertices[i].Position, 1.0);
-		this->StaticMesh->Vertices[i].Position = Vector3f(WordSpacePosition) / WordSpacePosition.W;
-	}*/
-
-	this->StaticMesh->SetupBuffers();
-}
-
-void PCameraActor::RenderDebugFrustrum(Matrix4f Projection, Matrix4f View)
-{
-	if (this->StaticMesh != nullptr)
-	{
-		Shader* LineShader = gShaderManager.GetShader("SimpleShader");
-		glUseProgram(LineShader->ID);
-
-		LineShader->SetMat4("modelViewProjectionMatrix", false, Projection * View * Matrix4f::IDENTITY);
-		LineShader->SetVec3("uColour", Vector3f(0.0, 1.0, 1.0));
-
-		this->StaticMesh->BindVAO();
-	//	glDisable(GL_DEPTH_TEST);
-		glDrawArrays(GL_LINES, 0, 24); // 12 lines × 2 vertices
-		//glEnable(GL_DEPTH_TEST);
-		CHECK_GL_ERROR();
-	}
+	Camera->UpdateCamera(Width, Height);
 }

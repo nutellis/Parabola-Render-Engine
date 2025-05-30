@@ -2,6 +2,7 @@
 #include <Components/RenderActor.h>
 
 #include <Components/Shader.h>
+#include <Utilities/CameraUtiltities.h>
 
 PDirectionalLightComponent::PDirectionalLightComponent(PRenderActor* Parent)
 {

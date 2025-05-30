@@ -51,6 +51,10 @@ public:
 	const TVector4 Ones();
 
 
+	TVector3<Type> XYZ() const;
+
+	TVector2<Type> XY() const;
+
 	Type Length() const;
 
 	void Normalize();
@@ -98,6 +102,7 @@ public:
 	static const TVector4 ONE;
 
 	void Print() const;
+
 
 };
 #pragma pack(pop)

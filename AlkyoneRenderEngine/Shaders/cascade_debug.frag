@@ -45,7 +45,7 @@ uniform sampler2D shadowMap[4];
 
 in vec4 shadowMapCoord[4];
 uniform vec4 farPlanes;
-
+uniform int numOfCascades;
 
 
 
@@ -77,17 +77,15 @@ vec3 shadowCoef(int index)
 }
 
 int getIndex() {
-	int index = 3;
-	
-	// find the appropriate depth map to look up in based on the depth of this fragment
-	if(gl_FragCoord.z < farPlanes.x)
-		index = 0;
-	else if(gl_FragCoord.z < farPlanes.y)
-		index = 1;
-	else if(gl_FragCoord.z < farPlanes.z)
-		index = 2;
 
-		return index;
+	float viewDepth = abs(viewSpacePosition.z);
+	int cascadeIndex =
+		int(viewDepth > farPlanes.x) +
+		int(viewDepth > farPlanes.y) +
+		int(viewDepth > farPlanes.z);
+	cascadeIndex = clamp(cascadeIndex, 0, numOfCascades - 1);
+
+	return cascadeIndex;
 }
 
 vec3 baseColor(int index) {

@@ -6,6 +6,9 @@
 
 
 class PCameraComponent;
+class PBoundingBox;
+class PAxisAlignedBoundingBox;
+
 
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
 enum CameraMovement {
@@ -24,12 +27,10 @@ enum ProjectionType {
 
 struct PFrustrum {
 public:
-	TArray<Vector3f> Corners;
-	Vector3f Center;
-	Vector3f Min;
-	Vector3f Max;
-	Vector3f Extents;
-	float DiagonalLength;
+
+	PBoundingBox * FrustrumBox;
+	PAxisAlignedBoundingBox* BoundingBox;
+
 	float NearPlane;
 	float FarPlane;
 	float Ratio;
@@ -39,18 +40,6 @@ public:
 	~PFrustrum();
 	void CalculateFrustrumCorners(PCameraComponent* Camera);
 
-	void SetupDebugFrustrumEdges(Vector3f LightPosition);
-
-	//void SetupDebugFrustrumEdges();
-
-	void SetupDebugFrustrumPlanes();
-
-	void RenderDebugFrustrum(int RenderOption, Vector4f Colour, Matrix4f Projection, Matrix4f View, Vector3f LightPosition);
-
-	//void RenderDebugFrustrum(int RenderOption, Vector4f Colour, Matrix4f Projection, Matrix4f View);
-
-private:
-	PStaticMeshComponent * DebugFrustrumMesh;
 };
 
 // Default camera values			//Load them in some way ?? -> .ini file probably
@@ -66,7 +55,7 @@ public:
 
 	Matrix4f View;
 	Matrix4f Projection;
-	PFrustrum Frustrum;
+	PFrustrum * Frustrum;
 
 
 	// Camera Attributes
@@ -89,6 +78,10 @@ public:
 
 	//set true for active camera
 	bool IsActiveCamera;
+private:
+	const float ZNearMin = 0.5f;
+	const float ZFarMax = 2000.f;
+public:
 
 	// Constructor with vectors
 	//PCameraComponent(Vector3f up = Vector3f(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
@@ -106,6 +99,10 @@ public:
 	// Calculates the front vector from the Camera's (updated) Eular Angles
 	void UpdateCameraVectors();
 
+	void AdjustPlanesBasedOnObjects(TArray<PAxisAlignedBoundingBox*>Objects);
+	//void AdjustPlanesBasedOnObjects(TArray<PAxisAlignedBoundingBox*> Objects, PCameraComponent* RCamera);
+
+	void UpdateCamera(uint32 Width = 0, uint32 Height = 0);
 	void SetDefaults();
 
 	// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
@@ -118,6 +115,7 @@ public:
 	void ProcessMouseScroll(float yoffset);
 
 	void SetupShaderCamera(Shader* ActiveShader);
+
 
 };
 
@@ -132,12 +130,11 @@ public:
 	PCameraActor();
 	PCameraActor(std::string NodeName);
 
+	void InitCamera();
 	void ControlCamera(uint32 Width, uint32 Height);
 
 	PCameraActor(PRenderActor* Parent);
 	~PCameraActor();
 	//void SetRotation(Vector3f InRotation);
 
-	void SetupDebugFrustrum();
-	void RenderDebugFrustrum(Matrix4f Projection, Matrix4f View);
 };

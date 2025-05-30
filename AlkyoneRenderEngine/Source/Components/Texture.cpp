@@ -38,6 +38,7 @@ Texture::Texture(uint32 InWidth, uint32 InHeight): Width(InWidth), Height(InHeig
 
 Texture::~Texture()
 {
+    glDeleteTextures(1, &TextureID);
 }
 
 void Texture::Generate(std::string filename, bool IsHDRImage)
@@ -122,10 +123,10 @@ void Texture::GenerateDepthTexture(bool IsForShadows) {
     if (IsForShadows) {
         glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-        glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+        glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
+        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     }
     else {
 

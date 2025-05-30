@@ -33,6 +33,8 @@ FBORenderTarget::FBORenderTarget(std::string Name,uint32 Width, uint32 Height) :
 
 FBORenderTarget::~FBORenderTarget()
 {
+	delete ColourAttachment;
+	delete DepthStencilAttachment;
 
 	glDeleteFramebuffers(1, &ID);
 }

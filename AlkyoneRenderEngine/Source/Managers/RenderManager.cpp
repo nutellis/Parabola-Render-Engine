@@ -30,6 +30,8 @@
 #include <Utilities/CameraUtiltities.h>
 
 #include <ParabolaMath.h>
+#include <Components/Colliders/AxisAlignedBoundingBox.h>
+#include <Components/StaticMesh.h>
 
 
 
@@ -111,23 +113,82 @@ void GRenderManager::Render(double DeltaTime)
 	ActiveCamera->ControlCamera(1366, 768);
 	RenderCamera->ControlCamera(1366, 768);
 
+	//TODO: this should be moved inside a generic camera update
+	TArray<PAxisAlignedBoundingBox*> Receivers = gSceneManager.GetActiveScene()->GetObjectsByIntersection(RenderCamera->Camera->Frustrum->BoundingBox);
+	RenderCamera->Camera->AdjustPlanesBasedOnObjects(Receivers);
+
 	ShadowMapPass(RenderCamera->Camera);
 
 	RenderPass(ActiveCamera->Camera);
 
 	PDirectionalLightComponent * light = ActiveScene->SceneLights.Front()->Light;
-	int bitMask = Options.ShowCameraPlanes << 1 | Options.ShowCameraEdges;
+	int bitMask = Options.ShowEdges << 1 | Options.ShowPlanes;
 	if (Options.ShowCameraFrustrum) {
 		
-		RenderCamera->Camera->Frustrum.RenderDebugFrustrum(bitMask, Vector4f(1.0, 1.0, 1.0, 0.2), ActiveCamera->Camera->Projection, ActiveCamera->Camera->View, light->LightDirection);
+		RenderCamera->Camera->Frustrum->FrustrumBox->RenderDebugBoundingBox(bitMask, Vector4f(1.0, 1.0, 1.0, 0.2), ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
+	}
+	if (Options.ShowCameraBoundingBox) {
+
+		RenderCamera->Camera->Frustrum->BoundingBox->RenderDebugBoundingBox(bitMask, Vector4f(1.0, 1.0, 1.0, 0.2), ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
 	}
 
 	if (Options.ShowCascadeFrustrumDebug) {
 		for (auto& Cascade : ShadowMap->Cascades) {
-			Cascade->Frustrum->RenderDebugFrustrum(bitMask, Cascade->CascadeDebugColour, ActiveCamera->Camera->Projection, ActiveCamera->Camera->View, light->LightDirection);
+			Cascade->Frustrum->FrustrumBox->RenderDebugBoundingBox(bitMask, Cascade->CascadeDebugColour, ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
 		}
 	}
 
+	if (Options.ShowCascadeBoundingDebug) {
+		for (auto& Cascade : ShadowMap->Cascades) {
+			Cascade->Frustrum->BoundingBox->RenderDebugBoundingBox(bitMask, Cascade->CascadeDebugColour, ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
+		}
+	}
+
+	
+
+	if (Options.ShowLightFrustrumDebug) {
+		TArray<Vector4f> ndcCorners;
+		ndcCorners = {
+		{-1, 1, -1, 1},
+		{ 1, 1, -1, 1},
+		{ -1,  -1, -1, 1},
+		{1,  -1, -1, 1},
+		{-1, 1,  1, 1},
+		{ 1, 1,  1, 1},
+		{-1,  -1,  1, 1},
+		{1,  -1,  1, 1},
+			};
+
+		PFrustrum* LightFrustrum = new PFrustrum();
+		
+		TArray<Vector3f> viewCorners;
+		for (int i = 0; i < 8; ++i) {
+			Vector4f viewPos = Inverse(ShadowMap->Cascades[Options.CascadeIndex-1]->CascadeCPVMatrix) * ndcCorners[i];
+			viewCorners.PushBack(Vector3f(viewPos) / viewPos.W);  // Perspective divide (though ortho w == 1)
+		}
+		LightFrustrum->FrustrumBox->Corners = viewCorners;
+
+		LightFrustrum->FrustrumBox->SetupDebugFrustrumEdges();
+
+		LightFrustrum->FrustrumBox->RenderDebugBoundingBox(bitMask, Vector4f(0.85, 0.85, 0.0, 0.6), ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
+
+	}
+
+	if (Options.ShowBoundingBoxes) {
+		TArray<PRenderActor*> VisibleMeshes = ActiveScene->SceneMeshes;
+		for (int i = 0; i < VisibleMeshes.Size(); i++) {
+			if (Options.ShowEdges) {
+				for (int j = 0; j < VisibleMeshes[i]->StaticMesh->Meshes.Size(); j++) {
+					VisibleMeshes[i]->StaticMesh->Meshes[j]->WorldBoundingBox->RenderDebugBoundingBox(
+						Options.ShowEdges << 1,
+						VisibleMeshes[i]->StaticMesh->Meshes[j]->WorldBoundingBox->DebugColour,
+						ActiveCamera->Camera->Projection,
+						ActiveCamera->Camera->View
+					);
+				}
+			}
+		}
+	}
 	// Draw GUI
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -144,21 +205,38 @@ void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 	Shader* DepthShader = gShaderManager.GetShader("DepthShader");
 	DepthShader->Enable();
 
-	if (ShadowMap == nullptr || ShadowMap->NumCascades != Options.NumCascades) {
+	if (ShadowMap == nullptr) {
 		ShadowMap = new PCascadeShadowMap(
 			Options.NumCascades,
-			Camera->Frustrum.FieldOfView,
-			Camera->Frustrum.Ratio,
-			Camera->Frustrum.NearPlane,
-			Camera->Frustrum.FarPlane);
+			Camera->Frustrum->FieldOfView,
+			Camera->Frustrum->Ratio,
+			Camera->Frustrum->NearPlane,
+			Camera->Frustrum->FarPlane);
 
 		//set shader
 
-		DepthShader->SetFloat("near_plane",Camera->Frustrum.NearPlane);
-		DepthShader->SetFloat("far_plane", Camera->Frustrum.FarPlane);
+		DepthShader->SetFloat("near_plane",Camera->Frustrum->NearPlane);
+		DepthShader->SetFloat("far_plane", Camera->Frustrum->FarPlane);
 
 		ShadowMap->Init();
 
+	}
+	else if (ShadowMap->NumCascades != Options.NumCascades) {
+		delete ShadowMap;
+
+		ShadowMap = new PCascadeShadowMap(
+			Options.NumCascades,
+			Camera->Frustrum->FieldOfView,
+			Camera->Frustrum->Ratio,
+			Camera->Frustrum->NearPlane,
+			Camera->Frustrum->FarPlane);
+
+		//set shader
+
+		DepthShader->SetFloat("near_plane", Camera->Frustrum->NearPlane);
+		DepthShader->SetFloat("far_plane", Camera->Frustrum->FarPlane);
+
+		ShadowMap->Init();
 	}
 
 	for (int i = 0; i < ShadowMap->NumCascades; i++) {
@@ -168,24 +246,25 @@ void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 		glViewport(0, 0, ShadowMap->GetCascade(i)->Resolution, ShadowMap->GetCascade(i)->Resolution);
 		glClearColor(1.0, 1.0, 1.0, 1.0);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-		//glCullFace(GL_FRONT);
+		glCullFace(GL_FRONT);
 
 
-		glPolygonOffset(1.0f, 4.0f); 
+		glPolygonOffset(1.0f, 16.0f); 
 		glEnable(GL_POLYGON_OFFSET_FILL);
 
 		//TODO: add a shouldUpdate here to avoid recalculations
 		ShadowMap->UpdateCascadeExtends(
-			Camera->Frustrum.NearPlane,
-			Camera->Frustrum.FarPlane,
-			Camera->Frustrum.Ratio,
-			Camera->Frustrum.FieldOfView
+			Camera->Frustrum->NearPlane,
+			Camera->Frustrum->FarPlane,
+			Camera->Frustrum->Ratio,
+			Camera->Frustrum->FieldOfView
 		);
 
 		ShadowMap->CalculateLightProjection(
 			i, 
 			Camera,
-			ActiveScene->SceneLights.Front()->Light
+			ActiveScene->SceneLights.Front()->Light,
+			Options.SquareShadowBox
 		);
 
 		DrawScene(
@@ -283,7 +362,7 @@ void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix
 		for (int i = 0; i < VisibleMeshes.Size(); i++) {
 			VisibleMeshes[i]->SetupModelMatrix();
 
-			Matrix4f ModelViewMatrix = ViewMatrix * VisibleMeshes[i]->ModelMatrix;
+			Matrix4f ModelViewMatrix = ViewMatrix * VisibleMeshes[i]->StaticMesh->ModelMatrix;
 			Matrix4f ModelViewProjectionMatrix = ProjectionMatrix * ModelViewMatrix;
 
 			ShaderToUse->SetMat4("modelViewMatrix", false, ModelViewMatrix);
@@ -294,7 +373,6 @@ void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix
 			
 			VisibleMeshes[i]->StaticMesh->DrawComponent(ShaderToUse);
 		}
-
 
 		//for (int i = 0; i < VisibleMeshes.Size(); i++) {
 		//	PStaticMeshComponent * MeshToRender = VisibleMeshes[i]->StaticMesh;
@@ -367,7 +445,7 @@ void GRenderManager::Terminate()
 void GRenderManager::DrawOptions() {
 
 	ImGui::SetNextWindowSize(ImVec2(600, 400));
-	ImGui::SetNextWindowPos(ImVec2(1440, 601));
+	ImGui::SetNextWindowPos(ImVec2(0, 770));
 	ImGuiWindowFlags window_flags = 0;
 	window_flags |= ImGuiWindowFlags_NoMove;
 	window_flags |= ImGuiWindowFlags_NoCollapse;
@@ -379,17 +457,30 @@ void GRenderManager::DrawOptions() {
 		//General Options
 		ImGui::Text("Camera");
 		ImGui::Checkbox("Show Camera Frustrum", &Options.ShowCameraFrustrum);
-		ImGui::Checkbox("Show Planes", &Options.ShowCameraEdges);
-		ImGui::Checkbox("Show Edges", &Options.ShowCameraPlanes);
+		ImGui::SameLine();
+		ImGui::Checkbox("Show Camera Bounding Box", &Options.ShowCameraBoundingBox);
+		ImGui::Checkbox("Show Edges", &Options.ShowEdges);
+		ImGui::SameLine();
+		ImGui::Checkbox("Show Planes", &Options.ShowPlanes);	
+		ImGui::SameLine();
+		ImGui::Checkbox("Show Bounding Boxes", &Options.ShowBoundingBoxes);
+		ImGui::NewLine();
 		ImGui::Separator();
 		//Cascade Shadow Map
 		ImGui::Text("Cascade Shadow Map");
+		ImGui::Checkbox("CSM Debug View", &Options.ShowShadowMapDebug);
+		ImGui::SameLine();
+		ImGui::Checkbox("Square Box", &Options.SquareShadowBox);
 		ImGui::SliderInt("Cascades Number", &Options.NumCascades, 1, 4);
 		if (ImGui::SliderFloat("Lambda", &Options.Lambda, 0.0, 1.0)) {
 			ShadowMap->Lambda = Options.Lambda;
 		}
-		ImGui::Checkbox("Show Cascade Frustrums", &Options.ShowCascadeFrustrumDebug);
-		ImGui::Checkbox("CSM Debug View", &Options.ShowShadowMapDebug);
+		ImGui::Checkbox("Show Cascade Frustrums", &Options.ShowCascadeFrustrumDebug); 
+		ImGui::SameLine();
+		ImGui::Checkbox("Show Cascade AABB", &Options.ShowCascadeBoundingDebug);
+		ImGui::SameLine();
+		ImGui::Checkbox("Show Light Frustrum", &Options.ShowLightFrustrumDebug);
+		if (ImGui::SliderInt("Cascade Selected", &Options.CascadeIndex, 1, Options.NumCascades))
 
 		for (int i = 0; i < ShadowMap->NumCascades; i++) {
 			std::string CascadeTitle = "CSM Level " + std::to_string(i);
@@ -405,6 +496,10 @@ void GRenderManager::DrawOptions() {
 		if(ImGui::Button("Reload Shaders")) {
 			gShaderManager.ReloadShaders();
 		}
+		ImGui::SameLine();
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate,
+			ImGui::GetIO().Framerate);
+
 	}
 	ImGui::End();
 }

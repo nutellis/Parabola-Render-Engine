@@ -1,12 +1,14 @@
 #pragma once
 
 #include <Utilities/Containers/Array.h>
+#include <ParabolaMath.h>
 
 class PRenderActor;
 class PCameraActor;
 class GSceneManager;
 class PCameraComponent;
 class PSkyBox;
+class PAxisAlignedBoundingBox;
 
 // Contains a scenegraph of Actors. Nothing else
 
@@ -38,6 +40,11 @@ public:
 
 	void SetActiveCamera(PCameraActor* Camera);
 
+	TArray<PAxisAlignedBoundingBox*> GetObjectsByIntersection(PAxisAlignedBoundingBox* BoxToCheck);
+
+	TArray<PAxisAlignedBoundingBox*> GetShadowCasters(PAxisAlignedBoundingBox* BoxToCheck, Vector3f Colour);
+
+	TArray<PAxisAlignedBoundingBox*> GetShadowCasters(PAxisAlignedBoundingBox* BoxToCheck);
 
 	//cull nodes
 

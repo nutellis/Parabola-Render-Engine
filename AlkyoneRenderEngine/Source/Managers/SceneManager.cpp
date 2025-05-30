@@ -6,6 +6,9 @@
 #include <Components/RenderActor.h>
 #include <Components/LightComponents/DirectionalLightComponent.h>
 #include <Components/CameraComponents/Camera.h>
+#include <Components/RenderComponents/StaticMeshComponent.h>
+#include <Components/StaticMesh.h>
+#include <Components/Colliders/AxisAlignedBoundingBox.h>
 
 template<> GSceneManager* SingletonManagerBase<GSceneManager>::instance = 0;
 GSceneManager & GSceneManager::getInstance()
@@ -101,7 +104,7 @@ void GSceneManager::Terminate()
 
 void GSceneManager::DrawSceneGraph()
 {
-	ImGui::SetNextWindowSize(ImVec2(600, 600));
+	ImGui::SetNextWindowSize(ImVec2(600, 1079));
 	ImGui::SetNextWindowPos(ImVec2(1440, 0));
 	ImGuiWindowFlags window_flags = 0;
 	window_flags |= ImGuiWindowFlags_NoMove;
@@ -110,6 +113,7 @@ void GSceneManager::DrawSceneGraph()
 	window_flags |= ImGuiWindowFlags_NoScrollbar;
 
 	static PRenderActor* selectedIndex = nullptr;
+	static PStaticMesh* selectedMesh = nullptr;
 	static bool useUniformScaling = true;
 	static bool useRelativeTranslation = true;
 	ImGui::Begin("SceneGraph", 0, window_flags);
@@ -133,11 +137,6 @@ void GSceneManager::DrawSceneGraph()
 				ImGui::Separator();
 				if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None))
 				{
-					/*if (ImGui::BeginTabItem("Description"))
-					{
-						ImGui::TextWrapped("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ");
-						ImGui::EndTabItem();
-					}*/
 					if (ImGui::BeginTabItem("Details"))
 					{
 						//if (useRelativeTranslation) {
@@ -171,6 +170,9 @@ void GSceneManager::DrawSceneGraph()
 							if (ImGui::SliderFloat("Zenith", &selectedIndex->Light->Zenith, 0.10f, 120.0f, "%.1f")) {
 								selectedIndex->Light->SetDirection();
 							}
+							if (ImGui::InputFloat("By Pass", &selectedIndex->Light->Intensity, ImGuiInputTextFlags_EnterReturnsTrue)) {
+								//selectedIndex->SetRotation(LocalRotation);
+							}
 						}
 						if (selectedIndex->ActorType == EntityType::CAMERA) {
 							PCameraActor* Camera = static_cast<PCameraActor*>(selectedIndex);
@@ -179,11 +181,11 @@ void GSceneManager::DrawSceneGraph()
 								if (ImGui::InputFloat("Camera Speed", &Camera->Camera->MovementSpeed, 1.0, 10.0, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
 								}
 								// Make those one line and fit them
-								if (ImGui::InputFloat("Near Plane", &Camera->Camera->Frustrum.NearPlane, 0.1, 1.0, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
+								if (ImGui::InputFloat("Near Plane", &Camera->Camera->Frustrum->NearPlane, 0.1, 1.0, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
 								}
-								if (ImGui::InputFloat("Far Plane", &Camera->Camera->Frustrum.FarPlane, 1.0, 10.0, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
+								if (ImGui::InputFloat("Far Plane", &Camera->Camera->Frustrum->FarPlane, 1.0, 10.0, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
 								}
-								if (ImGui::InputFloat("Field of View", &Camera->Camera->Frustrum.FieldOfView, 1.0, 10.0, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
+								if (ImGui::InputFloat("Field of View", &Camera->Camera->Frustrum->FieldOfView, 1.0, 10.0, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
 								}
 
 								if (ImGui::Checkbox("Set Active Camera", &Camera->Camera->IsActiveCamera)) {
@@ -191,8 +193,18 @@ void GSceneManager::DrawSceneGraph()
 								}
 							}
 						}
-
+						
 						ImGui::EndTabItem();
+					}
+					if (selectedIndex->ActorType == MODEL && selectedIndex->StaticMesh != nullptr) {
+						if (ImGui::BeginTabItem("Meshes"))
+						{
+							PStaticMesh* ReturnedValue = RecurseActorsMeshes(selectedIndex);
+							if (ReturnedValue != nullptr) {
+								selectedMesh = ReturnedValue;
+							}
+							ImGui::EndTabItem();
+						}
 					}
 					ImGui::EndTabBar();
 				}
@@ -200,6 +212,34 @@ void GSceneManager::DrawSceneGraph()
 				/*	if (ImGui::Button("Revert")) {}
 					ImGui::SameLine();
 					if (ImGui::Button("Save")) {}*/
+				ImGui::EndGroup();
+			}
+			if (selectedMesh != nullptr) {
+				ImGui::BeginGroup();
+				ImGui::BeginChild("Mesh Details", ImVec2(ImGui::GetContentRegionAvail().x, 500), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY, ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 line below us
+				ImGui::Text("Mesh: %s", selectedMesh->Name.c_str());
+				ImGui::Separator();
+				if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None))
+				{
+					if (ImGui::BeginTabItem("Details"))
+					{
+						ImGui::Text("Mesh: %d", selectedMesh->NumVertices);
+						ImGui::Checkbox("Cast Shadows", &selectedMesh->IsCastingShadows);
+						ImGui::Text("AABB Min: %f %f %f",
+							selectedMesh->WorldBoundingBox->Min.X,
+							selectedMesh->WorldBoundingBox->Min.Y,
+							selectedMesh->WorldBoundingBox->Min.Z
+						);
+						ImGui::Text("AABB Max: %f %f %f",
+							selectedMesh->WorldBoundingBox->Max.X,
+							selectedMesh->WorldBoundingBox->Max.Y,
+							selectedMesh->WorldBoundingBox->Max.Z
+						);
+						ImGui::EndTabItem();
+					}
+					ImGui::EndTabBar();
+				}
+				ImGui::EndChild();
 				ImGui::EndGroup();
 			}
 		}
@@ -210,7 +250,6 @@ void GSceneManager::DrawSceneGraph()
 
 PRenderActor* GSceneManager::RecurseSceneChildren(PRenderActor* Root) {
 	PRenderActor* SelectedNode = nullptr;
-
 	ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
 	if (ImGui::TreeNodeEx((void*)(intptr_t)0, node_flags | ImGuiTreeNodeFlags_DefaultOpen, Root->ObjectName.c_str()))
 	{
@@ -240,7 +279,30 @@ PRenderActor* GSceneManager::RecurseSceneChildren(PRenderActor* Root) {
 	return SelectedNode;
 }
 
+PStaticMesh* GSceneManager::RecurseActorsMeshes(PRenderActor* Root) {
+	PStaticMesh* SelectedNode = nullptr;
 
+	ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+	if (ImGui::TreeNodeEx((void*)(intptr_t)0, node_flags | ImGuiTreeNodeFlags_DefaultOpen, Root->ObjectName.c_str()))
+	{
+		TArray<PStaticMesh*> Meshes = Root->StaticMesh->Meshes;
+		for (int i = 0; i < Meshes.Size(); i++)
+		{
+			node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
+			if (ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags, Meshes[i]->Name.c_str()))
+			{
+				if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+					// callback for selection
+					SelectedNode = Meshes[i];
+				}
+			}
+		}
+		ImGui::TreePop();
+	}
+
+	return SelectedNode;
+}
 
 //
 //void GSceneManager::AddOctreeNode(OctreeNode * inNode, Octree * inOctant, int32 inDepth)

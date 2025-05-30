@@ -25,13 +25,19 @@ class PCameraComponent;
 struct RenderOptions {
 public:
 	bool ShowCameraFrustrum = false;
-	bool ShowCameraEdges = false;
-	bool ShowCameraPlanes = false;
+	bool ShowCameraBoundingBox = false;
+	bool ShowEdges = false;
+	bool ShowPlanes = false;
+	bool ShowBoundingBoxes = false;
 
 	//Cascade Shadow Mapping
 	bool ShowCascadeFrustrumDebug = false;
+	bool ShowCascadeBoundingDebug = false;
+	bool ShowLightFrustrumDebug = false;
+	int32 CascadeIndex = 1;
 	bool ShowShadowMapDebug = false;
-	bool ShowCascade[4];
+	bool SquareShadowBox = false;
+	bool ShowCascade[4] = { true, true, true, true };
 	bool ToggleShadowView = false;
 	int32 NumCascades = 4;
 	float Lambda = 0.5;

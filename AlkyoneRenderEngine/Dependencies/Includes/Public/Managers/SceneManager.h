@@ -11,6 +11,7 @@
 class Scene;
 class PRenderActor;
 class SceneNode;
+class PStaticMesh;
 
 
 class GSceneManager : SingletonManagerBase<GSceneManager>
@@ -41,6 +42,8 @@ public:
 	void FrustrumCull();
 
 	PRenderActor* RecurseSceneChildren(PRenderActor* Root);
+
+	PStaticMesh* RecurseActorsMeshes(PRenderActor* Root);
 
 private:
 

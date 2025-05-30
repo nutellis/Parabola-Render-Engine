@@ -3,6 +3,9 @@
 #include <ParabolaMath.h>
 #include <Components/CameraComponents/Camera.h>
 #include <Components/LightComponents/DirectionalLightComponent.h>
+#include <Components/StaticMesh.h>
+#include <Components/Colliders/BoundingBox.h>
+#include <Components/Colliders/BoundingHelper.h>
 
 PRenderActor::PRenderActor()
 {
@@ -73,6 +76,9 @@ void PRenderActor::SetPosition(Vector3f inPosition)
         for (auto i = 0; i < Children.Size(); i++) {
             Children[i]->SetPosition(ObjectPosition);
         }
+        if (ActorType == MODEL) {
+            UpdateWorldBoundingBox();
+        }
     }
 }
 
@@ -94,6 +100,9 @@ void PRenderActor::SetRotation(Vector3f inRotation)
         Children[i]->SetRotation(ObjectRotation);
     }
     //TODO: need to care about children
+    if (ActorType == MODEL) {
+        UpdateWorldBoundingBox();
+    }
 }
 
 void PRenderActor::AddRotation(Vector3f inRotation)
@@ -117,11 +126,17 @@ Vector3f PRenderActor::GetScale()
 void PRenderActor::SetScale(Vector3f inScale)
 {
     ObjectScale = inScale;
+    if (ActorType == MODEL) {
+        UpdateWorldBoundingBox();
+    }
 }
 
 void PRenderActor::SetScale(float inScale)
 {
     ObjectScale = inScale;
+    if (ActorType == MODEL) {
+        UpdateWorldBoundingBox();
+    }
 }
 
 void PRenderActor::DrawMeshChildren(Shader * ActiveShader) {
@@ -144,14 +159,27 @@ void PRenderActor::DrawMeshChildren(Shader * ActiveShader) {
     }
 }
 
+//TODO: Use this only after a transformation to reduce recalculations
 void PRenderActor::SetupModelMatrix() {
 
-    ModelMatrix = Matrix4f::IDENTITY;
+    StaticMesh->ModelMatrix = Matrix4f::IDENTITY;
 
     Matrix4f S = Scale(GetScale(), Matrix4f::IDENTITY);
     Matrix4f R = Rotate(GetRotation(), Matrix4f::IDENTITY);
     Matrix4f T = Translate(GetPosition(), Matrix4f::IDENTITY);
 
-    ModelMatrix = T * R * S;
+    StaticMesh->ModelMatrix = T * R * S;
+}
 
+
+void PRenderActor::UpdateWorldBoundingBox() {
+    SetupModelMatrix();
+
+    for (PStaticMesh* Mesh : StaticMesh->Meshes) {
+        Mesh->WorldBoundingBox = Utilities::Move(
+            BoundingHelper::TransformAABB(
+                Mesh->LocalBoundingBox, StaticMesh->ModelMatrix
+            )
+        );
+    }
 }
