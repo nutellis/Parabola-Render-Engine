@@ -7,7 +7,7 @@ class PRenderActor;
 class PCameraActor;
 class GSceneManager;
 class PCameraComponent;
-class PSkyBox;
+class RSkyBoxActor;
 class PAxisAlignedBoundingBox;
 
 // Contains a scenegraph of Actors. Nothing else
@@ -36,15 +36,13 @@ public:
 	void ResetScene();
 
 	PCameraActor* GetActiveCamera();
-	PSkyBox* GetSkyBox();
+	RSkyBoxActor* GetSkyBox();
 
 	void SetActiveCamera(PCameraActor* Camera);
 
-	TArray<PAxisAlignedBoundingBox*> GetObjectsByIntersection(PAxisAlignedBoundingBox* BoxToCheck);
+	TArray<PAxisAlignedBoundingBox> GetObjectsByIntersection(PAxisAlignedBoundingBox* BoxToCheck);
 
-	TArray<PAxisAlignedBoundingBox*> GetShadowCasters(PAxisAlignedBoundingBox* BoxToCheck, Vector3f Colour);
-
-	TArray<PAxisAlignedBoundingBox*> GetShadowCasters(PAxisAlignedBoundingBox* BoxToCheck);
+	TArray<PAxisAlignedBoundingBox> GetShadowCasters(PAxisAlignedBoundingBox* BoxToCheck, Vector3f Colour);
 
 	//cull nodes
 
@@ -64,4 +62,6 @@ private:
 
 	PRenderActor* Root;
 	bool isActive;
+
+	uint32 SceneMeshesTotal = 0;
 };

@@ -3,10 +3,10 @@
 #include <Core/PODTypes.h>
 
 template <typename T> class TArray;
-class Texture;
+class RTexture;
 struct VertexFormat;
 
 using VertexArray = TArray<VertexFormat>;
 using IndexArray = TArray<uint32>; 
-using TextureArray = TArray<Texture>;
+using TextureArray = TArray<RTexture>;
 

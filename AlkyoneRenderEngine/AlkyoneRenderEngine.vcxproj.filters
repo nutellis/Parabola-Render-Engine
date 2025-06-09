@@ -165,6 +165,9 @@
     <ClCompile Include="Source\Components\Colliders\BoundingBox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Components\AmbientOcclusion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\..\Program Files\Autodesk\FBX\FBX SDK\2020.0.1\include\fbxsdk.h">
@@ -1806,6 +1809,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\Includes\Public\Components\Colliders\BoundingBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\Includes\Public\Components\AmbientOcclusion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\Includes\Public\RenderHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

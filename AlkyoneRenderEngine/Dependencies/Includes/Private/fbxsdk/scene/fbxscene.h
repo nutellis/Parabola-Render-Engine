@@ -74,7 +74,7 @@ public:
 		FbxNode* GetRootNode() const;
 	//@}
 
-	//! \name Texture Material and Video Access
+	//! \name RTexture Material and Video Access
 	//@{
 		/** Clear, then fill, a texture array with all existing textures included in the scene.
 		* \param pTextureArray An array of texture pointers. */
@@ -295,7 +295,7 @@ public:
 		bool RemoveMaterial(FbxSurfaceMaterial* pMaterial);
 	//@}
 
-	//! \name Texture Access
+	//! \name RTexture Access
 	//@{
 		/** Get number of textures (type FbxTexture).
 		* \return Number of textures in this scene. Includes types FbxFileTexture, FbxLayeredTexture and FbxProceduralTexture.

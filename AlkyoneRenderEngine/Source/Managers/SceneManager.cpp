@@ -178,14 +178,14 @@ void GSceneManager::DrawSceneGraph()
 							PCameraActor* Camera = static_cast<PCameraActor*>(selectedIndex);
 							if (Camera != nullptr) {
 								ImGui::Separator();
-								if (ImGui::InputFloat("Camera Speed", &Camera->Camera->MovementSpeed, 1.0, 10.0, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
+								if (ImGui::InputFloat("Camera Speed", &Camera->Camera->MovementSpeed, 1.0f, 10.0f, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
 								}
 								// Make those one line and fit them
-								if (ImGui::InputFloat("Near Plane", &Camera->Camera->Frustrum->NearPlane, 0.1, 1.0, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
+								if (ImGui::InputFloat("Near Plane", &Camera->Camera->Frustrum->NearPlane, 0.1f, 1.0f, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
 								}
-								if (ImGui::InputFloat("Far Plane", &Camera->Camera->Frustrum->FarPlane, 1.0, 10.0, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
+								if (ImGui::InputFloat("Far Plane", &Camera->Camera->Frustrum->FarPlane, 1.0f, 10.0f, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
 								}
-								if (ImGui::InputFloat("Field of View", &Camera->Camera->Frustrum->FieldOfView, 1.0, 10.0, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
+								if (ImGui::InputFloat("Field of View", &Camera->Camera->Frustrum->FieldOfView, 1.0f, 10.0f, "%.1f", ImGuiInputTextFlags_EnterReturnsTrue)) {
 								}
 
 								if (ImGui::Checkbox("Set Active Camera", &Camera->Camera->IsActiveCamera)) {

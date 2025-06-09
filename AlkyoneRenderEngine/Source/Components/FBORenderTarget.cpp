@@ -2,6 +2,7 @@
 
 #include <Components/FBORenderTarget.h>
 #include <Components/Texture.h>
+
 #include <string>
 
 
@@ -18,22 +19,28 @@
 
 FBORenderTarget::FBORenderTarget() : RenderTarget()
 {
-	ColourAttachment = 0;
+	ColourAttachments = 0;
 	DepthStencilAttachment = 0;
 	Width = 0;
 	Height = 0;
 
 }
 
-FBORenderTarget::FBORenderTarget(std::string Name,uint32 Width, uint32 Height) : RenderTarget(Name, Width, Height)
+FBORenderTarget::FBORenderTarget(std::string Name,uint32 Width, uint32 Height, uint32 NumTargets) : RenderTarget(Name, Width, Height)
 {
-	ColourAttachment = 0;
-	DepthStencilAttachment = 0;
+	ColourAttachments = TArray<RTexture *>(NumTargets);
+	for (uint32 i = 0; i < NumTargets; i++)
+	{
+		ColourAttachments.PushBack(new RTexture(Width, Height, RTextureOptions::InitDefault()));
+	}
+
+	DepthStencilAttachment = new RTexture(Width, Height, RTextureOptions::InitDefaultDepth());
 }
 
 FBORenderTarget::~FBORenderTarget()
 {
-	delete ColourAttachment;
+	ColourAttachments.Clear();
+
 	delete DepthStencilAttachment;
 
 	glDeleteFramebuffers(1, &ID);
@@ -44,57 +51,46 @@ void FBORenderTarget::Bind()
 	glBindFramebuffer(GL_FRAMEBUFFER,ID);
 }
 
-bool FBORenderTarget::Init(bool IsForShadowMapping)
+bool FBORenderTarget::Init(TArray<RTextureOptions> ColourAttachmentOptions, RTextureOptions DepthAttachmentOptions)
 {
 	bool bIsCompleted = false;
 
 	glGenFramebuffers(1, &ID);
 	glBindFramebuffer(GL_FRAMEBUFFER, ID);
 
-	ColourAttachment = new Texture(Width, Height);
-	ColourAttachment->GenerateColourTexture();
+	TArray<GLenum> Attachments = TArray<GLenum>(ColourAttachments.Size());
+	for (uint32 i = 0; i < ColourAttachments.Size(); i++) {
+		if (ColourAttachmentOptions.IsNotEmpty()) { // options is either empty or same number with attachments, nothing else will work.
 
-	// attach to framebuffer
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ColourAttachment->TextureID, 0);
+			ColourAttachments[i]->TextureOptions = ColourAttachmentOptions[i];
+		}
+		ColourAttachments[i]->Generate();
 
-	DepthStencilAttachment = new Texture(Width, Height);
-	DepthStencilAttachment->GenerateDepthTexture(IsForShadowMapping);
-	
+		// attach to framebuffer
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D,
+			ColourAttachments[i]->TextureID, 0);
+		Attachments.PushBack(GL_COLOR_ATTACHMENT0 + i);
+	}
+	glDrawBuffers(Attachments.Size(), &Attachments[0]);
+
+	DepthStencilAttachment->TextureOptions = DepthAttachmentOptions;
+	DepthStencilAttachment->Generate();
+
 	// attach to framebuffer
 	glNamedFramebufferTexture(ID, GL_DEPTH_ATTACHMENT, DepthStencilAttachment->TextureID, 0);
 
-	GLenum result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	if (result == GL_FRAMEBUFFER_COMPLETE) {
+	GLenum Result = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (Result == GL_FRAMEBUFFER_COMPLETE) {
 		bIsCompleted = true;
 	}
 	else {
-		
+		//TODO: error message if framebufer fails to initialize
 	}
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	return bIsCompleted;
-}
-
-bool FBORenderTarget::Init(std::string Name, uint32 Width, uint32 Height, bool IsForShadowMapping)
-{
-	this->Name = Name;
-	this->Width = Width;
-	this->Height = Height;
-
-	return Init(IsForShadowMapping);
-}
-
-uint32 FBORenderTarget::GetTexture() const
-{
-	return ColourAttachment->TextureID;
-
-}
-uint32 FBORenderTarget::GetDepth() const
-{
-	return DepthStencilAttachment->TextureID;
-
 }
 
 

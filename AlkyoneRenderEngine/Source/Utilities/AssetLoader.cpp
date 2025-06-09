@@ -927,9 +927,9 @@ void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals)
 
 ///*
 //// "C:/Users/Nutellis/Documents/Visual Studio 2015/Projects/OpenGLTutorial/Engine-core/Resources/container2.png"
-////Texture *PMaterial::LoadTexture(const char * filename) //, GLenum image_format, int internal_format, int level, int border
+////RTexture *PMaterial::LoadTexture(const char * filename) //, GLenum image_format, int internal_format, int level, int border
 ////{
-////	Texture *tempTexture = new Texture();
+////	RTexture *tempTexture = new RTexture();
 ////	bool TextureLoaded = true;
 ////	//image format
 ////	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
@@ -1045,7 +1045,7 @@ void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals)
 //	Ar.ArchiveWrite(&HasTexture, sizeof(bool));
 //	if (HasTexture) {
 //		ChannelTexture->Serialize(Ar);
-//		//Ar.ArchiveWrite(&ChannelTexture,sizeof(Texture));
+//		//Ar.ArchiveWrite(&ChannelTexture,sizeof(RTexture));
 //	}
 //	Ar.ArchiveWrite(&Colour,sizeof(Vector4f));
 //
@@ -1057,7 +1057,7 @@ void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals)
 //	Ar.ArchiveRead(&HasTexture, sizeof(bool));
 //	if (HasTexture) {
 //		ChannelTexture->Deserialize(Ar);
-//		//Ar.ArchiveRead(&ChannelTexture, sizeof(Texture));
+//		//Ar.ArchiveRead(&ChannelTexture, sizeof(RTexture));
 //	}
 //	Ar.ArchiveRead(&Colour, sizeof(Vector4f));
 //}
@@ -1080,7 +1080,7 @@ void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals)
 //	delete test;
 //}
 //
-//void Texture::Serialize(Archive & Ar)
+//void RTexture::Serialize(Archive & Ar)
 //{
 //	//Ar.ArchiveWrite(&id, sizeof(unsigned int));
 //	Ar.ArchiveWrite(&width, sizeof(unsigned int));
@@ -1092,7 +1092,7 @@ void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals)
 //
 //}
 //
-//void Texture::Deserialize(Archive & Ar)
+//void RTexture::Deserialize(Archive & Ar)
 //{
 //	// Ar.ArchiveRead(&id, sizeof(unsigned int));
 //	Ar.ArchiveRead(&width, sizeof(unsigned int));
@@ -1178,7 +1178,7 @@ Asset * ObjLoader::Read(const char * Filepath)
 				__debugbreak();
 			}*/
 			material->Diffuse.HasTexture = true;
-			material->Diffuse.ChannelTexture = new Texture();
+			material->Diffuse.ChannelTexture = new RTexture();
 
 			material->Diffuse.ChannelTexture->Generate(directory + m.diffuse_texname);
 		}
@@ -1189,7 +1189,7 @@ Asset * ObjLoader::Read(const char * Filepath)
 		if (m.metallic_texname != "")
 		{
 			material->Metalness.HasTexture = true;
-			material->Metalness.ChannelTexture = new Texture();
+			material->Metalness.ChannelTexture = new RTexture();
 
 			material->Metalness.ChannelTexture->Generate(directory + m.metallic_texname);
 		}
@@ -1200,7 +1200,7 @@ Asset * ObjLoader::Read(const char * Filepath)
 		if (m.specular_texname != "")
 		{
 			material->Fresnel.HasTexture = true;
-			material->Fresnel.ChannelTexture = new Texture();
+			material->Fresnel.ChannelTexture = new RTexture();
 
 			material->Fresnel.ChannelTexture->Generate(directory + m.specular_texname);
 		}
@@ -1211,7 +1211,7 @@ Asset * ObjLoader::Read(const char * Filepath)
 		if (m.roughness_texname != "")
 		{
 			material->Roughness.HasTexture = true;
-			material->Roughness.ChannelTexture = new Texture();
+			material->Roughness.ChannelTexture = new RTexture();
 
 			material->Roughness.ChannelTexture->Generate(directory + m.roughness_texname);
 		}
@@ -1221,7 +1221,7 @@ Asset * ObjLoader::Read(const char * Filepath)
 		if (m.emissive_texname != "")
 		{
 			material->Emissive.HasTexture = true;
-			material->Emissive.ChannelTexture = new Texture();
+			material->Emissive.ChannelTexture = new RTexture();
 
 			material->Emissive.ChannelTexture->Generate(directory + m.emissive_texname);
 		}
@@ -1376,7 +1376,9 @@ Asset * ObjLoader::Read(const char * Filepath)
 			///////////////////////////////////////////////////////////////
 			mesh->NumVertices = vertices_so_far - mesh->IndexStart;
 
-			mesh->LocalBoundingBox = new AABB(Min, Max);
+			mesh->LocalBoundingBox->Min = Min;
+			mesh->LocalBoundingBox->Max = Max;
+			mesh->LocalBoundingBox->GetCornersFromMinMax();
 
 			asset->Meshes.PushBack(mesh);
 			finished_materials[current_material_index] = true;

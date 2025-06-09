@@ -30,7 +30,7 @@ class FBXSDK_DLL FbxProceduralTexture : public FbxTexture
 
 	public:
 	/**
-	  * \name Procedural Texture Properties
+	  * \name Procedural RTexture Properties
 	  */
 	//@{
 

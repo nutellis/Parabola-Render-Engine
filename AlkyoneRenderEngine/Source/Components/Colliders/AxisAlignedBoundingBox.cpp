@@ -12,6 +12,13 @@ PAxisAlignedBoundingBox::PAxisAlignedBoundingBox() : PBoundingBox()
 
 }
 
+PAxisAlignedBoundingBox::PAxisAlignedBoundingBox(const PAxisAlignedBoundingBox& Other) : PBoundingBox(Other)
+{}
+
+PAxisAlignedBoundingBox::PAxisAlignedBoundingBox(PAxisAlignedBoundingBox&& Other) noexcept
+	: PBoundingBox(Utilities::Move(Other)) {}
+
+
 PAxisAlignedBoundingBox::PAxisAlignedBoundingBox(Vector3f Min, Vector3f Max) : PBoundingBox(Min, Max)
 {
 	Corners = {
@@ -30,6 +37,14 @@ PAxisAlignedBoundingBox::PAxisAlignedBoundingBox(Vector3f Min, Vector3f Max) : P
 
 PAxisAlignedBoundingBox::~PAxisAlignedBoundingBox()
 {}
+
+
+PAxisAlignedBoundingBox& PAxisAlignedBoundingBox::operator=(PAxisAlignedBoundingBox&& Other) noexcept {
+	if (this != &Other) {
+		PBoundingBox::operator=(Utilities::Move(Other));
+	}
+	return *this;
+}
 
 Vector3f PAxisAlignedBoundingBox::GetCorner(CornerEnum CornerToGet) const
 {
@@ -69,7 +84,7 @@ void PAxisAlignedBoundingBox::CalculateFromCorners(TArray<Vector3f> Corners)
 		this->Min.Z = SMath::Min(this->Min.Z, Corners[i].Z);
 		this->Max.Z = SMath::Max(this->Max.Z, Corners[i].Z);
 	}
-	this->Corners = Utilities::Move(GetCornersFromMinMax());
+	GetCornersFromMinMax(); 
 	this->Center = this->Max.MidPoint(this->Min);
 }
 
@@ -116,9 +131,8 @@ uint8 PAxisAlignedBoundingBox::Contains(const PAxisAlignedBoundingBox & Other) c
 		Min.Z <= Other.Min.Z && Max.Z >= Other.Max.Z;
 }
 
-TArray<Vector3f> PAxisAlignedBoundingBox::GetCornersFromMinMax()
+void PAxisAlignedBoundingBox::GetCornersFromMinMax()
 {
-	TArray<Vector3f> Corners = TArray<Vector3f>(8);
 	Corners = {
 		Vector3f(Min.X, Max.Y, Min.Z), // 0: Left Near Top
 			Vector3f(Max.X, Max.Y, Min.Z), // 1: Right Near Top
@@ -130,8 +144,6 @@ TArray<Vector3f> PAxisAlignedBoundingBox::GetCornersFromMinMax()
 			Vector3f(Min.X, Min.Y, Max.Z), // 6: Left Far Bottom
 			Vector3f(Max.X, Min.Y, Max.Z)  // 7: Right Far Bottom}
 	};
-
-	return Corners;
 }
 
 

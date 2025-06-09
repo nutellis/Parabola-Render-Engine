@@ -1,6 +1,6 @@
 #pragma once
 
-//This class represents a RenderTarget that renders to a Texture.
+//This class represents a RenderTarget that renders to a RTexture.
 
 #include <Components/RenderTarget.h>
 

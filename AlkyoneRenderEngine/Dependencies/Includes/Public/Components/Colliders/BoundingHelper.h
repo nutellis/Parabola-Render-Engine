@@ -5,7 +5,7 @@
 
 namespace BoundingHelper {
 
-	inline PAxisAlignedBoundingBox* TransformAABB(const PBoundingBox* Box, const Matrix4f Transform) {
+	inline PAxisAlignedBoundingBox TransformAABB(const PBoundingBox* Box, const Matrix4f Transform) {
 
 		Vector3f Min(FLT_MAX, FLT_MAX, FLT_MAX);
 		Vector3f Max(-FLT_MAX, -FLT_MAX, -FLT_MAX);
@@ -21,73 +21,84 @@ namespace BoundingHelper {
 			Min.Z = SMath::Min(Min.Z, P.Z);
 			Max.Z = SMath::Max(Max.Z, P.Z);
 		}
-
-		AABB * newAABB = new AABB(Min, Max);
-
-		return newAABB;
+		return AABB(Min, Max);
 	}
 
-	inline PAxisAlignedBoundingBox* CalculateAABBFromCorners(TArray<Vector3f> Corners)
+	inline PAxisAlignedBoundingBox CalculateAABBFromCorners(TArray<Vector3f> Corners)
 	{
-		PAxisAlignedBoundingBox* NewAABB = new AABB();
-		NewAABB->Min = Vector3f(std::numeric_limits<float>::infinity());
-		NewAABB->Max = Vector3f(-std::numeric_limits<float>::infinity());
+		PAxisAlignedBoundingBox NewAABB = AABB();
+		NewAABB.Min = Vector3f(std::numeric_limits<float>::infinity());
+		NewAABB.Max = Vector3f(-std::numeric_limits<float>::infinity());
 		for (int i = 0; i < Corners.Size(); i++) {
 
-			NewAABB->Min.X = SMath::Min(NewAABB->Min.X, Corners[i].X);
-			NewAABB->Max.X = SMath::Max(NewAABB->Max.X, Corners[i].X);
-			NewAABB->Min.Y = SMath::Min(NewAABB->Min.Y, Corners[i].Y);
-			NewAABB->Max.Y = SMath::Max(NewAABB->Max.Y, Corners[i].Y);
-			NewAABB->Min.Z = SMath::Min(NewAABB->Min.Z, Corners[i].Z);
-			NewAABB->Max.Z = SMath::Max(NewAABB->Max.Z, Corners[i].Z);
+			NewAABB.Min.X = SMath::Min(NewAABB.Min.X, Corners[i].X);
+			NewAABB.Max.X = SMath::Max(NewAABB.Max.X, Corners[i].X);
+			NewAABB.Min.Y = SMath::Min(NewAABB.Min.Y, Corners[i].Y);
+			NewAABB.Max.Y = SMath::Max(NewAABB.Max.Y, Corners[i].Y);
+			NewAABB.Min.Z = SMath::Min(NewAABB.Min.Z, Corners[i].Z);
+			NewAABB.Max.Z = SMath::Max(NewAABB.Max.Z, Corners[i].Z);
 		}
-		NewAABB->Corners = Utilities::Move(NewAABB->GetCornersFromMinMax());
-		NewAABB->Center = NewAABB->Max.MidPoint(NewAABB->Min);
+		NewAABB.GetCornersFromMinMax();
+		NewAABB.Center = NewAABB.Max.MidPoint(NewAABB.Min);
 
 		return NewAABB;
 	}
 
-	inline PBoundingBox* Transform(const PBoundingBox* Box, const Matrix4f Transform) {
+	//inline void Transform(PBoundingBox & Box, const Matrix4f Transform) {
 
-		TArray<Vector3f> Corners = TArray<Vector3f>(8);
-		for (Vector3f Corner : Box->Corners) {
+	//	for (Vector3f & Corner : Box.Corners) {
+	//		Vector4f Transformed = Transform * Vector4f(Corner, 1.0f);
+	//		Corner = Vector3f(Transformed) / Transformed.W; // it results to Transformed for non projection changes
+	//	}
+	//	Box.CalculateFromCorners(Box.Corners);
+	//}
+
+	//inline PBoundingBox Transform(PBoundingBox Box, const Matrix4f Transform) {
+
+	//	for (Vector3f& Corner : Box.Corners) {
+	//		Vector4f Transformed = Transform * Vector4f(Corner, 1.0f);
+	//		Corner = Vector3f(Transformed) / Transformed.W; // it results to Transformed for non projection changes
+	//	}
+	//	Box.CalculateFromCorners(Box.Corners);
+	//	return Box;
+	//}
+
+	template <typename T>
+	inline void Transform(T & Box, const Matrix4f Transform) {
+
+		for (Vector3f & Corner : Box.Corners) {
 			Vector4f Transformed = Transform * Vector4f(Corner, 1.0f);
-			Vector3f P = Transformed / Transformed.W; // it results to Transformed for non projection changes
-			Corners.PushBack(P);
+			Corner = Transformed / Transformed.W; // it results to Transformed for non projection changes
 		}
+		Box.CalculateFromCorners(Box.Corners);
 
-		PBoundingBox* NewBox = new PBoundingBox(Corners);
-
-		return NewBox;
 	}
 
-	inline PAxisAlignedBoundingBox* Transform(const PAxisAlignedBoundingBox* Box, const Matrix4f Transform) {
+	template <typename T>
+	inline T TransformCreate(T Box, const Matrix4f Transform) {
 
-		TArray<Vector3f> Corners = TArray<Vector3f>(8);
-		for (Vector3f Corner : Box->Corners) {
+		for (Vector3f & Corner : Box.Corners) {
 			Vector4f Transformed = Transform * Vector4f(Corner, 1.0f);
-			Vector3f P = Transformed / Transformed.W; // it results to Transformed for non projection changes
-			Corners.PushBack(P);
+			Corner = Transformed / Transformed.W; // it results to Transformed for non projection changes
 		}
 
-		PAxisAlignedBoundingBox* NewBox = Utilities::Move(CalculateAABBFromCorners(Corners));
-
-		return NewBox;
+		Box.CalculateFromCorners(Box.Corners);
+		return Box;
 	}
 
-	inline AABB * UnionAABB(const TArray<AABB *> Objects) {
-		Vector3f Min = Objects[0]->Min;
-		Vector3f Max = Objects[0]->Max;
+	inline AABB UnionAABB(const TArray<AABB> Objects) {
+		Vector3f Min = Objects[0].Min;
+		Vector3f Max = Objects[0].Max;
 		for (size_t i = 1; i < Objects.Size(); ++i) {
-			Min.X = SMath::Min(Min.X, Objects[i]->Min.X);
-			Max.X = SMath::Max(Max.X, Objects[i]->Max.X);
-			Min.Y = SMath::Min(Min.Y, Objects[i]->Min.Y);
-			Max.Y = SMath::Max(Max.Y, Objects[i]->Max.Y);
-			Min.Z = SMath::Min(Min.Z, Objects[i]->Min.Z);
-			Max.Z = SMath::Max(Max.Z, Objects[i]->Max.Z);
+			Min.X = SMath::Min(Min.X, Objects[i].Min.X);
+			Max.X = SMath::Max(Max.X, Objects[i].Max.X);
+			Min.Y = SMath::Min(Min.Y, Objects[i].Min.Y);
+			Max.Y = SMath::Max(Max.Y, Objects[i].Max.Y);
+			Min.Z = SMath::Min(Min.Z, Objects[i].Min.Z);
+			Max.Z = SMath::Max(Max.Z, Objects[i].Max.Z);
 		}
-		AABB* NewAABB = new AABB(Min, Max);
-		return NewAABB;
+
+		return AABB(Min, Max);
 	}
 }
 

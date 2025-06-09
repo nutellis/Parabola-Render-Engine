@@ -32,6 +32,8 @@ public:
 
 	void Bind();
 
+	void Terminate();
+
 	void CreateBuffer(uint32 DrawType = GL_STATIC_DRAW, size_t Size = 0, const void* Data = nullptr);
 
 	void WriteBuffer(void * Data);
@@ -63,6 +65,8 @@ public:
 	void Bind();
 
 	void CreateArray(PVertexComponentCount ComponentCount = PVertexComponentCount());
+
+	void Terminate();
 
 	void SetupAttribute(uint32 BufferIndex, uint32 Attribute, uint32 ComponentCount, uint32 RelativeOffset);
 

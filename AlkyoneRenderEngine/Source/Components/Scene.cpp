@@ -59,7 +59,7 @@ void Scene::SortCamera(PCameraActor* Child) {
 
 void Scene::InitScene() {
 
-	PSkyBox* SkyBox = new PSkyBox("SkyBox");
+	RSkyBoxActor* SkyBox = new RSkyBoxActor("SkyBox");
 	this->AddToRoot(SkyBox);
 	SkyBox->SetPosition(Vector3f(0.0, 0.0, 0.0));
 
@@ -73,24 +73,24 @@ void Scene::InitScene() {
 		"Assets/envmaps/001_irradiance.hdr", 
 		filenames);
 
-	PRenderActor* sponza = new PRenderActor("sponza");
-	this->AddChild(sponza);
-	sponza->AddMesh("Assets/sponza.obj");
-	sponza->SetPosition(Vector3f(0.0, 0.0, 0.0));
-	sponza->SetRotation(Vector3f(0.0, 90.0, 0.0));
-	sponza->SetScale(0.2f);
+	//PRenderActor* sponza = new PRenderActor("sponza");
+	//this->AddChild(sponza);
+	//sponza->AddMesh("Assets/sponza.obj");
+	//sponza->SetPosition(Vector3f(0.0, 0.0, 0.0));
+	//sponza->SetRotation(Vector3f(0.0, 90.0, 0.0));
+	//sponza->SetScale(0.2f);
 
 
-	SortChild(sponza);
+	//SortChild(sponza);
 
-	/*PRenderActor* sponza = new PRenderActor("Scene");
+	PRenderActor* sponza = new PRenderActor("Scene");
 	this->AddChild(sponza);
 	sponza->AddMesh("Assets/city test/city2.obj");
 	sponza->SetPosition(Vector3f(0.0, 0.0, 250.0));
 	sponza->SetRotation(Vector3f(0.0, 0.0, 0.0));
 	sponza->SetScale(100.0f);
 
-	SortChild(sponza);*/
+	SortChild(sponza);
 	
 	/*PRenderActor* landingpad1 = new PRenderActor("landingpad_1");
 	this->AddChild(landingpad1);
@@ -178,10 +178,10 @@ PCameraActor* Scene::GetActiveCamera()
 	}
 }
 
-PSkyBox* Scene::GetSkyBox()
+RSkyBoxActor* Scene::GetSkyBox()
 {
 	//TODO: add checks, it might fail
-	return static_cast<PSkyBox * >(Root);
+	return static_cast<RSkyBoxActor * >(Root);
 }
 
 void Scene::SetActiveCamera(PCameraActor* Camera)
@@ -197,14 +197,14 @@ void Scene::SetActiveCamera(PCameraActor* Camera)
 
 
 
-TArray<PAxisAlignedBoundingBox *> Scene::GetObjectsByIntersection(PAxisAlignedBoundingBox * BoxToCheck)
+TArray<PAxisAlignedBoundingBox> Scene::GetObjectsByIntersection(PAxisAlignedBoundingBox * BoxToCheck)
 {
-	TArray<PAxisAlignedBoundingBox*> ObjectsToReturn = TArray<PAxisAlignedBoundingBox*>() ;
-	for (PRenderActor* Actor : SceneMeshes) {
+	TArray<PAxisAlignedBoundingBox> ObjectsToReturn = TArray<PAxisAlignedBoundingBox>(100) ;
+	for (PRenderActor * Actor : SceneMeshes) {
 		TArray<PStaticMesh*> Meshes = Actor->StaticMesh->Meshes;
 		for (PStaticMesh * Mesh : Meshes) {
 			if (IntersectionTest(Mesh->WorldBoundingBox, BoxToCheck)) {
-				ObjectsToReturn.PushBack(Mesh->WorldBoundingBox);
+				ObjectsToReturn.PushBack(*Mesh->WorldBoundingBox);
 				//Mesh->WorldBoundingBox->DebugColour = Vector3f(0.0, 1.0, 0.0);
 			}
 			else {
@@ -215,21 +215,20 @@ TArray<PAxisAlignedBoundingBox *> Scene::GetObjectsByIntersection(PAxisAlignedBo
 	return ObjectsToReturn;
 }
 
-TArray<PAxisAlignedBoundingBox*> Scene::GetShadowCasters(PAxisAlignedBoundingBox* BoxToCheck,Vector3f Colour)
+TArray<PAxisAlignedBoundingBox> Scene::GetShadowCasters(PAxisAlignedBoundingBox* BoxToCheck,Vector3f Colour)
 {
-	TArray<PAxisAlignedBoundingBox*> ObjectsToReturn = TArray<PAxisAlignedBoundingBox*>();
+	TArray<PAxisAlignedBoundingBox> ObjectsToReturn = TArray<PAxisAlignedBoundingBox>(SceneMeshes.Size());
 	for (PRenderActor* Actor : SceneMeshes) {
 		TArray<PStaticMesh*> Meshes = Actor->StaticMesh->Meshes;
-		for (PStaticMesh* Mesh : Meshes) {
-			/*if (Mesh->Name == "Muff_Mesh.053" || Mesh->Name == "Muff_1_Mesh.052") {
-				__debugbreak();
-			}*/
-			if (Mesh->IsCastingShadows && SweepIntersectionTest(Mesh->WorldBoundingBox, BoxToCheck, -SceneLights.Front()->Light->LightDirection)) {
-				ObjectsToReturn.PushBack(Mesh->WorldBoundingBox);
-				Mesh->WorldBoundingBox->DebugColour = Colour;
+		for (PStaticMesh * Mesh : Meshes) {
+			if (Mesh->IsCastingShadows && SweepIntersectionTest(Mesh->WorldBoundingBox, BoxToCheck, SceneLights.Front()->Light->LightDirection)) {
+				if (Mesh->WorldBoundingBox->Max.Y - Mesh->WorldBoundingBox->Min.Y > 15.0) {
+					ObjectsToReturn.PushBack(*Mesh->WorldBoundingBox);
+					Mesh->WorldBoundingBox->DebugColour = Colour;
+				}
 			}
 			else {
-				Mesh->WorldBoundingBox->DebugColour = Vector3f(1.0, 1.0, 0.0);
+				//Mesh->WorldBoundingBox->DebugColour = Vector3f(1.0, 1.0, 0.0);
 			}
 		}
 	}

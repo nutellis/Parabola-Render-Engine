@@ -23,9 +23,13 @@ class PBoundingBox
 {
 public:
 	PBoundingBox();
+	PBoundingBox(const PBoundingBox& Other);
+	PBoundingBox(PBoundingBox&& Other) noexcept;
 	PBoundingBox(TArray<Vector3f> InCorners);
 	PBoundingBox(Vector3f Min, Vector3f Max);
 	~PBoundingBox();
+
+	PBoundingBox& operator=(PBoundingBox&& Other) noexcept;
 
 public:
 
@@ -50,7 +54,7 @@ public:
 	
 
 	Vector3f DebugColour = Vector3f(0.0, 0.0, 1.0);
-private:
+//private:
 	PStaticMeshComponent* DebugFrustrumMesh;
 
 public:

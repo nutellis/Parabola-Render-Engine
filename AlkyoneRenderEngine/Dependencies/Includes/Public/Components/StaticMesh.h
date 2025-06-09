@@ -41,6 +41,10 @@ public:
 	
 	PStaticMesh();
 
+	PStaticMesh(const PStaticMesh& other);
+
+	PStaticMesh(PStaticMesh&& other) noexcept;
+
 	PStaticMesh(Asset* Mesh);
 
 	PStaticMesh(const char * filepath);
@@ -49,7 +53,8 @@ public:
 
 	~PStaticMesh();
 
-
+	PStaticMesh& operator=(const PStaticMesh& Other);
+	PStaticMesh& operator=(PStaticMesh&& Other) noexcept;
 
 	void SetupBuffers();
 
@@ -61,14 +66,14 @@ public:
 	//IndexBufferObject IBuffer;
 	
 	//PMaterial *materials;
-	//vector<Texture> textures;
+	//vector<RTexture> textures;
 	
 
 	/*  Functions  */
 	// constructor
 	//PStaticMesh(UArchive & Ar);
 	
-	//PStaticMesh(vector<Vertex> vertices, vector<uint32> indices, vector<Texture> textures);
+	//PStaticMesh(vector<Vertex> vertices, vector<uint32> indices, vector<RTexture> textures);
 	// render the StaticMesh
 	//void Draw(Shader shader);
 

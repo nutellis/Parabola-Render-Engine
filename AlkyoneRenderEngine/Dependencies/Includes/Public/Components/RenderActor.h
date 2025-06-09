@@ -6,6 +6,7 @@
 #include <Components/Components.h>
 
 #include <Utilities/Containers/Array.h>
+#include "VertexBuffers.h"
 
 
 class PStaticMeshComponent;
@@ -104,5 +105,19 @@ public:
 	bool IsMovable;
 };
 
+class RQuadRenderActor {
+
+public:
+	RQuadRenderActor();
+	~RQuadRenderActor();
+	VertexArray CreateFullScreenQuad();
+
+	void DrawFullScreenQuad();
+
+public:
+	VertexArrayObject VAO;
+	VertexBufferObject VBO;
+	VertexArray Vertices;
+};
 
 #endif // !_ACTOR_H

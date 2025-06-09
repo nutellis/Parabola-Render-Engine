@@ -89,7 +89,6 @@ int getIndex() {
 }
 
 vec3 baseColor(int index) {
-	
 	return color[index];
 }
 

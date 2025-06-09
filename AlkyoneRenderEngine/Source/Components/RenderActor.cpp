@@ -6,6 +6,7 @@
 #include <Components/StaticMesh.h>
 #include <Components/Colliders/BoundingBox.h>
 #include <Components/Colliders/BoundingHelper.h>
+#include <RenderHelper.h>
 
 PRenderActor::PRenderActor()
 {
@@ -176,10 +177,60 @@ void PRenderActor::UpdateWorldBoundingBox() {
     SetupModelMatrix();
 
     for (PStaticMesh* Mesh : StaticMesh->Meshes) {
-        Mesh->WorldBoundingBox = Utilities::Move(
-            BoundingHelper::TransformAABB(
+        if (Mesh->WorldBoundingBox == nullptr) {
+            Mesh->WorldBoundingBox = new AABB();
+        }
+        *Mesh->WorldBoundingBox = BoundingHelper::TransformAABB(
                 Mesh->LocalBoundingBox, StaticMesh->ModelMatrix
-            )
         );
     }
+}
+
+
+
+// RQUAD RENDER ACTOR
+
+RQuadRenderActor::RQuadRenderActor() {
+    Vertices = CreateFullScreenQuad();
+
+    RenderHelper::SetupBuffers(VAO, VBO, Vertices, PVertexComponentCount(2, 3, 2), GL_STATIC_DRAW);
+ }
+
+RQuadRenderActor::~RQuadRenderActor() {
+    VAO.Terminate();
+    VBO.Terminate();
+}
+
+VertexArray RQuadRenderActor::CreateFullScreenQuad()
+{
+    VertexArray FullScreenQuad = VertexArray(6);
+
+    const Vector3f positions[] = {
+        { -1.0f, -1.0f, 0.0f }, { 1.0f, -1.0f, 0.0f }, { 1.0f, 1.0f, 0.0f },
+        { -1.0f, -1.0f, 0.0f }, { 1.0f, 1.0f, 0.0f },  { -1.0f, 1.0f, 0.0f }
+    };
+
+    for (int i = 0; i < 6; i++)
+    {
+        FullScreenQuad.PushBack(VertexFormat(positions[i], Vector3f(), Vector2f()));
+    }
+
+    return FullScreenQuad;
+
+}
+
+void RQuadRenderActor::DrawFullScreenQuad() 
+{
+    GLboolean DepthState;
+    glGetBooleanv(GL_DEPTH_TEST, &DepthState);
+    glDisable(GL_DEPTH_TEST);
+
+    VAO.Bind();
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    if (DepthState) {
+        glEnable(GL_DEPTH_TEST);
+    }
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }

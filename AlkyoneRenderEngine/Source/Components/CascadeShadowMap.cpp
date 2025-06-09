@@ -18,11 +18,11 @@
 #include <Components/Colliders/BoundingHelper.h>
 
 
-PCascadeShadowMap::PCascadeShadowMap()
+RCascadeShadowMap::RCascadeShadowMap()
 {
 }
 
-PCascadeShadowMap::PCascadeShadowMap(
+RCascadeShadowMap::RCascadeShadowMap(
 	uint32 InNumCascades, 
 	float InFieldOfView,
 	float InAspectRatio,
@@ -30,11 +30,13 @@ PCascadeShadowMap::PCascadeShadowMap(
 	float ZFar) : NumCascades(InNumCascades)
 {
 
-	Cascades = TArray<PCascade *>(InNumCascades);
+	Cascades = TArray<RCascade *>(InNumCascades);
 
 	for (uint32 i = 0; i < NumCascades; i++)
 	{
-		PCascade * Cascade = new PCascade();
+		uint64 Resolution = SMath::HighestPowerOf2(4096 / (static_cast<uint64>(i) + 1)); //
+
+		RCascade * Cascade = new RCascade("Cascade_" + i, Resolution, Resolution);
 
 		float LogStepNear = ZNear * pow((ZFar / ZNear), static_cast<float>(i) / static_cast<float>(NumCascades));
 		float UniStepNear = ZNear + (ZFar - ZNear) * static_cast<float>(i) / static_cast<float>(NumCascades);
@@ -47,8 +49,6 @@ PCascadeShadowMap::PCascadeShadowMap(
 
 		Cascade->Frustrum->FarPlane = Lambda * LogStepFar + (1.0 - Lambda) * UniStepFar * 1.002f;
 
-		uint64 Resolution =  SMath::HighestPowerOf2(4096 / (static_cast<uint64>(i) + 1)); //
-		
 		Cascade->Resolution = static_cast<uint32>(Resolution);
 
 		Cascade->Frustrum->Ratio = InAspectRatio;
@@ -68,24 +68,23 @@ PCascadeShadowMap::PCascadeShadowMap(
 	}
 }
 
-PCascadeShadowMap::~PCascadeShadowMap()
+RCascadeShadowMap::~RCascadeShadowMap()
 {
-	for (PCascade * Cascade : Cascades) {
+	for (RCascade * Cascade : Cascades) {
 		delete Cascade->CascadeFBO;
 	}
-	Cascades.Destroy();
+	Cascades.Clear();
 	glDeleteBuffers(1, &CascadesMVPBuffer);
 }
 
-void PCascadeShadowMap::Init()
+void RCascadeShadowMap::Init()
 {
 	glGenBuffers(1, &ShadowMapSSBO);
 	glGenBuffers(1, &CascadesMVPBuffer);
 
 	for (uint32 i = 0; i < NumCascades; i++)
 	{
-		Cascades[i]->CascadeFBO->Init("Cascade_" + i, Cascades[i]->Resolution, Cascades[i]->Resolution, true);
-		
+		Cascades[i]->CascadeFBO->Init(TArray<RTextureOptions>(), RTextureOptions::InitForShadows());
 	}	
 	// init cascade MVP buffer
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, CascadesMVPBuffer);
@@ -95,7 +94,7 @@ void PCascadeShadowMap::Init()
 
 }
 
-void PCascadeShadowMap::UpdateCascadeExtends(float ZNear, float ZFar, float Ratio, float FieldOfView) {
+void RCascadeShadowMap::UpdateCascadeExtends(float ZNear, float ZFar, float Ratio, float FieldOfView) {
 
 	for (uint32 i = 0; i < NumCascades; i++)
 	{
@@ -115,7 +114,7 @@ void PCascadeShadowMap::UpdateCascadeExtends(float ZNear, float ZFar, float Rati
 		Cascades[i]->Frustrum->FieldOfView = FieldOfView;
 	}
 }
-void PCascadeShadowMap::CalculateLightProjection(
+void RCascadeShadowMap::CalculateLightProjection(
 	uint32 Index,
 	PCameraComponent* Camera,
 	PDirectionalLightComponent* Light,
@@ -126,68 +125,65 @@ void PCascadeShadowMap::CalculateLightProjection(
 	// Calculate the Corners in world space!
 	Cascades[Index]->Frustrum->CalculateFrustrumCorners(Camera);
 
-	Matrix4f LightViewMatrix = LookAt(Vector3f::ZERO, -Light->LightDirection, Vector3f(0.0f, 1.0f, 0.0f));
+	Vector3f Center = Cascades[Index]->Frustrum->FrustrumBox->Center;
 
-	// World Space -> Light Space
-	PAxisAlignedBoundingBox* LightSpaceAABB = BoundingHelper::Transform(Cascades[Index]->Frustrum->BoundingBox, LightViewMatrix);
+	//Matrix4f LightViewMatrix = LookAt(Center, Center - Light->LightDirection, Vector3f(0.0f, 1.0f, 0.0f));
+	Matrix4f LightViewMatrix = LookAt(Vector3f::ZERO, - Light->LightDirection, Vector3f(0.0f, 1.0f, 0.0f));
+
+	// World Space Frustrum -> Light Space
+	PBoundingBox LightSpaceTransform = BoundingHelper::TransformCreate(*Cascades[Index]->Frustrum->FrustrumBox, LightViewMatrix);
 	
-	L = LightSpaceAABB->Min.X;
-	R = LightSpaceAABB->Max.X;
-	B = LightSpaceAABB->Min.Y;
-	T = LightSpaceAABB->Max.Y;
-	N = LightSpaceAABB->Min.Z;
-	F = LightSpaceAABB->Max.Z;
+	PAxisAlignedBoundingBox LightSpaceAABB = BoundingHelper::CalculateAABBFromCorners(LightSpaceTransform.Corners);
 
-	TArray<PAxisAlignedBoundingBox*> ShadowCasters = gSceneManager.GetActiveScene()->GetShadowCasters(Cascades[Index]->Frustrum->BoundingBox, Vector3f(Cascades[Index]->CascadeDebugColour));
-	if (ShadowCasters.IsNotEmpty()) {
-		for (int i = 0; i < ShadowCasters.Size(); ++i) {
-			ShadowCasters[i] = BoundingHelper::Transform(ShadowCasters[i], LightViewMatrix);
-		}
-		// get the union of all shadow casters in light space
-		PAxisAlignedBoundingBox* LightSpaceCasters = BoundingHelper::UnionAABB(ShadowCasters);
+	//TArray<PAxisAlignedBoundingBox> ShadowCasters = gSceneManager.GetActiveScene()->GetShadowCasters(Cascades[Index]->Frustrum->BoundingBox, Vector3f(Cascades[Index]->CascadeDebugColour));
+	//if (ShadowCasters.IsNotEmpty()) {
+	//	for (int i = 0; i < ShadowCasters.Size(); ++i) {
+	//		BoundingHelper::Transform(ShadowCasters[i], LightViewMatrix);
+	//	}
+	//	// get the union of all shadow casters in light space
+	//	PAxisAlignedBoundingBox LightSpaceCasters = BoundingHelper::UnionAABB(ShadowCasters);
 
-		N = SMath::Min(LightSpaceAABB->Min.Z, LightSpaceCasters->Min.Z);
-		F = SMath::Max(LightSpaceAABB->Max.Z, LightSpaceCasters->Max.Z);
-	}
+	//	LightSpaceAABB.Min.X = SMath::Min(LightSpaceAABB.Min.X, LightSpaceCasters.Min.X);
+	//	LightSpaceAABB.Max.X = SMath::Max(LightSpaceAABB.Max.X, LightSpaceCasters.Max.X);
+	//	LightSpaceAABB.Min.Y = SMath::Min(LightSpaceAABB.Min.Y, LightSpaceCasters.Min.Y);
+	//	LightSpaceAABB.Max.Y = SMath::Max(LightSpaceAABB.Max.Y, LightSpaceCasters.Max.Y);
+	//	LightSpaceAABB.Min.Z = SMath::Min(LightSpaceAABB.Min.Z, LightSpaceCasters.Min.Z);
+	//	LightSpaceAABB.Max.Z = SMath::Max(LightSpaceAABB.Max.Z, LightSpaceCasters.Max.Z);
+	//}
 
-	float Extent = SMath::Max(R - L, T - B);
+	float Width = LightSpaceAABB.Max.X - LightSpaceAABB.Min.X;
+	float Height = LightSpaceAABB.Max.Y - LightSpaceAABB.Min.Y;
+	float Extent = SMath::Max(Width, Height);
 
-	// Make the box square
 	if (SquareBox) {
-		float W = R - L, H = T - B;
-		float Diff = Extent - H;
-		if (Diff > 0) {
-			T += Diff / 2.0f;
-			B -= Diff / 2.0f;
-		}
-		Diff = Extent - W;
-		if (Diff > 0) {
-			R += Diff / 2.0f;
-			L -= Diff / 2.0f;
-		}
+		Width = Extent;
+		Height = Extent;
 	}
-	// Texel Snapping (https://www.realtimeshadows.com/sites/default/files/sig2013-course-hardshadows_0.pdf)
-	float TexelSize = Extent / Cascades[Index]->Resolution;
 
-	L = std::round(L / TexelSize) * TexelSize;
-	R = std::round(R / TexelSize) * TexelSize;
-	B = std::round(B / TexelSize) * TexelSize;
-	T = std::round(T / TexelSize) * TexelSize;
+	// Texel Snapping 
+	float WorldUnitsPerTexel = Extent / static_cast<float>(Cascades[Index]->Resolution); // after square adjustment
+	LightSpaceAABB.Center.X = std::floor(LightSpaceAABB.Center.X / WorldUnitsPerTexel) * WorldUnitsPerTexel;
+	LightSpaceAABB.Center.Y = std::floor(LightSpaceAABB.Center.Y / WorldUnitsPerTexel) * WorldUnitsPerTexel;
 
+	// Now set L, R, B, T using snapped center
+	L = LightSpaceAABB.Center.X - Width * 0.5f;
+	R = LightSpaceAABB.Center.X + Width * 0.5f;
+	B = LightSpaceAABB.Center.Y - Height * 0.5f;
+	T = LightSpaceAABB.Center.Y + Height * 0.5f;
+	N = LightSpaceAABB.Min.Z;
+	F = LightSpaceAABB.Max.Z ;
 
-	Matrix4f LightProjectionMatrix = Ortho(L, R, B, T, -1000, 1000);
-
-	Matrix4f lightSpaceMatrix = LightProjectionMatrix * LightViewMatrix;
+	Matrix4f LightProjectionMatrix = Ortho(L, R, B, T, -1000.0f, 1000.0f);
 
 	Cascades[Index]->LightViewMatrix = LightViewMatrix;
 
 	Cascades[Index]->LightProjectionMatrix = LightProjectionMatrix;
 
-	Cascades[Index]->CascadeCPVMatrix = lightSpaceMatrix;
+	Cascades[Index]->CascadeCPVMatrix = LightProjectionMatrix * LightViewMatrix;
 
 }
 
-void PCascadeShadowMap::UpdateCascadeBuffer(Matrix4f CameraViewMatrix) {
+void RCascadeShadowMap::UpdateCascadeBuffer(Matrix4f CameraViewMatrix) {
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, CascadesMVPBuffer);
 
 	Matrix4f* CascadeMatrices = (Matrix4f*)glMapBufferRange(
@@ -206,19 +202,25 @@ void PCascadeShadowMap::UpdateCascadeBuffer(Matrix4f CameraViewMatrix) {
 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 }
 
-void PCascadeShadowMap::BindSSBO(uint32 Slot)
+void RCascadeShadowMap::BindSSBO(uint32 Slot)
 {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, Slot, ShadowMapSSBO);
 
 }
 
-void PCascadeShadowMap::UnbindBuffers()
+void RCascadeShadowMap::CleanUp()
 {
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	for (int i = 0; i < NumCascades; ++i) {
+		glActiveTexture(GL_TEXTURE10 + i);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+	glActiveTexture(GL_TEXTURE0);
 }
 
-void PCascadeShadowMap::PrepareForDraw(
+void RCascadeShadowMap::PrepareForDraw(
 	Shader* ActiveShader, 
 	Matrix4f CameraViewMatrix, 
 	Matrix4f CameraProjectionMatrix, 
@@ -241,7 +243,7 @@ void PCascadeShadowMap::PrepareForDraw(
 	//In texture space!
 	for (uint32 i = 0; i < NumCascades; i++)
 	{
-		// from light projection space (Crop * Projection * View) to Texture Space
+		// from light projection space (Crop * Projection * View) to RTexture Space
 		CascadeMatrices[i] = TextureSpaceMatrix * Cascades[i]->CascadeCPVMatrix;
 		
 		//Bind Textures
@@ -260,7 +262,13 @@ void PCascadeShadowMap::PrepareForDraw(
 		FarPlanes[i] = Cascades[i]->Frustrum->FarPlane;
 		
 		//in world space
-		NearPlanes[i] = Cascades[i]->Frustrum->NearPlane;
+
+		float m22 = Cascades[i]->LightProjectionMatrix[2][2]; // m[2][2]
+		float m23 = Cascades[i]->LightProjectionMatrix[3][2]; // m[2][3]
+
+		float d = -2.0f / m22;
+		float nearPlane = (-d * (1.0f + m23)) * 0.5f;
+		NearPlanes[i] = nearPlane;
 	}
 
 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
@@ -274,17 +282,23 @@ void PCascadeShadowMap::PrepareForDraw(
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, CascadesMVPBuffer);
 }
 
-PCascade * PCascadeShadowMap::GetCascade(uint32 Index)
+RCascade * RCascadeShadowMap::GetCascade(uint32 Index)
 {
 	return Cascades[Index];
 }
 
-PCascade::PCascade()
+RCascade::RCascade()
 {
 	Frustrum = new PFrustrum();
 	CascadeFBO = new FBORenderTarget();
 }
-PCascade::~PCascade() {
+
+RCascade::RCascade(std::string Name, uint32 Width, uint32 Height)
+{
+	Frustrum = new PFrustrum();
+	CascadeFBO = new FBORenderTarget(Name, Width, Height);
+}
+RCascade::~RCascade() {
 	delete Frustrum;
 	delete CascadeFBO;
 }

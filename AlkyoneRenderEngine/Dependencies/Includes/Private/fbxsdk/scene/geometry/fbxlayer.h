@@ -76,7 +76,7 @@ public:
 	{
 		eUnknown,
 
-        //Non-Texture layer element types
+        //Non-RTexture layer element types
 		//Note: Make sure to update static index below if you change this enum!
 		eNormal,
         eBiNormal,
@@ -92,7 +92,7 @@ public:
 		eUserData,
 		eVisibility,
 
-        //Texture layer element types
+        //RTexture layer element types
 		//Note: Make sure to update static index below if you change this enum!
         eTextureDiffuse,
         eTextureDiffuseFactor,
@@ -158,7 +158,7 @@ public:
                                   mode elements coordinates. Since the same coordinates are usually
 	                              repeated many times, this saves spaces by storing the coordinate only one time
 	                              and then referring to them with an index. Materials and Textures are also referenced with this
-	                              mode and the actual Material/Texture can be accessed via the FbxLayerElementTemplate::mDirectArray
+	                              mode and the actual Material/RTexture can be accessed via the FbxLayerElementTemplate::mDirectArray
 	  */
 	enum EReferenceMode
 	{
@@ -2565,7 +2565,7 @@ public:
 	const FbxLayerElementTexture* GetTextures(FbxLayerElement::EType pType) const;
 
 	/** Sets this layer's Textures description.
-	  * \param pType            Texture type identifier.
+	  * \param pType            RTexture type identifier.
 	  * \param pTextures        A pointer to the Textures layer element, or \c NULL to remove the Textures definition.
 	  */
     void SetTextures(FbxLayerElement::EType pType, FbxLayerElementTexture* pTextures);

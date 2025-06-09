@@ -1,55 +1,85 @@
 #include <Components\Texture.h>
 #include <Components/Image.h>
 
-Texture::Texture()
+RTexture::RTexture() : TextureID(0), Width(0), Height(0), TextureOptions()
+{}
+
+RTexture::RTexture(uint32 InWidth, uint32 InHeight, RTextureOptions TextureOptions): TextureID(0), Width(InWidth), Height(InHeight), TextureOptions(TextureOptions), TextureImage()
+{}
+
+// Copy constructor
+RTexture::RTexture(const RTexture& Other)
+    : TextureHandle(Other.TextureHandle),
+    TextureID(Other.TextureID),
+    Width(Other.Width),
+    Height(Other.Height),
+    TextureImage(Other.TextureImage ? new Image(*Other.TextureImage) : nullptr),
+    TextureOptions(Other.TextureOptions)
 {
-    Width = 0;
-    Height = 0;
-    TextureID = 0;
-    //Format = GL_RGB;
-
-   
-
-    Target = GL_TEXTURE_2D;
-    InternalFormat = GL_RGB8;
-    Format = GL_RGB;
-    Type = GL_UNSIGNED_BYTE;
-    FilterMin = GL_LINEAR_MIPMAP_LINEAR;
-    FilterMag = GL_LINEAR;
-    WrapS = GL_REPEAT;
-    WrapT = GL_REPEAT;
-    WrapR = GL_REPEAT;
-    Mipmapping = GL_FALSE;
 }
 
-Texture::Texture(uint32 InWidth, uint32 InHeight): Width(InWidth), Height(InHeight), TextureImage()
+// Move constructor
+RTexture::RTexture(RTexture&& Other) noexcept
+    : TextureHandle(Other.TextureHandle),
+    TextureID(Other.TextureID),
+    Width(Other.Width),
+    Height(Other.Height),
+    TextureImage(Other.TextureImage),
+    TextureOptions(Other.TextureOptions)
 {
-    Target = GL_TEXTURE_2D;
-    InternalFormat = GL_RGB8;
-    Format = GL_RGB;
-    Type = GL_UNSIGNED_BYTE;
-    FilterMin = GL_LINEAR;
-    FilterMag = GL_LINEAR;
-    WrapS = GL_CLAMP_TO_EDGE;
-    WrapT = GL_CLAMP_TO_EDGE;
-    WrapR = GL_REPEAT;
-    Mipmapping = GL_FALSE;
+    Other.TextureImage = nullptr;
 }
 
-Texture::~Texture()
+RTexture::~RTexture()
 {
     glDeleteTextures(1, &TextureID);
 }
 
-void Texture::Generate(std::string filename, bool IsHDRImage)
+// Copy assignment
+RTexture& RTexture::operator=(const RTexture& Other)
 {
-    glCreateTextures(Target, 1, &TextureID);
+    if (this == &Other) return *this;
 
-    glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, FilterMin);
-    glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, FilterMag);
+    TextureHandle = Other.TextureHandle;
+    TextureID = Other.TextureID;
+    Width = Other.Width;
+    Height = Other.Height;
+    
+    if (TextureImage) delete TextureImage;
+    TextureImage = Other.TextureImage ? new Image(*Other.TextureImage) : nullptr;
+    
+    TextureOptions = Other.TextureOptions;
 
-    glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, WrapS);
-    glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, WrapT);
+    return *this;
+}
+
+// Move assignment
+RTexture& RTexture::operator=(RTexture&& Other) noexcept
+{
+    if (this == &Other) return *this;
+
+    TextureHandle = Other.TextureHandle;
+    TextureID = Other.TextureID;
+    Width = Other.Width;
+    Height = Other.Height;
+   
+    if (TextureImage) delete TextureImage;
+    TextureImage = Other.TextureImage;
+    Other.TextureImage = nullptr;
+   
+    TextureOptions = Other.TextureOptions;
+    return *this;
+}
+
+void RTexture::Generate(std::string filename, bool IsHDRImage)
+{
+    glCreateTextures(TextureOptions.Target, 1, &TextureID);
+
+    glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, TextureOptions.FilterMin);
+    glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, TextureOptions.FilterMag);
+
+    glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, TextureOptions.WrapS);
+    glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, TextureOptions.WrapT);
 
     TextureImage = new Image(filename.c_str(), true, IsHDRImage);
 
@@ -64,21 +94,21 @@ void Texture::Generate(std::string filename, bool IsHDRImage)
         glTextureStorage2D(TextureID, 1, GL_RGB8, Width, Height);
         glTextureSubImage2D(TextureID, 0, 0, 0, Width, Height, GL_RGB, GL_UNSIGNED_BYTE, TextureImage->GetDataUint8());
     }
-    if (Mipmapping == GL_TRUE)
+    if (TextureOptions.EnableMipMapping == GL_TRUE)
     {
         glGenerateTextureMipmap(TextureID);
     }
 }
 
-void Texture::GenerateTextureLayers(TArray<std::string> filenames, bool IsHDRImage)
+void RTexture::GenerateTextureLayers(TArray<std::string> filenames, bool IsHDRImage)
 {
-    glCreateTextures(Target, 1, &TextureID);
+    glCreateTextures(TextureOptions.Target, 1, &TextureID);
 
-    glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, FilterMin);
-    glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, FilterMag);
+    glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, TextureOptions.FilterMin);
+    glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, TextureOptions.FilterMag);
 
-    glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, WrapS);
-    glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, WrapT);
+    glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, TextureOptions.WrapS);
+    glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, TextureOptions.WrapT);
 
     TextureImage = new Image(filenames[0].c_str(), true, IsHDRImage);
 
@@ -117,101 +147,148 @@ void Texture::GenerateTextureLayers(TArray<std::string> filenames, bool IsHDRIma
     }
 }
 
-void Texture::GenerateDepthTexture(bool IsForShadows) {
-    glCreateTextures(Target, 1, &TextureID);
-
-    if (IsForShadows) {
-        glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-        glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
-        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    }
-    else {
-
-        glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, FilterMin);
-        glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, FilterMag);
-        glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-        glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
-        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    }
-
-    glTextureStorage2D(TextureID, 1, GL_DEPTH_COMPONENT32F, Width, Height);
+void RTexture::Generate() {
+    glCreateTextures(TextureOptions.Target, 1, &TextureID);
+    CHECK_GL_ERROR();
+    glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, TextureOptions.FilterMin);
+    glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, TextureOptions.FilterMag);
+    CHECK_GL_ERROR();
+    glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_MODE, TextureOptions.CompareMode);
+    glTextureParameteri(TextureID, GL_TEXTURE_COMPARE_FUNC, TextureOptions.CompareFunc);
+    CHECK_GL_ERROR();
+    glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, TextureOptions.WrapS);
+    glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, TextureOptions.WrapT);
+    CHECK_GL_ERROR();
+    glTextureStorage2D(TextureID, 1, TextureOptions.InternalFormat, Width, Height);
 
     //TextureHandle = glGetTextureHandleARB(TextureID);
 	CHECK_GL_ERROR();
 
 }
 
-void Texture::GenerateColourTexture() {
-    glCreateTextures(Target, 1, &TextureID);
-
-    glTextureParameteri(TextureID, GL_TEXTURE_MIN_FILTER, FilterMin);
-    glTextureParameteri(TextureID, GL_TEXTURE_MAG_FILTER, FilterMag);
-
-    glTextureParameteri(TextureID, GL_TEXTURE_WRAP_S, WrapS);
-    glTextureParameteri(TextureID, GL_TEXTURE_WRAP_T, WrapT);
-
-    glTextureStorage2D(TextureID, 1, GL_RGBA8, Width, Height);
-
-}
-
-void Texture::Bind(int32 Unit)
+void RTexture::Bind(int32 Unit)
 {
     if (Unit >= 0)
     {
         glActiveTexture(GL_TEXTURE0 + Unit);
     }
-    glBindTexture(Target, TextureID);
+    glBindTexture(TextureOptions.Target, TextureID);
 }
 
-void Texture::Unbind()
+void RTexture::Unbind()
 {
-    glBindTexture(Target, 0);
+    glBindTexture(TextureOptions.Target, 0);
 }
 
-void Texture::SetWrapModeS(uint32 WrapMode, uint8 ShouldBind)
+void RTexture::SetWrapModeS(uint32 WrapMode, uint8 ShouldBind)
 {
-    WrapS = WrapMode;
+    TextureOptions.WrapS = WrapMode;
     if (ShouldBind)
     {
         Bind();
-        glTexParameteri(Target, GL_TEXTURE_WRAP_S, WrapS);
+        glTexParameteri(TextureOptions.Target, GL_TEXTURE_WRAP_S, TextureOptions.WrapS);
         Unbind();
     }
 }
 
-void Texture::SetWrapModeT(uint32 WrapMode, uint8 ShouldBind)
+void RTexture::SetWrapModeT(uint32 WrapMode, uint8 ShouldBind)
 {
-    WrapT = WrapMode;
+    TextureOptions.WrapT = WrapMode;
     if (ShouldBind)
     {
         Bind();
-        glTexParameteri(Target, GL_TEXTURE_WRAP_T, WrapT);
+        glTexParameteri(TextureOptions.Target, GL_TEXTURE_WRAP_T, TextureOptions.WrapT);
         Unbind();
     }
 }
 
-void Texture::SetFilterMin(uint32 Filter, uint8 ShouldBind)
+void RTexture::SetFilterMin(uint32 Filter, uint8 ShouldBind)
 {
-    FilterMin = Filter;
+    TextureOptions.FilterMin = Filter;
     if (ShouldBind)
     {
         Bind();
-        glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, FilterMin);
+        glTexParameteri(TextureOptions.Target, GL_TEXTURE_MIN_FILTER, TextureOptions.FilterMin);
         Unbind();
     }
 }
 
-void Texture::SetFilterMag(uint32 Filter, uint8 ShouldBind)
+void RTexture::SetFilterMag(uint32 Filter, uint8 ShouldBind)
 {
-    FilterMag = Filter;
+    TextureOptions.FilterMag = Filter;
     if (ShouldBind)
     {
         Bind();
-        glTexParameteri(Target, GL_TEXTURE_MAG_FILTER, FilterMag);
+        glTexParameteri(TextureOptions.Target, GL_TEXTURE_MAG_FILTER, TextureOptions.FilterMag);
         Unbind();
     }
+}
+
+//RTextureOptions::RTextureOptions()
+//{
+//    Target = GL_TEXTURE_2D;
+//    InternalFormat = GL_RGB8;
+//    Format = GL_RGB;
+//    Type = GL_UNSIGNED_BYTE;
+//    FilterMin = GL_LINEAR_MIPMAP_LINEAR;
+//    FilterMag = GL_LINEAR;
+//    WrapS = GL_REPEAT;
+//    WrapT = GL_REPEAT;
+//    WrapR = GL_REPEAT;
+//
+//	CompareMode = GL_NONE;
+//	CompareFunc = GL_LESS;
+//
+//    EnableMipMapping = GL_FALSE;
+//}
+
+RTextureOptions::RTextureOptions(uint32 InTarget, uint32 InInternalFormat, uint32 InFormat, uint32 InType,
+	uint32 InFilterMin, uint32 InFilterMag, uint32 InWrapS, uint32 InWrapT, uint32 InWrapR,
+	uint32 InCompareMode, uint32 InCompareFunc, bool bEnableMipMapping)
+	: Target(InTarget), InternalFormat(InInternalFormat), Format(InFormat), Type(InType),
+	FilterMin(InFilterMin), FilterMag(InFilterMag), WrapS(InWrapS), WrapT(InWrapT), WrapR(InWrapR),
+	CompareMode(InCompareMode), CompareFunc(InCompareFunc), EnableMipMapping(bEnableMipMapping)
+{
+}
+
+RTextureOptions RTextureOptions::InitForShadows()
+{
+	RTextureOptions ShadowOptions = RTextureOptions();
+
+    ShadowOptions.InternalFormat = GL_DEPTH_COMPONENT32F;
+    ShadowOptions.FilterMin = GL_LINEAR;
+    ShadowOptions.FilterMag = GL_LINEAR;
+    ShadowOptions.CompareMode = GL_NONE;
+    ShadowOptions.CompareFunc = GL_LESS;
+    ShadowOptions.WrapS = GL_CLAMP_TO_BORDER;
+    ShadowOptions.WrapT = GL_CLAMP_TO_BORDER;
+
+    return ShadowOptions;
+}
+
+RTextureOptions RTextureOptions::InitDefault()
+{
+    RTextureOptions DefaultOptions = RTextureOptions();
+
+    DefaultOptions.InternalFormat = GL_RGB8;
+    DefaultOptions.FilterMin = GL_LINEAR;
+    DefaultOptions.FilterMag = GL_LINEAR;
+    DefaultOptions.WrapS = GL_CLAMP_TO_EDGE;
+    DefaultOptions.WrapT = GL_CLAMP_TO_EDGE;
+    DefaultOptions.WrapR = GL_REPEAT;
+
+    return DefaultOptions;
+}
+
+RTextureOptions RTextureOptions::InitDefaultDepth()
+{
+    RTextureOptions DefaultDepthOptions = RTextureOptions();
+
+    DefaultDepthOptions.InternalFormat = GL_DEPTH_COMPONENT32F;
+    DefaultDepthOptions.CompareMode = GL_NONE;
+    DefaultDepthOptions.CompareFunc = GL_LESS;
+    DefaultDepthOptions.WrapS = GL_CLAMP_TO_EDGE;
+    DefaultDepthOptions.WrapT = GL_CLAMP_TO_EDGE;
+
+    return DefaultDepthOptions;
 }

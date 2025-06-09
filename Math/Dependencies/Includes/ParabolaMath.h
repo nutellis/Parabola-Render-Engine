@@ -185,6 +185,18 @@ static TVector3<Type> Normalize(TVector3<Type> inVector)
 }
 
 template <typename Type>
+static TVector2<Type> Normalize(TVector2<Type> inVector)
+{
+	TVector2<Type> Result = TVector2<Type>::ZERO;
+
+	Type invLength = static_cast<Type>(1) / inVector.Length();
+	Result.X = inVector.X * invLength;
+	Result.Y = inVector.Y * invLength;
+
+	return Result;
+}
+
+template <typename Type>
 static TVector3<Type> Cross(const TVector3<Type>& A, const TVector3<Type>& B)
 {
 	return TVector3<Type>(
@@ -260,6 +272,85 @@ static TMatrix4<Type> Inverse(const TMatrix4<Type>& M)
 	Type OneOverDeterminant = static_cast<Type>(1) / Dot1;
 
 	return Inverse * OneOverDeterminant;
+}
+
+static float Lerp(float A, float B, float Alpha)
+{
+	return A + (B - A) * Alpha;
+}
+
+static float RandomFloat() // [0-1]
+{
+	return float(rand()) / float(RAND_MAX);
+}
+
+static TVector2<float> ConcentricSampleDisk()
+{
+	float RadialDistance, Theta;
+	float Uniform1 = RandomFloat();
+	float Uniform2 = RandomFloat();
+
+	// Map uniform random numbers to $[-1,1]^2$
+	float SampleX = 2 * Uniform1 - 1;
+	float SampleY = 2 * Uniform2 - 1;
+
+	// Handle degeneracy at the origin (avoid div by zero)
+	if (SampleX == 0.0 && SampleY == 0.0)
+	{
+		return Vector2f(0, 0);
+	}
+	// Map square to $(r,\theta)$
+	if (SampleX >= -SampleY)
+	{
+		if (SampleX > SampleY)
+		{ // Handle first region of disk
+			RadialDistance = SampleX;
+			if (SampleY > 0.0)
+				Theta = SampleY / RadialDistance;
+			else
+				Theta = 8.0f + SampleY / RadialDistance;
+		}
+		else
+		{ // Handle second region of disk
+			RadialDistance = SampleY;
+			Theta = 2.0f - SampleX / RadialDistance;
+		}
+	}
+	else
+	{
+		if (SampleX <= SampleY)
+		{ // Handle third region of disk
+			RadialDistance = -SampleX;
+			Theta = 4.0f - SampleY / RadialDistance;
+		}
+		else
+		{ // Handle fourth region of disk
+			RadialDistance = -SampleY;
+			Theta = 6.0f + SampleX / RadialDistance;
+		}
+	}
+	Theta *= float(PI) / 4.0f;
+	return TVector2<float>(RadialDistance * cosf(Theta), RadialDistance * sinf(Theta));
+}
+
+
+static TVector3<float> CosineSampleHemisphere()
+{
+	TVector3<float> CosineHemisphere(ConcentricSampleDisk(), 0);
+	CosineHemisphere.Z = SMath::Sqrt(SMath::Max(0.f, 1.f - CosineHemisphere.X * CosineHemisphere.X - CosineHemisphere.Y * CosineHemisphere.Y));
+	return CosineHemisphere;
+}
+
+static TVector3<float> UniformSampleHemisphere()
+{
+	float Uniform1 = RandomFloat();
+	float Uniform2 = RandomFloat();
+
+	float Phi = 2.0f * PI * Uniform1;
+	float CosTheta = Uniform2;
+	float SinTheta = SMath::Sqrt(SMath::Max(0.f, 1.f - CosTheta * CosTheta));
+
+	return TVector3<float>(SinTheta * SMath::Cos(Phi), SinTheta * SMath::Sin(Phi), CosTheta);
 }
 
 #endif //!PMATH

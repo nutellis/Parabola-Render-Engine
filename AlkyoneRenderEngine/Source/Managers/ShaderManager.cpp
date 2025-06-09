@@ -132,10 +132,12 @@ void GShaderManager::ReloadShader(std::string name)
 
 void GShaderManager::ReloadShaders()
 {
-	for (Shader* shader : Shaders) {
+	for (uint32 i = 0; i < Shaders.Size(); ++i) {
+		Shader* shader = Shaders[i];
 		Shader* ReloadedShader = CompileProgram(shader->Name, shader->GetVertexPath(), shader->GetFragmentPath());
 		if (ReloadedShader->ID != -1) {
-			shader = Utilities::Move(ReloadedShader);
+			delete shader; // Clean up the old shader
+			Shaders[i] = ReloadedShader; // Replace with new one
 		}
 		else {
 			LOG(ERROR, "Failed to reload shader: %s", shader->Name.c_str());
@@ -191,6 +193,7 @@ void GShaderManager::Init()
 	{
 		Shaders.PushBack(BrdfShader);
 	}
+
 	//Sky
 	Shader* SkyBoxShader = CompileProgram("SkyBoxShader", "Shaders/skybox.vert", "Shaders/skybox.frag");
 	if (SkyBoxShader->ID == 0)
@@ -222,6 +225,47 @@ void GShaderManager::Init()
 	else
 	{
 		Shaders.PushBack(CSMDebugShader);
+	}
+
+	// SSAO
+	Shader* SSAOInputShader = CompileProgram("SSAOInputShader", "Shaders/position.vert", "Shaders/ssaoInput.frag");
+	if (SSAOInputShader->ID == 0)
+	{
+		LOG(ERROR, "Failed to compile SSAO Input Shader\n");
+	}
+	else
+	{
+		Shaders.PushBack(SSAOInputShader);
+	}
+
+	Shader* SSAOOutputShader = CompileProgram("SSAOOutputShader", "Shaders/ssaoOutput.vert", "Shaders/ssaoOutput.frag");
+	if (SSAOOutputShader->ID == 0)
+	{
+		LOG(ERROR, "Failed to compile SSAO Output Shader\n");
+	}
+	else
+	{
+		Shaders.PushBack(SSAOOutputShader);
+	}
+
+	Shader* SSAOBlurShader = CompileProgram("SSAOBlurShader", "Shaders/ssaoOutput.vert", "Shaders/ssaoBlur.frag");
+	if (SSAOBlurShader->ID == 0)
+	{
+		LOG(ERROR, "Failed to compile SSAO Blur Shader\n");
+	}
+	else
+	{
+		Shaders.PushBack(SSAOBlurShader);
+	}
+
+	Shader* HBAOOutputShader = CompileProgram("HBAOOutputShader", "Shaders/ssaoOutput.vert", "Shaders/hbaoOutput.frag");
+	if (HBAOOutputShader->ID == 0)
+	{
+		LOG(ERROR, "Failed to compile HBAO+ Output Shader\n");
+	}
+	else
+	{
+		Shaders.PushBack(HBAOOutputShader);
 	}
 
 	Shader* LightShader = CompileProgram("SimpleShader", "Shaders/position.vert", "Shaders/colour.frag");

@@ -5,8 +5,11 @@
 #include <Components/Texture.h>
 #include <Utilities/Containers/Array.h>
 #include <Components/RenderComponents/StaticMeshComponent.h>
+#include <Components/CameraComponents/Camera.h>
+#include <Components/Shader.h>
+#include "RenderHelper.h"
 
-PSkyBox::PSkyBox() : PRenderActor()
+RSkyBoxActor::RSkyBoxActor() : PRenderActor()
 {
     ActorType = EntityType::SKYBOX;
     EnviromentMap = nullptr;
@@ -14,7 +17,7 @@ PSkyBox::PSkyBox() : PRenderActor()
     ReflectionMap = nullptr;
 }
 
-PSkyBox::PSkyBox(const char* Name) : PRenderActor(Name)
+RSkyBoxActor::RSkyBoxActor(const char* Name) : PRenderActor(Name)
 {
     ActorType = EntityType::SKYBOX;
 
@@ -24,51 +27,55 @@ PSkyBox::PSkyBox(const char* Name) : PRenderActor(Name)
 
 	StaticMesh = new PStaticMeshComponent(this);
 
-    VertexArray SkyVertices;
+    //VertexArray SkyVertices = RenderHelper::CreateFullScreenQuad();
 
-     const Vector3f positions[] = { 
-        { -1.0f, -1.0f, 0.0f }, { 1.0f, -1.0f, 0.0f }, { 1.0f, 1.0f, 0.0f },
-        { -1.0f, -1.0f, 0.0f }, { 1.0f, 1.0f, 0.0f },  { -1.0f, 1.0f, 0.0f }
-    };
-
-     for (int i = 0; i < 6; i++)
-     {
-         SkyVertices.PushBack(VertexFormat(positions[i], Vector3f(), Vector2f()));
-     }
-
-     StaticMesh->SetupVertexBuffers(SkyVertices);
-     StaticMesh->SetupBuffers(GL_STATIC_DRAW,PVertexComponentCount(2,3,2));
+    // StaticMesh->SetupVertexBuffers(SkyVertices);
+    // StaticMesh->SetupBuffers(GL_STATIC_DRAW,PVertexComponentCount(2,3,2));
 
 }
 
-PSkyBox::~PSkyBox()
+RSkyBoxActor::~RSkyBoxActor()
 {
     delete EnviromentMap;
     delete IrradianceMap;
     delete ReflectionMap;
 }
 
-void PSkyBox::Draw()
+void RSkyBoxActor::Draw()
 {
-    GLboolean previous_depth_state;
-    glGetBooleanv(GL_DEPTH_TEST, &previous_depth_state);
-    glDisable(GL_DEPTH_TEST);
-    
-	StaticMesh->BindVAO();
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-
-    if (previous_depth_state)
-        glEnable(GL_DEPTH_TEST);
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    RenderHelper::GetQuadActor().DrawFullScreenQuad();
 }
 
-void PSkyBox::CreateSkyBox(std::string EnviromentPath, std::string IrradiancePath, TArray<std::string> ReflectionPaths)
+void RSkyBoxActor::PrepareForDraw(Shader * ActiveShader, PCameraComponent * Camera)
+{
+    glActiveTexture(GL_TEXTURE6);
+    glBindTexture(GL_TEXTURE_2D, EnviromentMap->TextureID);
+    glActiveTexture(GL_TEXTURE7);
+    glBindTexture(GL_TEXTURE_2D, IrradianceMap->TextureID);
+    glActiveTexture(GL_TEXTURE8);
+    glBindTexture(GL_TEXTURE_2D, ReflectionMap->TextureID);
+
+    float environment_multiplier = 1.3f;
+    ActiveShader->SetFloat("environment_multiplier", environment_multiplier);
+    ActiveShader->SetMat4("inv_PV", false, Inverse(Camera->Projection * Camera->View));
+    ActiveShader->SetVec3("camera_pos", Camera->GetPosition());
+}
+
+void RSkyBoxActor::CleanUp() {
+    //glActiveTexture(GL_TEXTURE6);
+    //glBindTexture(GL_TEXTURE_2D, 0);
+    //glActiveTexture(GL_TEXTURE7);
+    //glBindTexture(GL_TEXTURE_2D, 0);
+    //glActiveTexture(GL_TEXTURE8);
+    //glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void RSkyBoxActor::CreateSkyBox(std::string EnviromentPath, std::string IrradiancePath, TArray<std::string> ReflectionPaths)
 {
 
     if (!EnviromentPath.empty())
     {
-		EnviromentMap = new Texture();
+		EnviromentMap = new RTexture();
 		EnviromentMap->SetWrapModeS(GL_CLAMP_TO_EDGE, false);
 
 		EnviromentMap->SetWrapModeT(GL_CLAMP_TO_EDGE, false);
@@ -78,7 +85,7 @@ void PSkyBox::CreateSkyBox(std::string EnviromentPath, std::string IrradiancePat
 
     if (!IrradiancePath.empty())
     {
-        IrradianceMap = new Texture();
+        IrradianceMap = new RTexture();
         IrradianceMap->SetWrapModeS(GL_CLAMP_TO_EDGE, false);
         IrradianceMap->SetWrapModeT(GL_CLAMP_TO_EDGE, false);
         IrradianceMap->SetFilterMin(GL_LINEAR, false);
@@ -88,7 +95,7 @@ void PSkyBox::CreateSkyBox(std::string EnviromentPath, std::string IrradiancePat
     if (ReflectionPaths.IsNotEmpty())
     {
 
-        ReflectionMap = new Texture();
+        ReflectionMap = new RTexture();
         ReflectionMap->SetWrapModeS(GL_REPEAT, false);
         ReflectionMap->SetWrapModeT(GL_MIRRORED_REPEAT, false);
         ReflectionMap->GenerateTextureLayers(ReflectionPaths,true);

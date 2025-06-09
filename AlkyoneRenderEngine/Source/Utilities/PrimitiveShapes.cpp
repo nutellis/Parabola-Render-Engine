@@ -7,7 +7,7 @@ PrimitiveShape::PrimitiveShape()
 
 PrimitiveShape::~PrimitiveShape()
 {
-	Data.Destroy();
+	Data.Clear();
 }
 
 

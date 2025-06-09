@@ -25,6 +25,13 @@ public:
 
 	PStaticMeshComponent(PRenderActor* Parent);
 	PStaticMeshComponent(PRenderActor* Parent, const char* path);
+	PStaticMeshComponent(const PStaticMeshComponent& Other);
+	PStaticMeshComponent(PStaticMeshComponent&& Other) noexcept;
+	~PStaticMeshComponent();
+
+	PStaticMeshComponent& operator=(const PStaticMeshComponent& Other);
+
+	PStaticMeshComponent& operator=(PStaticMeshComponent&& Other) noexcept;
 
 	void SetupBuffers(uint32 DrawType = GL_STATIC_DRAW, PVertexComponentCount ComponentCount = PVertexComponentCount());
 

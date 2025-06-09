@@ -13,11 +13,17 @@ public:
 
 	bool HasTexture;
 	
-	Texture *ChannelTexture;
+	RTexture *ChannelTexture;
 
 public:
 	PChannel();
+	PChannel(const PChannel& other);
+	PChannel(PChannel&& other) noexcept;
 	~PChannel();
+
+	PChannel& operator=(const PChannel& other);
+
+	PChannel& operator=(PChannel&& other) noexcept;
 
 	//void Serialize(Archive &Ar);
 	//void Deserialize(Archive &Ar);
@@ -27,7 +33,11 @@ class PMaterial
 {
 public:
 	PMaterial();
+	PMaterial(const PMaterial& Other);
+	PMaterial(PMaterial&& Other) noexcept;
 	~PMaterial();
+	PMaterial& operator=(const PMaterial& Other);
+	PMaterial& operator=(PMaterial&& Other) noexcept;
 	//PMaterial *Initialize(const FbxSurfaceMaterial * pMaterial);
 
 	// Set material colors and binding diffuse texture if exists.
@@ -36,7 +46,7 @@ public:
 	//	const char * pPropertyName,
 		//const char * pFactorPropertyName);
 
-	//Texture *LoadTexture(const char* filename);
+	//RTexture *LoadTexture(const char* filename);
 	//void Serialize(Archive &Ar);
 	//void Deserialize(Archive &Ar);
 	std::string Name;
@@ -65,11 +75,11 @@ public:
 	glm::vec3 m_emission;
 	float m_transparency;
 	float m_ior;
-	Texture m_color_texture;
-	Texture m_shininess_texture;
-	Texture m_metalness_texture;
-	Texture m_fresnel_texture;
-	Texture m_emission_texture;
+	RTexture m_color_texture;
+	RTexture m_shininess_texture;
+	RTexture m_metalness_texture;
+	RTexture m_fresnel_texture;
+	RTexture m_emission_texture;
 	
 	*/
 

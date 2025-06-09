@@ -78,7 +78,9 @@ void Engine::Run()
 
 	LOG(INFO, "Engine is Running Full SPEEED :)\n");
 	
-	while (!glfwWindowShouldClose(GWindowManager::getInstance().GetWindow()))
+	GLFWwindow* Window = gWindowManager.GetWindow();
+
+	while (!glfwWindowShouldClose(Window))
 	{
 		Time::CurrentTime = Time::Seconds();
 
@@ -104,7 +106,7 @@ void Engine::Run()
 
 		//	accum += Time::FixedDeltaTime;
 		//}
-		glfwSwapBuffers(gWindowManager.GetWindow());
+		glfwSwapBuffers(Window);
 			
 	}
 }

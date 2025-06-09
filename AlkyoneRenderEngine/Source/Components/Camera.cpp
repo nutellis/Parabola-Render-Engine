@@ -41,7 +41,7 @@ void PFrustrum::CalculateFrustrumCorners(PCameraComponent* Camera)
 	Vector3f RightVector = Camera->Right * (WNear * 0.5f);
 	Vector3f UpVector = Camera->Up * (HNear * 0.5f);
 
-	TArray<Vector3f> FrustrumCorners;
+	TArray<Vector3f> FrustrumCorners = TArray<Vector3f>(8);
 	// Near Plane
 	FrustrumCorners.PushBack(NearCenter + UpVector - RightVector); //top left
 	FrustrumCorners.PushBack(NearCenter + UpVector + RightVector); //top right
@@ -190,14 +190,14 @@ void PCameraComponent::SetupShaderCamera(Shader* ActiveShader) {
 
 }
 
-void PCameraComponent::AdjustPlanesBasedOnObjects(TArray<PAxisAlignedBoundingBox*> Objects)
+void PCameraComponent::AdjustPlanesBasedOnObjects(TArray<PAxisAlignedBoundingBox> Objects)
 {
 	if (Objects.IsEmpty()) {
 		return;
 	}
 
 	// get the union of all objects
-	PAxisAlignedBoundingBox* Union = BoundingHelper::UnionAABB(Objects);
+	PAxisAlignedBoundingBox Union = BoundingHelper::UnionAABB(Objects);
 
 //	Union->RenderDebugBoundingBox(1, Vector4f(1.0, 0.0f, 0.0f, 0.1f), RCamera->Projection, RCamera->View);
 
@@ -206,7 +206,7 @@ void PCameraComponent::AdjustPlanesBasedOnObjects(TArray<PAxisAlignedBoundingBox
 
 	for (int i = 0; i < 8; ++i) {
 
-		Vector3f PointToCam = Union->Corners[i] - GetPosition();
+		Vector3f PointToCam = Union.Corners[i] - GetPosition();
 		float Z = Dot(PointToCam, this->Front);
 
 		// find boundary values

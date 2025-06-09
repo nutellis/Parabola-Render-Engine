@@ -11,8 +11,10 @@ layout(location = 2) in vec2 TextureCoord;
 ///////////////////////////////////////////////////////////////////////////////
 uniform mat4 normalMatrix;
 uniform mat4 modelViewMatrix;
+uniform mat4 modelMatrix;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 viewInverse;
+uniform mat4 cameraView;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Cascade Shadow Map Data
@@ -30,7 +32,7 @@ out vec2 texCoord;
 out vec3 viewSpaceNormal;
 out vec3 viewSpacePosition;
 
-out vec4 shadowMapCoord[4];
+out vec3 shadowMapCoord[4];
 
 void main()
 {
@@ -38,12 +40,13 @@ void main()
     gl_Position = modelViewProjectionMatrix * vec4(VertexPosition, 1.0);
     texCoord = TextureCoord;
     viewSpaceNormal = (normalMatrix * vec4(NormalPosition, 0.0)).xyz;
-    viewSpacePosition = (modelViewMatrix * vec4(VertexPosition, 1.0)).xyz;
 
+	viewSpacePosition = (cameraView * modelMatrix  * vec4(VertexPosition, 1.0)).xyz;
 
-    vec4 WorldSpacePosition = viewInverse * (modelViewMatrix * vec4(VertexPosition, 1.0));
+    vec4 WorldSpacePosition = modelMatrix * vec4(VertexPosition, 1.0);
 
     for (int i = 0; i < numOfCascades; ++i) {
-        shadowMapCoord[i] = lightMatrices[i] * WorldSpacePosition;
+        vec4 shadowMapCoordTemp = lightMatrices[i] * WorldSpacePosition;
+        shadowMapCoord[i] = shadowMapCoordTemp.xyz / shadowMapCoordTemp.w;
     }
 }

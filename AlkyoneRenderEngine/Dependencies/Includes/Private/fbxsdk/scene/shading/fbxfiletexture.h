@@ -37,7 +37,7 @@ class FBXSDK_DLL FbxFileTexture : public FbxTexture
 
 public:
 	/**
-	  * \name Texture Properties
+	  * \name RTexture Properties
 	  */
 	//@{
         /** This property handles the material use.
@@ -85,8 +85,8 @@ public:
 	  */
     enum EMaterialUse
     {
-        eModelMaterial,		//! Texture uses model material.
-        eDefaultMaterial	//! Texture does not use model material.
+        eModelMaterial,		//! RTexture uses model material.
+        eDefaultMaterial	//! RTexture does not use model material.
     };
 
     /** Sets the material use.

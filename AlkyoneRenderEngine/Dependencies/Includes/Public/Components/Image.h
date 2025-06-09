@@ -38,6 +38,47 @@ public:
 		DataUint8 = static_cast<uint8 *>(inData);
 	}
 
+	// Copy constructor
+	Image(const Image& Other)
+		: Width(Other.Width),
+		Height(Other.Height),
+		NrChannels(Other.NrChannels),
+		IsHDR(Other.IsHDR)
+	{
+		if (IsHDR) {
+			size_t dataSize = size_t(Width) * Height * NrChannels;
+			DataFloat = nullptr;
+			if (Other.DataFloat) {
+				DataFloat = static_cast<float*>(stbi__malloc(dataSize * sizeof(float)));
+				std::memcpy(DataFloat, Other.DataFloat, dataSize * sizeof(float));
+			}
+		}
+		else {
+			size_t dataSize = size_t(Width) * Height * NrChannels;
+			DataUint8 = nullptr;
+			if (Other.DataUint8) {
+				DataUint8 = static_cast<uint8*>(stbi__malloc(dataSize * sizeof(uint8)));
+				std::memcpy(DataUint8, Other.DataUint8, dataSize * sizeof(uint8));
+			}
+		}
+	}
+
+	// Move constructor
+	Image(Image&& Other) noexcept
+		: Width(Other.Width),
+		Height(Other.Height),
+		NrChannels(Other.NrChannels),
+		IsHDR(Other.IsHDR)
+	{
+		if (IsHDR) {
+			DataFloat = Other.DataFloat;
+			Other.DataFloat = nullptr;
+		}
+		else {
+			DataUint8 = Other.DataUint8;
+			Other.DataUint8 = nullptr;
+		}
+	}
 
 	~Image()
 	{
@@ -48,6 +89,63 @@ public:
 			stbi_image_free(DataUint8);
 		}
 		
+	}
+
+
+	// Copy assignment
+	Image& operator=(const Image& Other)
+	{
+		if (this == &Other) return *this;
+		// Free existing data
+		if (IsHDR && DataFloat) stbi_image_free(DataFloat);
+		if (!IsHDR && DataUint8) stbi_image_free(DataUint8);
+
+		Width = Other.Width;
+		Height = Other.Height;
+		NrChannels = Other.NrChannels;
+		IsHDR = Other.IsHDR;
+
+		if (IsHDR) {
+			size_t dataSize = size_t(Width) * Height * NrChannels;
+			DataFloat = nullptr;
+			if (Other.DataFloat) {
+				DataFloat = static_cast<float*>(stbi__malloc(dataSize * sizeof(float)));
+				std::memcpy(DataFloat, Other.DataFloat, dataSize * sizeof(float));
+			}
+		}
+		else {
+			size_t dataSize = size_t(Width) * Height * NrChannels;
+			DataUint8 = nullptr;
+			if (Other.DataUint8) {
+				DataUint8 = static_cast<uint8*>(stbi__malloc(dataSize * sizeof(uint8)));
+				std::memcpy(DataUint8, Other.DataUint8, dataSize * sizeof(uint8));
+			}
+		}
+		return *this;
+	}
+
+	// Move assignment
+	Image& operator=(Image&& Other) noexcept
+	{
+		if (this == &Other) return *this;
+		// Free existing data
+		if (IsHDR && DataFloat) stbi_image_free(DataFloat);
+		if (!IsHDR && DataUint8) stbi_image_free(DataUint8);
+
+		Width = Other.Width;
+		Height = Other.Height;
+		NrChannels = Other.NrChannels;
+		IsHDR = Other.IsHDR;
+
+		if (IsHDR) {
+			DataFloat = Other.DataFloat;
+			Other.DataFloat = nullptr;
+		}
+		else {
+			DataUint8 = Other.DataUint8;
+			Other.DataUint8 = nullptr;
+		}
+		return *this;
 	}
 
 	inline uint8 * GetDataUint8() { return DataUint8; }

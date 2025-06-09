@@ -13,6 +13,7 @@ uniform mat4 normalMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 viewInverse;
+uniform mat4 cameraView;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Cascade Shadow Map Data
@@ -37,6 +38,8 @@ void main()
 	gl_Position = modelViewProjectionMatrix * vec4(VertexPosition, 1.0);
 	viewSpaceNormal = (normalMatrix * vec4(NormalPosition, 0.0)).xyz;
 	viewSpacePosition = (modelViewMatrix * vec4(VertexPosition, 1.0)).xyz;
+
+	viewSpacePosition = (cameraView * viewInverse * modelViewMatrix  * vec4(VertexPosition, 1.0)).xyz;
 
 
     vec4 WorldSpacePosition = viewInverse * (modelViewMatrix * vec4(VertexPosition, 1.0));

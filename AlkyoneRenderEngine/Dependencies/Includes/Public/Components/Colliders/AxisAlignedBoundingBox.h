@@ -21,10 +21,14 @@ typedef class PAxisAlignedBoundingBox: public PBoundingBox
 {
 public:
 	PAxisAlignedBoundingBox();
+	PAxisAlignedBoundingBox(const PAxisAlignedBoundingBox & Other);
+	PAxisAlignedBoundingBox(PAxisAlignedBoundingBox&& other) noexcept;
 	PAxisAlignedBoundingBox(Vector3f Min, Vector3f Max);
 	~PAxisAlignedBoundingBox();
 
 public:
+
+	PAxisAlignedBoundingBox& operator=(PAxisAlignedBoundingBox&& other) noexcept;
 
 	Vector3f GetCorner(CornerEnum cornerToGet) const;
 
@@ -41,7 +45,7 @@ public:
 
 	Vector3f GetMaximum() const;
 
-	TArray<Vector3f> GetCornersFromMinMax();
+	void GetCornersFromMinMax();
 
 	/** Sets both minimum and maximum extents at once.
 */

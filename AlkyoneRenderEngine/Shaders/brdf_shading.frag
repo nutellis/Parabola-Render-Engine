@@ -23,7 +23,7 @@ uniform int has_emission_texture = 0;
 ///////////////////////////////////////////////////////////////////////////////
 // Environment
 ///////////////////////////////////////////////////////////////////////////////
-layout(binding = 6) uniform sampler2D environmentMap;
+//layout(binding = 6) uniform sampler2D environmentMap;
 layout(binding = 7) uniform sampler2D irradianceMap;
 layout(binding = 8) uniform sampler2D reflectionMap;
 uniform float environment_multiplier;
@@ -46,9 +46,6 @@ in vec3 viewSpacePosition;
 uniform mat4 viewInverse;
 
 
-uniform int enableSSAO = 0;
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // Light source
 ///////////////////////////////////////////////////////////////////////////////
@@ -63,6 +60,12 @@ uniform vec3 viewSpaceLightPosition;
 uniform vec3 viewSpaceLightDir;
 
 ///////////////////////////////////////////////////////////////////////////////
+//SSAO
+///////////////////////////////////////////////////////////////////////////////
+uniform int enableSSAO = 0;
+layout(binding = 16) uniform sampler2D ssaoTexture;
+
+///////////////////////////////////////////////////////////////////////////////
 //Cascade Shadow Information
 ///////////////////////////////////////////////////////////////////////////////
 // textures 10 to 13
@@ -71,7 +74,7 @@ uniform sampler2D shadowMap[4];
 
 uniform int numOfCascades; 
 
-in vec4 shadowMapCoord[4];
+in vec3 shadowMapCoord[4];
 uniform vec4 farPlanes;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -79,8 +82,8 @@ uniform vec4 farPlanes;
 ///////////////////////////////////////////////////////////////////////////////
 uniform int usePCSS = 0;
 uniform float lightSize = 0.5; 
-uniform vec4 lightFrustrumWidth; 
-uniform vec4 nearPlanes; 
+uniform vec4 lightFrustrumWidth = vec4(3.75); 
+uniform vec4 nearPlanes = vec4(9.5); 
 uniform vec4 texelSize;
 
 const vec2 offsets[16] = vec2[](
@@ -169,20 +172,19 @@ const vec2 poisson[64] = vec2[](
     vec2( 0.2419,  0.4159 )
 );
 
-layout(binding = 16) uniform sampler2D ssaoTexture;
-
 ///////////////////////////////////////////////////////////////////////////////
 // Output color
 ///////////////////////////////////////////////////////////////////////////////
 layout(location = 0) out vec4 fragmentColor;
 
-float PCF(float bias, float filterRadius, int index, float stepSize) {
+float PCF(float bias, float filterRadius, int index) {
     float sum = 0.0;
+
+	float stepSize = 1.0 / texelSize[index];
 
     for (int x = 0; x < 64; x++) {
 
-		vec2 projected = shadowMapCoord[index].xy / shadowMapCoord[index].w;
-        vec2 offset =  projected + stepSize * poisson[x] * filterRadius;
+        vec2 offset = shadowMapCoord[index].xy + stepSize * poisson[x] * filterRadius;
 
 		offset = clamp(offset, 0.0, 1.0);
 
@@ -195,7 +197,7 @@ float PCF(float bias, float filterRadius, int index, float stepSize) {
 }
 
 // https://developer.download.nvidia.com/whitepapers/2008/PCSS_Integration.pdf
-float PCSS(float bias, int index, float stepSize) {
+float PCSS(float bias, int index) {
 
 	// Step 1: Blocker step
 	float zBlocker = 0;
@@ -204,11 +206,15 @@ float PCSS(float bias, int index, float stepSize) {
     int numBlockers = 0;
 
 	float zReceiver = shadowMapCoord[index].z;
-
-	float searchWidth = (lightSize/lightFrustrumWidth[index]) * (zReceiver - nearPlanes[index]) / zReceiver;
+	// lightSize/lightFrustrumWidth[index]
+	float searchWidth = (7.0) * (zReceiver - 0) / zReceiver;
+	if(searchWidth <= 0){
+        return 0;
+    }
 
 	for(int i = 0; i < 16; ++i) {
-		vec2 offset = shadowMapCoord[index].xy + (stepSize * searchWidth * poisson[i]);
+		vec2 offset = shadowMapCoord[index].xy + (searchWidth * poisson[i]);
+		offset = clamp(offset, 0.0, 1.0);
 		float shadowMapDepth = texture(shadowMap[index], offset).r;
 		if ( shadowMapDepth < zReceiver ) {
 			blockerSum += shadowMapDepth;
@@ -220,13 +226,14 @@ float PCSS(float bias, int index, float stepSize) {
         return 1.0;
 
 	zBlocker = blockerSum / numBlockers;
+	//return zBlocker = blockerSum / 16;
 
 	// Step 2: Penumbra size estimation 
 	float penumbraRatio = (zReceiver - zBlocker) / zBlocker;
-    float filterRadius = stepSize * penumbraRatio * (lightSize/lightFrustrumWidth[index]) * nearPlanes[index] / zReceiver;
+    float filterRadius = penumbraRatio * (lightSize/lightFrustrumWidth[index]);
 
 	// Step 3: PCF filtering
-	return PCF(bias, filterRadius, index, stepSize);
+	return PCF(bias, filterRadius, index);
 }
 
 
@@ -246,14 +253,12 @@ float calculateShadowsCoef(vec3 n, vec3 wi)
 	float bias = 0.0005 * (1.0 - dot(n, wi));
 	bias = clamp(bias, 0.0, 0.01);
 
-    float stepSize = 1.0 / texelSize[cascadeIndex];
-
 	if(usePCSS == 1) {
-		return PCSS(bias, cascadeIndex, stepSize);
+		return PCSS(bias, cascadeIndex);
 	} 
 
 	float filterRadius = texelSize[cascadeIndex] / 1024.0;
-	return PCF(bias, filterRadius, cascadeIndex, stepSize);
+	return PCF(bias, filterRadius, cascadeIndex);
 }
 
 
@@ -339,9 +344,9 @@ void main()
 
 	float visibility = 1.0;
 	float ssao = 1.0;
-//    if (enableSSAO == 1) {
-//        ssao = texture(ssaoTexture, gl_FragCoord.xy / textureSize(ssaoTexture, 0).xy).r; // Fetch SSAO value
-//    }
+    if (enableSSAO == 1) {
+		ssao = texture(ssaoTexture, gl_FragCoord.xy / textureSize(ssaoTexture, 0).xy).r; // Fetch SSAO value
+    }
 	vec3 wo = -normalize(viewSpacePosition);
 	vec3 n = normalize(viewSpaceNormal);
 
@@ -358,7 +363,7 @@ void main()
 	vec3 direct_illumination_term =calculateDirectIllumiunation(wo, n, base_color) * visibility; 
 
 	// Indirect illumination
-	vec3 indirect_illumination_term = calculateIndirectIllumination(wo, n, base_color);
+	vec3 indirect_illumination_term = calculateIndirectIllumination(wo, n, base_color) * ssao;
 
 	///////////////////////////////////////////////////////////////////////////
 	// Add emissive term. If emissive texture exists, sample this term.
@@ -369,11 +374,9 @@ void main()
 //		emission_term = texture(emissiveMap, texCoord).rgb * 0.5 ;
 //	}
 
-	vec3 shading = direct_illumination_term + indirect_illumination_term + emission_term; // (ssao * )
-	
-	// 
-	//vec3(calculateShadowsCoef(n, wi))
-	fragmentColor =  vec4(shading, 1.0);
+	vec3 shading = direct_illumination_term +  indirect_illumination_term + emission_term; 
 
+	//fragmentColor =  vec4(shading, 1.0);
+	fragmentColor =  vec4(vec3(ssao), 1.0);
 	return;
 }

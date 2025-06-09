@@ -39,7 +39,9 @@ VertexArrayObject::VertexArrayObject() : bIsCreated(false)
 
 
 VertexArrayObject::~VertexArrayObject()
-{}
+{
+	//glDeleteVertexArrays(1, &ID);
+}
 
 void VertexArrayObject::Bind()
 {
@@ -50,10 +52,13 @@ void VertexArrayObject::CreateArray(PVertexComponentCount InComponentCount)
 {
 	if (bIsCreated == false) {
 		glCreateVertexArrays(1, &ID);
-
 		ComponentCount = InComponentCount;
 		bIsCreated = true;
 	}
+}
+
+void VertexArrayObject::Terminate() {
+	glDeleteVertexArrays(1, &ID);
 }
 
 void VertexArrayObject::SetupAttribute(uint32 BufferIndex, uint32 Attribute, uint32 ComponentCount, uint32 RelativeOffset)
@@ -100,11 +105,17 @@ VertexBufferObject::VertexBufferObject() : bIsCreated(false)
 {}
 
 VertexBufferObject::~VertexBufferObject()
-{}
+{
+	//glDeleteBuffers(1, &ID);
+}
 
 void VertexBufferObject::Bind()
 {
 	glBindBuffer(GL_ARRAY_BUFFER,ID);
+}
+
+void VertexBufferObject::Terminate() {
+	glDeleteBuffers(1, &ID);
 }
 
 //Maybe check the size? nuuuh
@@ -132,11 +143,11 @@ void  VertexBufferObject::CreateBuffer(uint32 DrawType, size_t Size, const void*
 		if (Data != nullptr) {
 			//glBufferStorage(GL_ARRAY_BUFFER, Size, Data, GL_DYNAMIC_STORAGE_BIT);
 			//glNamedBufferStorage(ID, Size, Data, GL_DYNAMIC_STORAGE_BIT);
-			glBufferData(GL_ARRAY_BUFFER, Size, Data, DrawType);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, Size, Data);
 		}
 	}
-	
 }
+
 void VertexBufferObject::WriteBuffer(void * Data)
 {
 	//glNamedBufferSubData(ID, 0, sizeof(Data), Data);

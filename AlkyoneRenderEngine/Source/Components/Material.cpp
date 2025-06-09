@@ -1,4 +1,5 @@
 #include <Components/Material.h>
+#include <Components/Texture.h>
 
 
 PChannel::PChannel() :
@@ -7,16 +8,95 @@ PChannel::PChannel() :
 	Colours(Vector4f())
 {}
 
+// Copy constructor
+PChannel::PChannel(const PChannel& Other)
+	: Name(Other.Name),
+	Colours(Other.Colours),
+	HasTexture(Other.HasTexture),
+	ChannelTexture(Other.ChannelTexture ? new RTexture(*Other.ChannelTexture) : nullptr)
+{
+}
+
+// Move constructor
+PChannel::PChannel(PChannel&& Other) noexcept
+	: Name(Utilities::Move(Other.Name)),
+	Colours(Other.Colours),
+	HasTexture(Other.HasTexture),
+	ChannelTexture(Other.ChannelTexture)
+{
+	Other.ChannelTexture = nullptr;
+}
+
 PChannel::~PChannel()
 {
 }
 
+// Copy assignment
+PChannel& PChannel::operator=(const PChannel& Other)
+{
+	if (this == &Other) return *this;
+	Name = Other.Name;
+	Colours = Other.Colours;
+	HasTexture = Other.HasTexture;
+	if (ChannelTexture) delete ChannelTexture;
+	ChannelTexture = Other.ChannelTexture ? new RTexture(*Other.ChannelTexture) : nullptr;
+	return *this;
+}
 
+// Move assignment
+PChannel& PChannel::operator=(PChannel&& Other) noexcept
+{
+	if (this == &Other) return *this;
+	Name = Other.Name;
+	Colours = Other.Colours;
+	HasTexture = Other.HasTexture;
+
+	if (ChannelTexture) delete ChannelTexture;
+
+	ChannelTexture = Other.ChannelTexture;
+	Other.ChannelTexture = nullptr;
+	return *this;
+}
 
 
 PMaterial::PMaterial() : ShaderName("BRDF")
 {	//TextureSlot = 0;
 	//isActive = false;
+}
+
+//Copy Constructor
+PMaterial::PMaterial(const PMaterial& Other)
+	: Name(Other.Name),
+	MaterialID(Other.MaterialID),
+	ShaderName(Other.ShaderName),
+	Diffuse(Other.Diffuse),
+	Metalness(Other.Metalness),
+	Roughness(Other.Roughness),
+	Fresnel(Other.Fresnel),
+	Emissive(Other.Emissive),
+	Specular(Other.Specular),
+	Normal(Other.Normal),
+	Transparency(Other.Transparency),
+	IOR(Other.IOR)
+{
+}
+
+
+// Move constructor
+PMaterial::PMaterial(PMaterial&& Other) noexcept
+	: Name(Utilities::Move(Other.Name)),
+	MaterialID(Other.MaterialID),
+	ShaderName(Utilities::Move(Other.ShaderName)),
+	Diffuse(Utilities::Move(Other.Diffuse)),
+	Metalness(Utilities::Move(Other.Metalness)),
+	Roughness(Utilities::Move(Other.Roughness)),
+	Fresnel(Utilities::Move(Other.Fresnel)),
+	Emissive(Utilities::Move(Other.Emissive)),
+	Specular(Utilities::Move(Other.Specular)),
+	Normal(Utilities::Move(Other.Normal)),
+	Transparency(Other.Transparency),
+	IOR(Other.IOR)
+{
 }
 
 //PMaterial::PMaterial(UArchive &Ar) : mShinness(0)
@@ -35,11 +115,57 @@ PMaterial::PMaterial() : ShaderName("BRDF")
 
 PMaterial::~PMaterial()
 {
-	/*delete Emissive;
-	delete Ambient;
-	delete Diffuse;
-	delete Specular;*/
+	//delete Emissive;
+	//delete Ambient;
+	//delete Diffuse;
+	//delete Specular;
 }
+
+
+// Copy assignment
+PMaterial& PMaterial::operator=(const PMaterial& Other)
+{
+	if (this == &Other) return *this;
+
+	Name = Other.Name;
+	MaterialID = Other.MaterialID;
+	ShaderName = Other.ShaderName;
+	Diffuse = Other.Diffuse;
+	Metalness = Other.Metalness;
+	Roughness = Other.Roughness;
+	Fresnel = Other.Fresnel;
+	Emissive = Other.Emissive;
+	Specular = Other.Specular;
+	Normal = Other.Normal;
+	Transparency = Other.Transparency;
+	IOR = Other.IOR;
+
+	return *this;
+}
+
+
+// Move assignment
+PMaterial& PMaterial::operator=(PMaterial&& Other) noexcept
+{
+	if (this == &Other) return *this;
+
+	Name = Utilities::Move(Other.Name);
+	MaterialID = Other.MaterialID;
+	ShaderName = Utilities::Move(Other.ShaderName);
+	Diffuse = Utilities::Move(Other.Diffuse);
+	Metalness = Utilities::Move(Other.Metalness);
+	Roughness = Utilities::Move(Other.Roughness);
+	Fresnel = Utilities::Move(Other.Fresnel);
+	Emissive = Utilities::Move(Other.Emissive);
+	Specular = Utilities::Move(Other.Specular);
+	Normal = Utilities::Move(Other.Normal);
+	Transparency = Other.Transparency;
+	IOR = Other.IOR;
+
+	return *this;
+}
+
+
 /*
 void PMaterial::SetupMaterial() 
 {
@@ -87,7 +213,7 @@ void PMaterial::Deserialize(UArchive & Ar)
 	Ar.ArchiveRead(&mShinness, sizeof(float));
 }
 
-void Texture::SetupTextures()
+void RTexture::SetupTextures()
 {
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_2D, textureID);
@@ -124,8 +250,8 @@ void Channel::Serialize(UArchive &Ar)
 	Ar.ArchiveWrite(&HasTexture, sizeof(bool));
 	if (HasTexture) {
 		//ChannelTexture->Serialize(Ar)
-		//ChannelTexture = new Texture();
-		//Ar.ArchiveWrite(&ChannelTexture, sizeof(Texture));
+		//ChannelTexture = new RTexture();
+		//Ar.ArchiveWrite(&ChannelTexture, sizeof(RTexture));
 	}
 	Ar.ArchiveWrite(&Colour, sizeof(glm::vec4));
 
@@ -137,15 +263,15 @@ void Channel::Deserialize(UArchive & Ar)
 	Ar.ArchiveRead(&ChName, sizeof(char*));
 	Ar.ArchiveRead(&HasTexture, sizeof(bool));
 	if (HasTexture) {
-		ChannelTexture = new Texture();
+		ChannelTexture = new RTexture();
 		ChannelTexture->Deserialize(Ar);
-		//Ar.ArchiveRead(&ChannelTexture, sizeof(Texture));
+		//Ar.ArchiveRead(&ChannelTexture, sizeof(RTexture));
 	}
 	Ar.ArchiveRead(&Colour, sizeof(glm::vec4));
 }
 
 
-void Texture::Deserialize(UArchive & Ar)
+void RTexture::Deserialize(UArchive & Ar)
 {
 	//Ar.ArchiveRead(&textureID, sizeof(uint32));
 	Ar.ArchiveRead(&width, sizeof(uint32));
@@ -160,4 +286,6 @@ void Texture::Deserialize(UArchive & Ar)
 	Ar.ArchiveRead(&data[0], sizeof(byte)*dataSize);
 
 }*/
+
+
 

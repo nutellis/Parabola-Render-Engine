@@ -9,6 +9,48 @@ Indices()
 	LocalBoundingBox = new AABB();
 }
 
+// Copy constructor
+PStaticMesh::PStaticMesh(const PStaticMesh& Other)
+	: PDrawableMesh(Other),
+	Vertices(Other.Vertices),
+	Indices(Other.Indices),
+	MaterialIndex(Other.MaterialIndex),
+	IndexStart(Other.IndexStart),
+	NumVertices(Other.NumVertices),
+	IsCastingShadows(Other.IsCastingShadows)
+{
+	if (Other.LocalBoundingBox) {
+		LocalBoundingBox = new PAxisAlignedBoundingBox(*Other.LocalBoundingBox);
+	}
+	else {
+		LocalBoundingBox = nullptr;
+	}
+	if (Other.WorldBoundingBox) {
+		WorldBoundingBox = new PAxisAlignedBoundingBox(*Other.WorldBoundingBox);
+	}
+	else {
+		WorldBoundingBox = nullptr;
+	}
+}
+
+// Move constructor
+PStaticMesh::PStaticMesh(PStaticMesh&& Other) noexcept
+	: PDrawableMesh(Utilities::Move(Other)),
+	Vertices(Utilities::Move(Other.Vertices)),
+	Indices(Utilities::Move(Other.Indices)),
+	MaterialIndex(Other.MaterialIndex),
+	IndexStart(Other.IndexStart),
+	NumVertices(Other.NumVertices),
+	LocalBoundingBox(Other.LocalBoundingBox),
+	WorldBoundingBox(Other.WorldBoundingBox),
+	IsCastingShadows(Other.IsCastingShadows)
+{
+	Other.LocalBoundingBox = nullptr;
+	Other.WorldBoundingBox = nullptr;
+}
+
+
+
 PStaticMesh::PStaticMesh(Asset* Mesh)
 	: Vertices(), Indices()
 {
@@ -33,7 +75,7 @@ PStaticMesh::PStaticMesh(const char * filepath) : Vertices(), Indices()
 		
 
 		//Textures = TextureArray();
-		//Textures.PushBack(Texture());
+		//Textures.PushBack(RTexture());
 		//Textures[0].Generate();
 	//}
 
@@ -51,11 +93,11 @@ PStaticMesh::PStaticMesh(const VertexArray & vertex, IndexArray & index) :
 	Indices(index)
 {
 //	Textures = TextureArray();
-	//Textures.PushBack(Texture());
+	//Textures.PushBack(RTexture());
  
 	//Textures[0].Generate();
 
-	//Textures.PushBack(Texture());
+	//Textures.PushBack(RTexture());
 
 
 }
@@ -64,6 +106,61 @@ PStaticMesh::~PStaticMesh()
 {
 	//Vertices.~TArray();
 	//Indices.~TArray();
+}
+
+
+// Copy assignment operator
+PStaticMesh& PStaticMesh::operator=(const PStaticMesh& Other)
+{
+	if (this == &Other)
+		return *this;
+
+	PDrawableMesh::operator=(Other);
+	Vertices = Other.Vertices;
+	Indices = Other.Indices;
+	MaterialIndex = Other.MaterialIndex;
+	IndexStart = Other.IndexStart;
+	NumVertices = Other.NumVertices;
+	IsCastingShadows = Other.IsCastingShadows;
+
+	if (LocalBoundingBox) delete LocalBoundingBox;
+	if (Other.LocalBoundingBox)
+		LocalBoundingBox = new PAxisAlignedBoundingBox(*Other.LocalBoundingBox);
+	else
+		LocalBoundingBox = nullptr;
+
+	if (WorldBoundingBox) delete WorldBoundingBox;
+	if (Other.WorldBoundingBox)
+		WorldBoundingBox = new PAxisAlignedBoundingBox(*Other.WorldBoundingBox);
+	else
+		WorldBoundingBox = nullptr;
+
+	return *this;
+}
+
+// Move assignment operator
+PStaticMesh & PStaticMesh::operator=(PStaticMesh&& Other) noexcept
+{
+	if (this == &Other)
+		return *this;
+
+	PDrawableMesh::operator=(Utilities::Move(Other));
+	Vertices = Utilities::Move(Other.Vertices);
+	Indices = Utilities::Move(Other.Indices);
+	MaterialIndex = Other.MaterialIndex;
+	IndexStart = Other.IndexStart;
+	NumVertices = Other.NumVertices;
+	IsCastingShadows = Other.IsCastingShadows;
+
+	if (LocalBoundingBox) delete LocalBoundingBox;
+	LocalBoundingBox = Other.LocalBoundingBox;
+	Other.LocalBoundingBox = nullptr;
+
+	if (WorldBoundingBox) delete WorldBoundingBox;
+	WorldBoundingBox = Other.WorldBoundingBox;
+	Other.WorldBoundingBox = nullptr;
+
+	return *this;
 }
 
 void PStaticMesh::SetupBuffers()
@@ -144,7 +241,7 @@ void PStaticMesh::Deserialize(const char * path)
 //}
 
 
-//PStaticMesh::PStaticMesh(vector<Vertex> vertices, vector<uint32> indices, vector<Texture> textures)
+//PStaticMesh::PStaticMesh(vector<Vertex> vertices, vector<uint32> indices, vector<RTexture> textures)
 //{
 //	this->vertices = vertices;
 //	this->indices = indices;

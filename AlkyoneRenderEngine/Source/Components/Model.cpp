@@ -60,7 +60,7 @@
 //	// data to fill
 //	vector<Vertex> vertices;
 //	vector<uint32> indices;
-//	vector<Texture> textures;
+//	vector<RTexture> textures;
 //
 //	// Walk through each of the mesh's vertices
 //	for (uint32 i = 0; i < mesh->mNumVertices; i++)
@@ -119,25 +119,25 @@
 //	// normal: texture_normalN
 //
 //	// 1. diffuse maps
-//	vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+//	vector<RTexture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
 //	textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 //	// 2. specular maps
-//	vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+//	vector<RTexture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
 //	textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
 //	// 3. normal maps
-//	std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
+//	std::vector<RTexture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
 //	textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
 //	// 4. height maps
-//	std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
+//	std::vector<RTexture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
 //	textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 //
 //	// return a mesh object created from the extracted mesh data
 //	return Mesh(vertices, indices, textures);
 //}
 //
-//vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, string typeName)
+//vector<RTexture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, string typeName)
 //{
-//	vector<Texture> textures;
+//	vector<RTexture> textures;
 //	for (uint32 i = 0; i < mat->GetTextureCount(type); i++)
 //	{
 //		aiString str;
@@ -155,7 +155,7 @@
 //		}
 //		if (!skip)
 //		{   // if texture hasn't been loaded already, load it
-//			Texture texture;
+//			RTexture texture;
 //			texture.id = TextureFromFile(str.C_Str(), this->directory);
 //			texture.type = typeName;
 //			texture.path = str;
@@ -198,7 +198,7 @@
 //	}
 //	else
 //	{
-//		std::cout << "Texture failed to load at path: " << path << std::endl;
+//		std::cout << "RTexture failed to load at path: " << path << std::endl;
 //		stbi_image_free(data);
 //	}
 //

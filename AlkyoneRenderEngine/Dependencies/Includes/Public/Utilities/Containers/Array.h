@@ -16,14 +16,14 @@ public:
 	using ValueType = T;
 
 	// A reference to the element type.
-	using Reference = T & ;
+	using Reference = T&;
 	//consts reference
-	using ConstReference = T const &;
+	using ConstReference = T const&;
 
 	// A pointer to the element type.
-	using Pointer = T * ;
+	using Pointer = T*;
 	//const pointer
-	using ConstPointer = T const *;
+	using ConstPointer = T const*;
 
 	// The type used to index into the container.
 	using SizeType = size_t;
@@ -38,7 +38,8 @@ public:
 		Last(nullptr),
 		Storage(nullptr),
 		ArraySize(0),
-		StorageSize(0) {}
+		StorageSize(0) {
+	}
 
 	//TODO: Should this arraySize be zero ????
 	TArray(const SizeType Count) :
@@ -65,7 +66,7 @@ public:
 	}
 
 	// Copy Constructor
-	TArray(const TArray & Other) {
+	TArray(const TArray& Other) {
 		CopyToEmpty(Other.First, Other.Size());
 	}
 
@@ -78,7 +79,7 @@ public:
 		return *this;
 	}
 
-	TArray(TArray && Other) noexcept :
+	TArray(TArray&& Other) noexcept :
 		First(nullptr),
 		Last(nullptr),
 		Storage(nullptr),
@@ -125,6 +126,18 @@ public:
 		EndOfArray = First + ArrayMax;
 	}*/
 
+	constexpr bool operator ==(TArray Other) {
+		if (this->Size() != Other.Size()) {
+			return false;
+		}
+		for (SizeType i = 0; i < this->Size(); ++i) {
+			if (this->First[i] != Other.First[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	TArray& operator =(TArray&& Other) noexcept {
 		if (this != &Other) {
 			Free();
@@ -139,21 +152,28 @@ public:
 	}
 
 	TArray& operator=(std::initializer_list<T> InitList) {
-		// Resize the array to match the size of the initializer list
-			SizeType NewSize = InitList.size();
-		if (NewSize > 0) {
-			BuySpace(NewSize); // Allocate memory for the new size
-			ArraySize = NewSize;
+			SizeType ListSize = InitList.size();
 
-			// Copy elements from the initializer list to the array
+			Clear();
+
+			// If newsize == 0, destroy everything
+			if (ListSize == 0) {
+				return *this;
+			} 
+			
+			if (ListSize > StorageSize) {
+				// Not enough capacity, free and allocate new memory
+				Free();
+				BuySpace(ListSize);
+			}
 			Pointer Dest = First;
 			for (const auto& Element : InitList) {
-				new (Dest++) T(Element); // Construct each element in place
+				new (Dest++) T(Element);
 			}
-
-			Last = First + ArraySize; // Update the Last pointer
-		}
-		return *this;
+			ArraySize = ListSize;
+			Last = First + ArraySize;
+			Storage = First + StorageSize;
+			return *this;
 	}
 
 	~TArray() {
@@ -323,15 +343,7 @@ public:
 		StorageSize = NewMax;
 	}
 
-
 	void Clear() {
-		//Destroy(&First, &Last);
-		Last = First;
-		ArraySize = 0;
-		//delete First;
-	}
-
-	void Destroy() {
 		if (Last == First) {
 			return;
 		}
@@ -342,7 +354,6 @@ public:
 		}
 
 		ArraySize = 0;
-		StorageSize = 0;
 	}
 
 	//returns Value, or nullptr
@@ -373,6 +384,30 @@ public:
 		}
 		return Matches;
 	}
+
+	void Move(TArray<T> OtherData) {
+		Clear();
+		*this = Utilities::Move(OtherData);
+	}
+
+
+	//void Reserve(SizeType NewCapacity) {
+	//	if (NewCapacity > StorageSize) {
+	//		// Allocate new storage
+	//		Pointer NewStorage = static_cast<ValueType*>(::operator new(NewCapacity * sizeof(ValueType)));
+	//		if (std::is_trivially_copyable<ValueType>::value == true) {
+	//			memmove(NewStorage, First, ArraySize * sizeof(ValueType));
+	//		}
+	//		else {
+	//			for (SizeType i = 0; i < ArraySize; ++i) {
+	//				::new (static_cast<void*>(NewStorage + i)) ValueType(std::move(First[i]));
+	//			}
+	//		}
+	//		Free();
+	//		ChangeArray(NewStorage, ArraySize, NewCapacity);
+	//	}
+	//}
+
 
 private:
 
@@ -456,6 +491,7 @@ private:
 
 	}
 
+	
 private:
 
 	SizeType ArraySize;
@@ -516,6 +552,8 @@ public:
 			const T* m_ptr;
 		};
 
+		Iterator begin() { return Iterator(First); }
+		Iterator end() { return Iterator(Last); }
 		ConstIterator begin() const { return ConstIterator(First); }
 		ConstIterator end() const { return ConstIterator(Last); }
 };

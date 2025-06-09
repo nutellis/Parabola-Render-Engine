@@ -15,13 +15,13 @@
 //----------------------------------------------------------------------------------------
 //								STATIC MESH COMPONENT
 //----------------------------------------------------------------------------------------
-PStaticMeshComponent::PStaticMeshComponent(PRenderActor* Parent)
+PStaticMeshComponent::PStaticMeshComponent(PRenderActor* Parent) : Vertices(), Meshes(), Materials(), Indices()
 {
 	this->Parent = Parent;
 }
 
 
-PStaticMeshComponent::PStaticMeshComponent(PRenderActor* Parent, const char* path)//const char* path,PSceneComponent *Default,bool isAbsolute)
+PStaticMeshComponent::PStaticMeshComponent(PRenderActor* Parent, const char* path) : Vertices(), Meshes(), Materials(), Indices()  //const char* path,PSceneComponent *Default,bool isAbsolute)
 {
 	std::cout << "This is a StaticMeshComponent\n";
 	//	ComponentArchive->Load(path);
@@ -52,6 +52,118 @@ PStaticMeshComponent::PStaticMeshComponent(PRenderActor* Parent, const char* pat
 
 	SetupBuffers();
 
+}
+
+PStaticMeshComponent::PStaticMeshComponent(const PStaticMeshComponent& Other)
+	: PPrimitiveComponent(Other),
+	ModelMatrix(Other.ModelMatrix),
+	angle(Other.angle),
+	Vertices(Other.Vertices),
+	Indices(Other.Indices),
+	VAO(Other.VAO),
+	VBO(Other.VBO),
+	EBO(Other.EBO)
+{
+	// Deep copy meshes
+	Meshes = TArray<PStaticMesh*>(Other.Meshes.Size());
+	for (PStaticMesh* Mesh : Other.Meshes) {
+		if (Mesh){
+			Meshes.PushBack(new PStaticMesh(*Mesh));
+		}
+	}
+
+	// Deep copy materials
+	Materials = TArray<PMaterial*>(Other.Materials.Size());
+	for (PMaterial* Mat : Other.Materials) {
+		if (Mat) {
+			Materials.PushBack(new PMaterial(*Mat));
+		}
+	}
+}
+
+// Move constructor
+PStaticMeshComponent::PStaticMeshComponent(PStaticMeshComponent&& Other) noexcept
+	: PPrimitiveComponent(Utilities::Move(Other)),
+	ModelMatrix(Utilities::Move(Other.ModelMatrix)),
+	angle(Other.angle),
+	Vertices(Utilities::Move(Other.Vertices)),
+	Meshes(Utilities::Move(Other.Meshes)),
+	Materials(Utilities::Move(Other.Materials)),
+	VAO(Utilities::Move(Other.VAO)),
+	VBO(Utilities::Move(Other.VBO)),
+	EBO(Utilities::Move(Other.EBO)),
+	Indices(Utilities::Move(Other.Indices))
+{
+	Other.Meshes.Clear();
+	Other.Materials.Clear();
+	Other.Vertices.Clear();
+	Other.Indices.Clear();
+}
+
+PStaticMeshComponent::~PStaticMeshComponent()
+{
+	Vertices.Clear();
+	Meshes.Clear();
+	Materials.Clear();
+	Indices.Clear();
+}
+
+
+// Copy Assignment
+PStaticMeshComponent& PStaticMeshComponent::operator=(const PStaticMeshComponent& Other)
+{
+	if (this == &Other)
+		return *this;
+
+	PPrimitiveComponent::operator=(Other);
+
+	// Clean up current
+	for (auto Mesh : Meshes)
+		delete Mesh;
+	Meshes.Clear();
+
+	for (auto Mat : Materials)
+		delete Mat;
+	Materials.Clear();
+
+	// Copy
+	ModelMatrix = Other.ModelMatrix;
+	angle = Other.angle;
+	Vertices = Other.Vertices;
+	Indices = Other.Indices;
+
+	VAO = Other.VAO;
+	VBO = Other.VBO;
+	EBO = Other.EBO;
+
+	//// Deep copy again
+	//for (PStaticMesh* mesh : other.Meshes)
+	//	Meshes.Add(mesh ? new PStaticMesh(*mesh) : nullptr);
+
+	//for (PMaterial* mat : other.Materials)
+	//	Materials.Add(mat ? new PMaterial(*mat) : nullptr);
+
+	return *this;
+}
+
+// Move assignment operator
+PStaticMeshComponent& PStaticMeshComponent::operator=(PStaticMeshComponent&& Other) noexcept
+{
+	if (this == &Other)
+		return *this;
+
+	PPrimitiveComponent::operator=(Utilities::Move(Other));
+	ModelMatrix = Utilities::Move(Other.ModelMatrix);
+	angle = Other.angle;
+	Vertices = Utilities::Move(Other.Vertices);
+	Meshes = Utilities::Move(Other.Meshes);
+	Materials = Utilities::Move(Other.Materials);
+	VAO = Utilities::Move(Other.VAO);
+	VBO = Utilities::Move(Other.VBO);
+	EBO = Utilities::Move(Other.EBO);
+	Indices = Utilities::Move(Other.Indices);
+
+	return *this;
 }
 
 void PStaticMeshComponent::SetupBuffers(uint32 DrawType, PVertexComponentCount ComponentCount)

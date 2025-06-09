@@ -51,6 +51,7 @@ public:
 	void SetVec2(const char*Name, float x, float y) const;
 	// ------------------------------------------------------------------------
 	void SetVec3(const char*Name, const Vector3f &Value) const;
+	void SetVec3(const char* Name, const uint32 Size, const Vector3f* Value) const;
 	void SetVec3(const char*Name, float x, float y, float z) const;
 	// ------------------------------------------------------------------------
 	void SetVec4(const char*Name, const Vector4f &Value) const;

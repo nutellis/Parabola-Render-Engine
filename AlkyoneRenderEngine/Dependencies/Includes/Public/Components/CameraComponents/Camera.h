@@ -99,7 +99,7 @@ public:
 	// Calculates the front vector from the Camera's (updated) Eular Angles
 	void UpdateCameraVectors();
 
-	void AdjustPlanesBasedOnObjects(TArray<PAxisAlignedBoundingBox*>Objects);
+	void AdjustPlanesBasedOnObjects(TArray<PAxisAlignedBoundingBox>Objects);
 	//void AdjustPlanesBasedOnObjects(TArray<PAxisAlignedBoundingBox*> Objects, PCameraComponent* RCamera);
 
 	void UpdateCamera(uint32 Width = 0, uint32 Height = 0);

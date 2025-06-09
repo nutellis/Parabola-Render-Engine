@@ -9,7 +9,7 @@
 #include <Utilities/PrimitiveShapes.h>
 
 class FBORenderTarget;
-class Texture;
+class RTexture;
 class PCameraComponent;
 class PDirectionalLightComponent;
 class Shader;
@@ -18,7 +18,7 @@ class PFrustrum;
 #define MAX_CASCADES 4
 
 
-struct PCascade {
+struct RCascade {
 
 public:
 	uint32 Resolution = 4096;
@@ -35,37 +35,38 @@ public:
 
 	Vector4f CascadeDebugColour;
 
-	PCascade();
-	~PCascade();
-	PCascade* CalculateStep();
+	RCascade();
+	RCascade(std::string Name, uint32 Width, uint32 Height);
+	~RCascade();
+	RCascade* CalculateStep();
 
 };
 
-class PCascadeShadowMap
+class RCascadeShadowMap
 {
 public:
-	PCascadeShadowMap();
-	PCascadeShadowMap(uint32 InNumCascades, float InFieldOfView, float AspectRatio, float ZNear, float ZFar);
-	//PCascadeShadowMap(uint32 InNumCascades, float ZNear, float ZFar);
-	//PCascadeShadowMap(uint32 NumCascades = 4);
-	~PCascadeShadowMap();
+	RCascadeShadowMap();
+	RCascadeShadowMap(uint32 InNumCascades, float InFieldOfView, float AspectRatio, float ZNear, float ZFar);
+	//RCascadeShadowMap(uint32 InNumCascades, float ZNear, float ZFar);
+	//RCascadeShadowMap(uint32 NumCascades = 4);
+	~RCascadeShadowMap();
 	void Init();
 	void UpdateCascadeExtends(float ZNear, float ZFar, float Ratio, float FieldOfView);
 	void CalculateLightProjection(uint32 Index, PCameraComponent* Camera, PDirectionalLightComponent* Light, bool SquareBox);
 	void UpdateCascadeBuffer(Matrix4f CameraViewMatrix);
 	void Draw(uint32 Index);
 	void BindSSBO(uint32 Slot);
-	void UnbindBuffers();
+	void CleanUp();
 	void PrepareForDraw(Shader* ActiveShader, Matrix4f CameraViewMatrix, Matrix4f CameraProjectionMatrix, bool UsePCSS = false);
 	void SetViewport(uint32 Width, uint32 Height);
 
-	PCascade * GetCascade(uint32 Index);
+	RCascade * GetCascade(uint32 Index);
 
 public:
 	uint32 NumCascades;
-	TArray<PCascade *> Cascades;
+	TArray<RCascade *> Cascades;
 
-	float Lambda = 0.5f;
+	float Lambda = 0.25f;
 
 private:
 	uint32 ShadowMapSSBO;

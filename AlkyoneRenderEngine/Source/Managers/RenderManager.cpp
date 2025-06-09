@@ -25,13 +25,18 @@
 #include<Components/RenderComponents/StaticMeshComponent.h>
 
 #include <Components/FBORenderTarget.h>
+
 #include <Components/CascadeShadowMap.h>
+#include <Components/AmbientOcclusion.h>
+
 #include <Components/LightComponents/DirectionalLightComponent.h>
 #include <Utilities/CameraUtiltities.h>
 
 #include <ParabolaMath.h>
 #include <Components/Colliders/AxisAlignedBoundingBox.h>
 #include <Components/StaticMesh.h>
+#include <RenderHelper.h>
+
 
 
 
@@ -64,6 +69,8 @@ GRenderManager::GRenderManager()
 GRenderManager::~GRenderManager()
 {
 	delete OpenGLSystem;
+	delete ShadowMap;
+	delete AmbientOcclusion;
 
 	ShaderManager = nullptr;
 }
@@ -114,10 +121,12 @@ void GRenderManager::Render(double DeltaTime)
 	RenderCamera->ControlCamera(1366, 768);
 
 	//TODO: this should be moved inside a generic camera update
-	TArray<PAxisAlignedBoundingBox*> Receivers = gSceneManager.GetActiveScene()->GetObjectsByIntersection(RenderCamera->Camera->Frustrum->BoundingBox);
+	TArray<PAxisAlignedBoundingBox> Receivers = gSceneManager.GetActiveScene()->GetObjectsByIntersection(RenderCamera->Camera->Frustrum->BoundingBox);
 	RenderCamera->Camera->AdjustPlanesBasedOnObjects(Receivers);
 
 	ShadowMapPass(RenderCamera->Camera);
+
+	AmbientOcclusionPass(ActiveCamera->Camera);
 
 	RenderPass(ActiveCamera->Camera);
 
@@ -143,11 +152,9 @@ void GRenderManager::Render(double DeltaTime)
 			Cascade->Frustrum->BoundingBox->RenderDebugBoundingBox(bitMask, Cascade->CascadeDebugColour, ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
 		}
 	}
-
 	
-
 	if (Options.ShowLightFrustrumDebug) {
-		TArray<Vector4f> ndcCorners;
+		static TArray<Vector4f> ndcCorners;
 		ndcCorners = {
 		{-1, 1, -1, 1},
 		{ 1, 1, -1, 1},
@@ -159,19 +166,19 @@ void GRenderManager::Render(double DeltaTime)
 		{1,  -1,  1, 1},
 			};
 
-		PFrustrum* LightFrustrum = new PFrustrum();
-		
+		PFrustrum LightFrustrum = PFrustrum();
 		TArray<Vector3f> viewCorners;
 		for (int i = 0; i < 8; ++i) {
 			Vector4f viewPos = Inverse(ShadowMap->Cascades[Options.CascadeIndex-1]->CascadeCPVMatrix) * ndcCorners[i];
 			viewCorners.PushBack(Vector3f(viewPos) / viewPos.W);  // Perspective divide (though ortho w == 1)
 		}
-		LightFrustrum->FrustrumBox->Corners = viewCorners;
+		LightFrustrum.FrustrumBox->Corners = viewCorners;
 
-		LightFrustrum->FrustrumBox->SetupDebugFrustrumEdges();
+		LightFrustrum.FrustrumBox->RenderDebugBoundingBox(bitMask, Vector4f(0.85, 0.85, 0.0, 0.6), ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
 
-		LightFrustrum->FrustrumBox->RenderDebugBoundingBox(bitMask, Vector4f(0.85, 0.85, 0.0, 0.6), ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
-
+		// ugly but it works
+		LightFrustrum.FrustrumBox->DebugFrustrumMesh->VAO.Terminate();
+		LightFrustrum.FrustrumBox->DebugFrustrumMesh->VBO.Terminate();
 	}
 
 	if (Options.ShowBoundingBoxes) {
@@ -206,7 +213,7 @@ void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 	DepthShader->Enable();
 
 	if (ShadowMap == nullptr) {
-		ShadowMap = new PCascadeShadowMap(
+		ShadowMap = new RCascadeShadowMap(
 			Options.NumCascades,
 			Camera->Frustrum->FieldOfView,
 			Camera->Frustrum->Ratio,
@@ -224,7 +231,7 @@ void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 	else if (ShadowMap->NumCascades != Options.NumCascades) {
 		delete ShadowMap;
 
-		ShadowMap = new PCascadeShadowMap(
+		ShadowMap = new RCascadeShadowMap(
 			Options.NumCascades,
 			Camera->Frustrum->FieldOfView,
 			Camera->Frustrum->Ratio,
@@ -249,7 +256,7 @@ void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 		glCullFace(GL_FRONT);
 
 
-		glPolygonOffset(1.0f, 16.0f); 
+		glPolygonOffset(0.8f, 4.0f); 
 		glEnable(GL_POLYGON_OFFSET_FILL);
 
 		//TODO: add a shouldUpdate here to avoid recalculations
@@ -279,6 +286,79 @@ void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 	glUseProgram(0);
 }
 
+void GRenderManager::AmbientOcclusionPass(PCameraComponent* Camera) {
+	Shader* AOInputShader = gShaderManager.GetShader("SSAOInputShader");
+	AOInputShader->Enable();
+
+	// Render Normals and Depth to a texture
+	FBORenderTarget* AOInputRenderTarget = AmbientOcclusion->AmbientOcclusionInputFBO;
+	AOInputRenderTarget->Bind();
+
+	glViewport(0, 0, AOInputRenderTarget->Width, AOInputRenderTarget->Height);
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+	glEnable(GL_CULL_FACE);
+
+	AOInputShader->SetFloat("near", Camera->Frustrum->NearPlane);
+	AOInputShader->SetFloat("far", Camera->Frustrum->FarPlane);
+
+	DrawScene(
+		AOInputShader,
+		Camera->View,
+		Camera->Projection
+	);
+	glUseProgram(0);
+
+	// Do the SSAO calculation 
+
+	Shader* AOOutputShader = gShaderManager.GetShader("HBAOOutputShader");
+	AOOutputShader->Enable();
+	
+	FBORenderTarget* AOOutputRenderTarget = AmbientOcclusion->AmbientOcclusionOutputFBO;
+	AOOutputRenderTarget->Bind();
+
+	glViewport(0, 0, AOOutputRenderTarget->Width, AOOutputRenderTarget->Height);
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+	// Prepare data
+	AmbientOcclusion->PrepareForDraw(AOOutputShader, Camera);
+
+	// Draw the AO effect
+	RenderHelper::GetQuadActor().DrawFullScreenQuad();
+
+	//glBindTexture(GL_TEXTURE_2D, 0);
+	//glActiveTexture(GL_TEXTURE14);
+	//glBindTexture(GL_TEXTURE_2D, 0);
+	//glActiveTexture(GL_TEXTURE13);
+	//glBindTexture(GL_TEXTURE_2D, 0);
+
+	// Blur the AO
+	Shader* AOBlurShader = gShaderManager.GetShader("SSAOBlurShader");
+	AOBlurShader->Enable();
+
+	FBORenderTarget* AOBlurRenderTarget = AmbientOcclusion->AmbientOcclusionBlurFBO;
+	AOBlurRenderTarget->Bind();
+	
+	glViewport(0, 0, AOBlurRenderTarget->Width, AOBlurRenderTarget->Height);
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	AOBlurShader->SetInt("filterSize", AmbientOcclusion->FilterSizes[Options.SSAOBlurFilter - 1]);
+
+	glActiveTexture(GL_TEXTURE11);
+	glBindTexture(GL_TEXTURE_2D, AOOutputRenderTarget->ColourAttachments[0]->TextureID);
+
+	RenderHelper::GetQuadActor().DrawFullScreenQuad();
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	//AmbientOcclusion->CleanUp();
+
+	glUseProgram(0);
+}
+
 void GRenderManager::RenderPass(PCameraComponent* Camera)
 {
 	CHECK_GL_ERROR();
@@ -297,16 +377,31 @@ void GRenderManager::RenderPass(PCameraComponent* Camera)
 
 		Shader* RenderShader;
 		if (Options.ShowShadowMapDebug) {
+			
 			RenderShader = gShaderManager.GetShader("CSM_Debug");
 		}
 		else {
 			RenderShader = gShaderManager.GetShader("BRDF_Default");
 		}
 		RenderShader->Enable();
-		
+
+		//TODO: move this from here
+		PCameraActor* RenderCamera = ActiveScene->SceneCameras.FindFirst([](const PCameraActor* At) {
+
+			return At->ObjectName == "Camera";
+			});
+
+		RenderShader->SetMat4("cameraView", false, RenderCamera->Camera->View);
+
 		// Shader Options
 		RenderShader->SetBool("usePCSS", Options.UsePCSS);
 		RenderShader->SetFloat("wLight", Options.LightSize);
+		RenderShader->SetBool("enableSSAO", Options.UseSSAO);
+		if (Options.UseSSAO) {
+			// Bind the SSAO texture
+			glActiveTexture(GL_TEXTURE16);
+			glBindTexture(GL_TEXTURE_2D, AmbientOcclusion->AmbientOcclusionOutputFBO->ColourAttachments[0]->TextureID);
+		}
 
 		//for now get light but later we will need lights!
 		TArray<PRenderActor*> Lights = ActiveScene->SceneLights;
@@ -317,35 +412,25 @@ void GRenderManager::RenderPass(PCameraComponent* Camera)
 
 		DrawScene(RenderShader, Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
 
-		ShadowMap->UnbindBuffers();
+		ShadowMap->CleanUp();
 	}
 }
 
 void GRenderManager::DrawSkyBox(PCameraComponent* Camera) {
 	
-	PSkyBox* SkyBox = ActiveScene->GetSkyBox();
+	RSkyBoxActor* SkyBox = ActiveScene->GetSkyBox();
 
 	Shader* SkyBoxShader = gShaderManager.GetShader("SkyBoxShader");
 	SkyBoxShader->Enable();
 
 	Matrix4f viewMatrix = Camera->GetViewMatrix();
 	Matrix4f projectionMatrix = Camera->GetProjectionMatrix();
-
-	glActiveTexture(GL_TEXTURE6);
-	glBindTexture(GL_TEXTURE_2D, SkyBox->EnviromentMap->TextureID);
-	glActiveTexture(GL_TEXTURE7);
-	glBindTexture(GL_TEXTURE_2D, SkyBox->IrradianceMap->TextureID);
-	glActiveTexture(GL_TEXTURE8);
-	glBindTexture(GL_TEXTURE_2D, SkyBox->ReflectionMap->TextureID);
-
-	float environment_multiplier = 1.3f;
-	SkyBoxShader->SetFloat("environment_multiplier", environment_multiplier);
-	SkyBoxShader->SetMat4("inv_PV", false, Inverse(projectionMatrix * viewMatrix));
-	SkyBoxShader->SetVec3("camera_pos", Camera->GetPosition());
+	
+	SkyBox->PrepareForDraw(SkyBoxShader, Camera);
 
 	SkyBox->Draw();
 
-	SkyBoxShader->Disable();
+	glUseProgram(0);
 }
 
 void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix4f ProjectionMatrix)
@@ -361,6 +446,8 @@ void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix
 
 		for (int i = 0; i < VisibleMeshes.Size(); i++) {
 			VisibleMeshes[i]->SetupModelMatrix();
+
+			ShaderToUse->SetMat4("modelMatrix", false, VisibleMeshes[i]->StaticMesh->ModelMatrix);
 
 			Matrix4f ModelViewMatrix = ViewMatrix * VisibleMeshes[i]->StaticMesh->ModelMatrix;
 			Matrix4f ModelViewProjectionMatrix = ProjectionMatrix * ModelViewMatrix;
@@ -421,7 +508,7 @@ void GRenderManager::Init()
 
 
 	// init render targets
-	FBORenderTarget* MainRenderTarget = new FBORenderTarget("Main", 1600, 900);
+	FBORenderTarget* MainRenderTarget = new FBORenderTarget("Main", 1366, 768);
 	FBORenderTarget * ShadowMapTarget = new FBORenderTarget("ShadowMap",1024, 1024);
 
 	MainRenderTarget->Init();
@@ -429,8 +516,10 @@ void GRenderManager::Init()
 
 	RenderTargets.PushBack(MainRenderTarget);
 	RenderTargets.PushBack(ShadowMapTarget);
+	
+	AmbientOcclusion = new RAmbientOcclusion();
 
-
+	AmbientOcclusion->Init();
 }
 
 void GRenderManager::Terminate()
@@ -482,16 +571,20 @@ void GRenderManager::DrawOptions() {
 		ImGui::Checkbox("Show Light Frustrum", &Options.ShowLightFrustrumDebug);
 		if (ImGui::SliderInt("Cascade Selected", &Options.CascadeIndex, 1, Options.NumCascades))
 
-		for (int i = 0; i < ShadowMap->NumCascades; i++) {
-			std::string CascadeTitle = "CSM Level " + std::to_string(i);
-			ImGui::Checkbox(CascadeTitle.c_str(), &Options.ShowCascade[i]);
-			ImGui::SameLine();
-		}
+		//for (int i = 0; i < ShadowMap->NumCascades; i++) {
+		//	std::string CascadeTitle = "CSM Level " + std::to_string(i);
+		//	ImGui::Checkbox(CascadeTitle.c_str(), &Options.ShowCascade[i]);
+		//	ImGui::SameLine();
+		//}
 		//-------------------------------------------------------------------
 		ImGui::NewLine();
 		ImGui::Text("Percentage-Close Soft Shadows");
 		ImGui::Checkbox("Enable PCSS", &Options.UsePCSS);
 		ImGui::SliderFloat("Light Size", &Options.LightSize, 0.0f, 1.0f);
+		ImGui::Separator();
+		ImGui::Text("SSAO");
+		ImGui::Checkbox("Enable SSAO", &Options.UseSSAO);
+		ImGui::SliderInt("Blur Filter size", &Options.SSAOBlurFilter, 1, 12);
 		ImGui::Separator();
 		if(ImGui::Button("Reload Shaders")) {
 			gShaderManager.ReloadShaders();
@@ -507,7 +600,7 @@ void GRenderManager::DrawOptions() {
 void GRenderManager::DrawPreview()
 {
 	uint32 RenderTarget = 0;
-	RenderTarget = RenderTargets[0]->GetTexture();
+	RenderTarget = RenderTargets[0]->ColourAttachments[0]->TextureID;
 	if (RenderTarget != 0) {
 		ImGui::SetNextWindowSize(ImVec2(1366, 768));
 		ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -556,7 +649,7 @@ void GRenderManager::DrawDepthMaps() {
 		{
 			for (int i = 0; i < ShadowMap->NumCascades; i++) {
 				if (Options.ShowCascade[i]) {
-					uint32 Target = ShadowMap->Cascades[i]->CascadeFBO->GetTexture();
+					uint32 Target = ShadowMap->Cascades[i]->CascadeFBO->ColourAttachments[0]->TextureID;
 					
 					ImGui::Image(
 						(ImTextureID)Target,

@@ -8,21 +8,22 @@
 class Image;
 
 
-class PSkyBox: public PRenderActor
+class RSkyBoxActor: public PRenderActor
 {
 public:
-    PSkyBox();
-    PSkyBox(const char* Name);
-    ~PSkyBox();
+    RSkyBoxActor();
+    RSkyBoxActor(const char* Name);
+    ~RSkyBoxActor();
 
     void Draw();
-
+    void PrepareForDraw(Shader* ActiveShader, PCameraComponent* Camera);
+    void CleanUp();
     void CreateSkyBox(std::string EnviromentPath, std::string IrradiancePath, TArray<std::string> ReflectionPaths);
 
 public:
-    Texture* EnviromentMap;
-    Texture* IrradianceMap;
-    Texture* ReflectionMap;
+    RTexture* EnviromentMap;
+    RTexture* IrradianceMap;
+    RTexture* ReflectionMap;
 };
 
 #endif // !SKYBOX_H

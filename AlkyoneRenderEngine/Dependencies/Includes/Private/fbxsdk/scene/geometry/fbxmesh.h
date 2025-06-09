@@ -45,7 +45,7 @@ public:
 		* \param pMaterial Index of material to assign to this polygon if material mapping type is \e eByPolygon. Otherwise it must be \c -1.
 		* \param pTexture Index of texture to assign to this polygon if texture mapping type is \e eByPolygon. Otherwise it must be \c -1.
 		* \param pGroup Group index assigned to polygon.
-		* \param pLegacy When set to \c true, automatically create a LayerElement of type Texture; This was the default behavior of earlier
+		* \param pLegacy When set to \c true, automatically create a LayerElement of type RTexture; This was the default behavior of earlier
 		* versions of the FBX SDK. Since version 2010, the textures are connected to the material object.
 		* \remark This function must be called before AddPolygon().
 		* \remark If used, the pTexture index will reference textures assigned to the DIFFUSE channel (FbxLayerElement::eTextureDiffuse). */
@@ -192,7 +192,7 @@ public:
 		int RemoveDuplicatedEdges(FbxArray<int>& pEdgeIndexList);
     //@}
 
-	/** \name Texture UV Utility Functions.
+	/** \name RTexture UV Utility Functions.
 	* 
 	* The methods found in this section are utility functions used to handle UV coordinates quickly. Internally, they
 	* refer to \c FbxLayer and \c FbxLayerElementUV methods to do the job. Except for the GetAllChannelUV(int pLayer),
@@ -207,7 +207,7 @@ public:
 
 		/** Add texture UV coordinates.
 		* Appends a new element at the end of the array of texture UV coordinates.
-		* \param pUV Texture UV coordinates, ranging between \c 0 and \c 1.
+		* \param pUV RTexture UV coordinates, ranging between \c 0 and \c 1.
 		* \param pTypeIdentifier Specifies which texture channel this UV refers to.
 		* \remark The final number of texture UV elements must equal the number of control
 		* points if the UV mapping mode is \e FbxLayerElement::eByControlPoint. */
@@ -232,8 +232,8 @@ public:
 		FbxArray<FbxLayerElement::EType> GetAllChannelUV(int pLayer);
 	//@}
 
-	/** \name Material, Texture and UV Indices Utility Functions.
-	* The methods found in this section are utility functions used to handle Material, Texture and UV indices quickly.
+	/** \name Material, RTexture and UV Indices Utility Functions.
+	* The methods found in this section are utility functions used to handle Material, RTexture and UV indices quickly.
 	* Internally, they refer to \c FbxLayer and \c FbxLayerElementUV methods to do the job. These functions are only
 	* working on Layer 0. Use the \c FbxLayer methods directly to access other layers. */
 	//@{

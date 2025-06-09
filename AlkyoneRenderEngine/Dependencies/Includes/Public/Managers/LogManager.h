@@ -60,7 +60,7 @@ struct GuiLog
 
 	void Clear()
 	{
-		Items.Destroy();
+		Items.Clear();
 	}
 
 	void AddLog(const char* fmt, ...) IM_FMTARGS(2)

@@ -16,11 +16,12 @@
 
 class RenderSystem;
 class Scene;
-class PCascadeShadowMap;
+class RCascadeShadowMap;
 class GGUIManager;
 class Shader;
 class FBORenderTarget;
 class PCameraComponent;
+class RAmbientOcclusion;
 
 struct RenderOptions {
 public:
@@ -40,11 +41,15 @@ public:
 	bool ShowCascade[4] = { true, true, true, true };
 	bool ToggleShadowView = false;
 	int32 NumCascades = 4;
-	float Lambda = 0.5;
+	float Lambda = 0.25;
 
 	//Percentage-Closer Soft Shadows
 	bool UsePCSS = false;
-	float LightSize = 0.1;
+	float LightSize = 0.1f;
+
+	// SSAO
+	bool UseSSAO = false;
+	int32 SSAOBlurFilter = 3;
 
 	int32 TargetToRender = 100;
 
@@ -71,7 +76,8 @@ private:
 
 	Scene* ActiveScene;
 
-	PCascadeShadowMap* ShadowMap;
+	RCascadeShadowMap* ShadowMap;
+	RAmbientOcclusion* AmbientOcclusion;
 
 	TArray<FBORenderTarget* > RenderTargets;
 
@@ -88,6 +94,8 @@ public:
 	void Render(double currentTime);
 
 	void ShadowMapPass(PCameraComponent* Camera);
+
+	void AmbientOcclusionPass(PCameraComponent* Camera);
 
 	void RenderPass(PCameraComponent* Camera);
 

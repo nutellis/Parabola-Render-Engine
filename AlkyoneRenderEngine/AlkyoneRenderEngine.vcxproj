@@ -172,6 +172,7 @@
     <ClCompile Include="Dependencies\Includes\Private\ImGUI\imgui_impl_opengl3.cpp" />
     <ClCompile Include="Dependencies\Includes\Private\ImGUI\imgui_tables.cpp" />
     <ClCompile Include="Dependencies\Includes\Private\ImGUI\imgui_widgets.cpp" />
+    <ClCompile Include="Source\Components\AmbientOcclusion.cpp" />
     <ClCompile Include="Source\Components\Colliders\BoundingBox.cpp" />
     <ClCompile Include="Source\Components\LightComponents\DirectionalLightComponent.cpp" />
     <ClCompile Include="Source\Components\LightComponents\PointLightComponent.cpp" />
@@ -702,6 +703,7 @@
     <ClInclude Include="Dependencies\Includes\Private\KHR\khrplatform.h" />
     <ClInclude Include="Dependencies\Includes\Private\stb_image.h" />
     <ClInclude Include="Dependencies\Includes\Private\tiny_obj_loader.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Components\AmbientOcclusion.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\Colliders\AxisAlignedBoundingBox.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\CameraComponents\Camera.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\CascadeShadowMap.h" />
@@ -763,6 +765,7 @@
     <ClInclude Include="Dependencies\Includes\Public\Win32\Win32RenderWindow.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\SkyBox.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\Colliders\BoundingBox.h" />
+    <ClInclude Include="Dependencies\Includes\Public\RenderHelper.h" />
     <ClInclude Include="Source\Utilities\TestData\TestData.h" />
     <ClInclude Include="Source\Win32\Win32RenderWindow.cpp" />
   </ItemGroup>

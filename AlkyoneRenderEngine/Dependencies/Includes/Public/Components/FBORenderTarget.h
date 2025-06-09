@@ -1,8 +1,6 @@
 #pragma once
 #include <Components/RenderTarget.h>
-
-
-class Texture;
+#include <Components/Texture.h>
 
 
 class FBORenderTarget : public RenderTarget
@@ -10,27 +8,26 @@ class FBORenderTarget : public RenderTarget
 public:
 	FBORenderTarget();
 
-	FBORenderTarget(std::string Name, uint32 Width, uint32 Height);
+	FBORenderTarget(std::string Name, uint32 Width, uint32 Height, uint32 NumTargets = 1);
 
 	~FBORenderTarget();
 
 	void Bind();
 
-	bool Init(bool IsForShadowMapping = false);
-	bool Init(std::string Name, uint32 Width, uint32 Height, bool IsForShadowMapping = true);
-
-
-	uint32 GetTexture() const;
-	uint32 GetDepth() const;
+	bool Init(
+		TArray<RTextureOptions> ColourAttachmentOptions = TArray<RTextureOptions>(),
+		RTextureOptions DepthAttachmentOptions = RTextureOptions::InitDefaultDepth());
 
 	inline void AttachTextureToFrameBuffer(uint32 TextureRef, uint32 Channel) {
 		glNamedFramebufferTexture(ID, Channel, TextureRef, 0);
 	}
 
 public:
-	Texture * ColourAttachment;
-	Texture * DepthStencilAttachment;
+	TArray<RTexture *> ColourAttachments;
+	RTexture * DepthStencilAttachment;
 
+private:
+	uint32 NumColourTargets = 0;
 };
 
 class GLFrameBufferObject

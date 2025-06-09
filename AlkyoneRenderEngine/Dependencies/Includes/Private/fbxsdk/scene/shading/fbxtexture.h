@@ -29,7 +29,7 @@ class FBXSDK_DLL FbxTexture : public FbxObject
 
 public:
 	/**
-	  * \name Texture Properties
+	  * \name RTexture Properties
 	  */
 	//@{
 	  /** \enum EUnifiedMappingType      Internal enum for texture mapping types.
@@ -96,7 +96,7 @@ public:
             eBottom	//! Bottom cropping.
         };
 
-        /** \enum ECoordinates Texture coordinates.
+        /** \enum ECoordinates RTexture coordinates.
           */
         enum ECoordinates
         {
@@ -147,7 +147,7 @@ public:
           */
 		FbxPropertyT<FbxBool>				PremultiplyAlpha;
 
-		// Texture positioning
+		// RTexture positioning
 
         /** This property handles the default translation vector.
           * Default value is FbxDouble3(0.0,0.0,0.0).
@@ -186,7 +186,7 @@ public:
           */
 		FbxPropertyT<FbxString>			UVSet;
 
-        /** This property only used by Vector Displacement Texture so it is not added to FbxTexture.
+        /** This property only used by Vector Displacement RTexture so it is not added to FbxTexture.
           * It is a dynamic enum property which has values : "World", "Object" and "Tangent"
           * Default value is "Object".
           */
@@ -195,7 +195,7 @@ public:
         static const char* sVectorSpaceObject  ;
         static const char* sVectorSpaceTangent ;
 
-        /** This property only used by Vector Displacement Texture so it is not added to FbxTexture.
+        /** This property only used by Vector Displacement RTexture so it is not added to FbxTexture.
           * It is a dynamic enum property which has values : "Floating-point Absolute" and "Signed Encoding"
           * Default value is "Floating-point Absolute".
           */
@@ -282,7 +282,7 @@ public:
 	  */
     int GetCroppingBottom() const;
 	
-	/** \enum EMappingType Texture mapping types.
+	/** \enum EMappingType RTexture mapping types.
 	  */
     enum EMappingType
     { 
@@ -293,7 +293,7 @@ public:
         eBox,			//! Wrap texture around the model as if it was a box.
         eFace,			//! Apply texture to the model viewed as a face.
         eUV,			//! Apply texture to the model according to UVs.
-		eEnvironment	//! Texture is an environment map.
+		eEnvironment	//! RTexture is an environment map.
     };
 
     /** Sets the mapping type.
@@ -325,7 +325,7 @@ public:
 	  */
     EPlanarMappingNormal GetPlanarMappingNormal() const;
 
-	/** \enum ETextureUse           Texture uses.
+	/** \enum ETextureUse           RTexture uses.
 	  */
 	enum ETextureUse
 	{
@@ -334,7 +334,7 @@ public:
 		eLightMap,					//! Light map
 		eSphericalReflectionMap,	//! Spherical reflection map: Object reflects the contents of the scene
 		eSphereReflectionMap,		//! Sphere reflection map: Object reflects the contents of the scene from only one point of view
-		eBumpNormalMap				//! Bump map: Texture contains two direction vectors, that are used to convey relief in a texture.
+		eBumpNormalMap				//! Bump map: RTexture contains two direction vectors, that are used to convey relief in a texture.
 	};
 
 	/** Sets the texture use.
@@ -493,9 +493,9 @@ public:
     double GetTranslationV() const;
 
     /** Sets rotation.
-	  * \param pU       Texture rotation around the U axis in degrees.
-	  * \param pV       Texture rotation around the V axis in degrees.
-	  * \param pW       Texture rotation around the W axis in degrees.
+	  * \param pU       RTexture rotation around the U axis in degrees.
+	  * \param pV       RTexture rotation around the V axis in degrees.
+	  * \param pW       RTexture rotation around the W axis in degrees.
 	  * \remarks        The W axis is oriented toward the result of the vector product of 
 	  *                 the U and V axes that is W = U x V.
 	  */
