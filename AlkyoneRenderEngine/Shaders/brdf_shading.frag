@@ -39,6 +39,8 @@ uniform float environment_multiplier;
 in vec2 texCoord;
 in vec3 viewSpaceNormal;
 in vec3 viewSpacePosition;
+layout(binding = 20) uniform sampler2D normalMap;
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Input uniform variables
@@ -69,6 +71,7 @@ layout(binding = 16) uniform sampler2D ssaoTexture;
 //Cascade Shadow Information
 ///////////////////////////////////////////////////////////////////////////////
 // textures 10 to 13
+uniform int enableCMS = 0;
 uniform sampler2D shadowMap[4];
 
 
@@ -348,7 +351,11 @@ void main()
 		ssao = texture(ssaoTexture, gl_FragCoord.xy / textureSize(ssaoTexture, 0).xy).r; // Fetch SSAO value
     }
 	vec3 wo = -normalize(viewSpacePosition);
+
 	vec3 n = normalize(viewSpaceNormal);
+	
+	//texture(normalMap, gl_FragCoord.xy / textureSize(normalMap, 0).xy).xyz;
+
 
 	vec3 wi = normalize(LightDirection);
 
@@ -358,7 +365,10 @@ void main()
 		base_color = base_color * texture(colorMap, texCoord).rgb;
 	}
 	const float shadow_ambient = 0.9;
-	visibility = shadow_ambient * calculateShadowsCoef(n, wi);
+
+	if (enableCMS == 1) {
+		visibility = shadow_ambient * calculateShadowsCoef(n, wi);
+	}
 	// Direct illumination
 	vec3 direct_illumination_term =calculateDirectIllumiunation(wo, n, base_color) * visibility; 
 
@@ -376,7 +386,7 @@ void main()
 
 	vec3 shading = direct_illumination_term +  indirect_illumination_term + emission_term; 
 
-	//fragmentColor =  vec4(shading, 1.0);
-	fragmentColor =  vec4(vec3(ssao), 1.0);
+	fragmentColor =  vec4(shading, 1.0);
+
 	return;
 }

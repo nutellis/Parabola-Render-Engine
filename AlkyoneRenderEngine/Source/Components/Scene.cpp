@@ -73,22 +73,22 @@ void Scene::InitScene() {
 		"Assets/envmaps/001_irradiance.hdr", 
 		filenames);
 
-	//PRenderActor* sponza = new PRenderActor("sponza");
-	//this->AddChild(sponza);
-	//sponza->AddMesh("Assets/sponza.obj");
-	//sponza->SetPosition(Vector3f(0.0, 0.0, 0.0));
-	//sponza->SetRotation(Vector3f(0.0, 90.0, 0.0));
-	//sponza->SetScale(0.2f);
+	PRenderActor* sponza = new PRenderActor("sponza");
+	this->AddChild(sponza);
+	sponza->AddMesh("Assets/sponza.obj");
+	sponza->SetPosition(Vector3f(0.0, 0.0, 0.0));
+	sponza->SetRotation(Vector3f(0.0, 90.0, 0.0));
+	sponza->SetScale(0.2f);
 
 
 	//SortChild(sponza);
 
-	PRenderActor* sponza = new PRenderActor("Scene");
-	this->AddChild(sponza);
-	sponza->AddMesh("Assets/city test/city2.obj");
-	sponza->SetPosition(Vector3f(0.0, 0.0, 250.0));
-	sponza->SetRotation(Vector3f(0.0, 0.0, 0.0));
-	sponza->SetScale(100.0f);
+	//PRenderActor* sponza = new PRenderActor("Scene");
+	//this->AddChild(sponza);
+	//sponza->AddMesh("Assets/city test/city2.obj");
+	//sponza->SetPosition(Vector3f(0.0, 0.0, 250.0));
+	//sponza->SetRotation(Vector3f(0.0, 0.0, 0.0));
+	//sponza->SetScale(100.0f);
 
 	SortChild(sponza);
 	
@@ -222,7 +222,7 @@ TArray<PAxisAlignedBoundingBox> Scene::GetShadowCasters(PAxisAlignedBoundingBox*
 		TArray<PStaticMesh*> Meshes = Actor->StaticMesh->Meshes;
 		for (PStaticMesh * Mesh : Meshes) {
 			if (Mesh->IsCastingShadows && SweepIntersectionTest(Mesh->WorldBoundingBox, BoxToCheck, SceneLights.Front()->Light->LightDirection)) {
-				if (Mesh->WorldBoundingBox->Max.Y - Mesh->WorldBoundingBox->Min.Y > 15.0) {
+				if (Mesh->WorldBoundingBox->Max.Y - Mesh->WorldBoundingBox->Min.Y > 8.0) {
 					ObjectsToReturn.PushBack(*Mesh->WorldBoundingBox);
 					Mesh->WorldBoundingBox->DebugColour = Colour;
 				}

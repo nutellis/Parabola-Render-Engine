@@ -68,7 +68,7 @@ void VertexArrayObject::SetupAttribute(uint32 BufferIndex, uint32 Attribute, uin
 	glEnableVertexArrayAttrib(ID, Attribute	);
 
 	// Tell OpenGL what the format of the attribute is
-	glVertexArrayAttribFormat(ID, Attribute, ComponentCount, GL_FLOAT, GL_FALSE,RelativeOffset);
+	glVertexArrayAttribFormat(ID, Attribute, ComponentCount, GL_FLOAT, GL_FALSE, RelativeOffset);
 
 	// Tell OpenGL which vertex buffer binding to use for this attribute. 
 	glVertexArrayAttribBinding(ID, Attribute, BufferIndex);

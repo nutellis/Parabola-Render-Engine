@@ -32,6 +32,7 @@ public:
 	bool ShowBoundingBoxes = false;
 
 	//Cascade Shadow Mapping
+	bool UseShadows = true;
 	bool ShowCascadeFrustrumDebug = false;
 	bool ShowCascadeBoundingDebug = false;
 	bool ShowLightFrustrumDebug = false;

@@ -209,10 +209,14 @@ VertexArray RQuadRenderActor::CreateFullScreenQuad()
         { -1.0f, -1.0f, 0.0f }, { 1.0f, -1.0f, 0.0f }, { 1.0f, 1.0f, 0.0f },
         { -1.0f, -1.0f, 0.0f }, { 1.0f, 1.0f, 0.0f },  { -1.0f, 1.0f, 0.0f }
     };
+    const Vector2f uvs[] = {
+    { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f },
+    { 0.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f }
+    };
 
     for (int i = 0; i < 6; i++)
     {
-        FullScreenQuad.PushBack(VertexFormat(positions[i], Vector3f(), Vector2f()));
+        FullScreenQuad.PushBack(VertexFormat(positions[i], Vector3f(0.0f, 0.0f, 1.0f), uvs[i]));
     }
 
     return FullScreenQuad;

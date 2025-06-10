@@ -15,7 +15,7 @@
 RAmbientOcclusion::RAmbientOcclusion()
 {
 	NumDirections = 8;
-	NumSteps = 8;
+	NumSteps = 4;
 	AmbientOcclusionInputFBO = new FBORenderTarget("AmbientOcclusionInput", 1366, 768, 2);
 	AmbientOcclusionOutputFBO = new FBORenderTarget("AmbientOcclusionOutput", 1366, 768);
 	AmbientOcclusionBlurFBO = new FBORenderTarget("AmbientOcclusionBlur", 1366, 768);
@@ -80,18 +80,18 @@ void RAmbientOcclusion::Init()
 
 	TArray<RTextureOptions> ColourInputOptions = TArray<RTextureOptions>(2);
 
-	ColourInputOptions.PushBack(RTextureOptions());
 	ColourInputOptions.PushBack(RTextureOptions(
-		GL_TEXTURE_2D, GL_RGBA32F, GL_RGBA, GL_FLOAT,
+		GL_TEXTURE_2D, GL_RGB32F, GL_RGB, GL_FLOAT,
 		GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
 		GL_NONE, GL_LESS, false));
-
+	ColourInputOptions.PushBack(RTextureOptions());
+	
 	if (AmbientOcclusionInputFBO) {
 		AmbientOcclusionInputFBO->Init(ColourInputOptions);
 	}
 
 	RTextureOptions ColourOutputOptions = RTextureOptions(
-		GL_TEXTURE_2D, GL_RGBA32F, GL_RGBA, GL_FLOAT,
+		GL_TEXTURE_2D, GL_RGB32F, GL_RGB, GL_FLOAT,
 		GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
 		GL_NONE, GL_LESS, false);
 
@@ -107,11 +107,11 @@ void RAmbientOcclusion::Init()
 void RAmbientOcclusion::PrepareForDraw(Shader* ActiveShader, PCameraComponent * Camera)
 {
 	ActiveShader->SetMat4("projectionMatrix", false, Camera->Projection);
-	ActiveShader->SetFloat("radius", 2.0f);
-	ActiveShader->SetFloat("bias", 0.1f);
-	ActiveShader->SetFloat("Nd", (float)NumDirections);
-	ActiveShader->SetFloat("Ns", (float)NumSteps);
-	ActiveShader->SetFloat("powerExponent", 2.0f);
+	ActiveShader->SetFloat("radius", Radius);
+	ActiveShader->SetFloat("bias", Bias);
+	ActiveShader->SetInt("Nd", NumDirections);
+	ActiveShader->SetInt("Ns", NumSteps);
+	ActiveShader->SetFloat("powerExponent", Exponent);
 	ActiveShader->SetFloat("fieldOfView", DegreesToRadians(Camera->Frustrum->FieldOfView));
 	ActiveShader->SetFloat("aspectRatio", Camera->Frustrum->Ratio);
 

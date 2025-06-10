@@ -44,6 +44,11 @@ public:
 
 	int NumDirections;
 	int NumSteps;
+
+	float Radius = 2.0f;
+	float Bias = 0.5f;
+	float Exponent = 2.0f;
+
 	TArray<Vector3f> Kernel;
 
 	//TODO: change this
