@@ -73,22 +73,20 @@ void Scene::InitScene() {
 		"Assets/envmaps/001_irradiance.hdr", 
 		filenames);
 
-	PRenderActor* sponza = new PRenderActor("sponza");
-	this->AddChild(sponza);
-	sponza->AddMesh("Assets/sponza.obj");
-	sponza->SetPosition(Vector3f(0.0, 0.0, 0.0));
-	sponza->SetRotation(Vector3f(0.0, 90.0, 0.0));
-	sponza->SetScale(0.2f);
-
-
-	//SortChild(sponza);
-
-	//PRenderActor* sponza = new PRenderActor("Scene");
+	//PRenderActor* sponza = new PRenderActor("sponza");
 	//this->AddChild(sponza);
-	//sponza->AddMesh("Assets/city test/city2.obj");
-	//sponza->SetPosition(Vector3f(0.0, 0.0, 250.0));
-	//sponza->SetRotation(Vector3f(0.0, 0.0, 0.0));
-	//sponza->SetScale(100.0f);
+	//sponza->AddMesh("Assets/sponza/sponza.obj");
+	//sponza->SetPosition(Vector3f(0.0, 0.0, 0.0));
+	//sponza->SetRotation(Vector3f(0.0, 90.0, 0.0));
+	//sponza->SetScale(1.0f);
+
+
+	PRenderActor* sponza = new PRenderActor("Scene");
+	this->AddChild(sponza);
+	sponza->AddMesh("Assets/city test/city3.obj");
+	sponza->SetPosition(Vector3f(0.0, 0.0, 0.0));
+	sponza->SetRotation(Vector3f(0.0, 0.0, 0.0));
+	sponza->SetScale(1.0f);
 
 	SortChild(sponza);
 	
@@ -125,7 +123,7 @@ void Scene::InitScene() {
 	PCameraActor* camera = new PCameraActor("Camera");
 	this->AddChild(camera);
 
-	camera->SetPosition(Vector3f(0.f, 20.f, 110.f));// 58.280, 65.168, -208.757));
+	camera->SetPosition(Vector3f(0.f, 0.f, -7.0f));// 58.280, 65.168, -208.757));
 	camera->SetRotation(Vector3f::ZERO);// -50.580, 339.361, 0.0f));
 	camera->InitCamera();
 	SortCamera(camera);
@@ -133,8 +131,8 @@ void Scene::InitScene() {
 	PCameraActor* secondarycamera = new PCameraActor("Free Camera");
 	this->AddChild(secondarycamera);
 
-	secondarycamera->SetPosition(Vector3f(-280.0f, 111.0f, -290.0f));
-	secondarycamera->SetRotation(Vector3f(-25.0f, 170.0f, 0.0f));
+	secondarycamera->SetPosition(Vector3f(-15.0f, 2.0f, 0.0f));
+	secondarycamera->SetRotation(Vector3f(-11.0f, 42.0f, 0.0f));
 	camera->InitCamera();
 	SortCamera(secondarycamera);
 	this->SetActiveCamera(camera);
@@ -222,10 +220,10 @@ TArray<PAxisAlignedBoundingBox> Scene::GetShadowCasters(PAxisAlignedBoundingBox*
 		TArray<PStaticMesh*> Meshes = Actor->StaticMesh->Meshes;
 		for (PStaticMesh * Mesh : Meshes) {
 			if (Mesh->IsCastingShadows && SweepIntersectionTest(Mesh->WorldBoundingBox, BoxToCheck, SceneLights.Front()->Light->LightDirection)) {
-				if (Mesh->WorldBoundingBox->Max.Y - Mesh->WorldBoundingBox->Min.Y > 8.0) {
+				//if (Mesh->LocalBoundingBox->Max.Y - Mesh->LocalBoundingBox->Min.Y > 0.8) {
 					ObjectsToReturn.PushBack(*Mesh->WorldBoundingBox);
 					Mesh->WorldBoundingBox->DebugColour = Colour;
-				}
+				//}
 			}
 			else {
 				//Mesh->WorldBoundingBox->DebugColour = Vector3f(1.0, 1.0, 0.0);

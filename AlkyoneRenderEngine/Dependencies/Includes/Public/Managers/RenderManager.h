@@ -35,6 +35,7 @@ public:
 	bool UseShadows = true;
 	bool ShowCascadeFrustrumDebug = false;
 	bool ShowCascadeBoundingDebug = false;
+	bool SoloCascadeDebug = false;
 	bool ShowLightFrustrumDebug = false;
 	int32 CascadeIndex = 1;
 	bool ShowShadowMapDebug = false;

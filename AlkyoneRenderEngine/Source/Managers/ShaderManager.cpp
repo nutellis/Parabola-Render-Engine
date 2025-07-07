@@ -258,7 +258,7 @@ void GShaderManager::Init()
 		Shaders.PushBack(SSAOBlurShader);
 	}
 
-	// HBAO
+	// Linear Depth
 	Shader* LinearDepthShader = CompileProgram("LinearDepthShader", "Shaders/position.vert", "Shaders/linearDepth.frag");
 	if (LinearDepthShader->ID == 0)
 	{
@@ -268,7 +268,7 @@ void GShaderManager::Init()
 	{
 		Shaders.PushBack(LinearDepthShader);
 	}
-
+	// Normal Reconstruction
 	Shader* ReconstructNormalShader = CompileProgram("ReconstructNormalShader", "Shaders/ssaoOutput.vert", "Shaders/reconstructNormal.frag");
 	if (ReconstructNormalShader->ID == 0)
 	{
@@ -278,7 +278,7 @@ void GShaderManager::Init()
 	{
 		Shaders.PushBack(ReconstructNormalShader);
 	}
-	
+	// HBAO
 	Shader* HBAOOutputShader = CompileProgram("HBAOOutputShader", "Shaders/ssaoOutput.vert", "Shaders/hbaoOutput.frag");
 	if (HBAOOutputShader->ID == 0)
 	{

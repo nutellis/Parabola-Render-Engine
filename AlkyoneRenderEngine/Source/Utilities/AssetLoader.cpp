@@ -1207,7 +1207,8 @@ Asset * ObjLoader::Read(const char * Filepath)
 
 		//Roughness
 		material->Roughness = PChannel();
-		material->Roughness.Colours = Vector4f(m.roughness, m.roughness, m.roughness, 1);
+		//material->Roughness.Colours = Vector4f(m.roughness, m.roughness, m.roughness, 1);
+		material->Roughness.Colours = Vector4f(0.6, 0.6, 0.6, 1);
 		if (m.roughness_texname != "")
 		{
 			material->Roughness.HasTexture = true;

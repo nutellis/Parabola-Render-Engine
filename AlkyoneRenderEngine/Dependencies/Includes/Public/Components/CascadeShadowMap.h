@@ -35,6 +35,10 @@ public:
 
 	Vector4f CascadeDebugColour;
 
+	//TODO: this needs a cleanup
+	float Near;
+	float Far;
+
 	RCascade();
 	RCascade(std::string Name, uint32 Width, uint32 Height);
 	~RCascade();
@@ -67,6 +71,8 @@ public:
 	TArray<RCascade *> Cascades;
 
 	float Lambda = 0.25f;
+	float TransitionOverlap = 0.95;
+	float LightDistance = 50.0f;
 
 private:
 	uint32 ShadowMapSSBO;

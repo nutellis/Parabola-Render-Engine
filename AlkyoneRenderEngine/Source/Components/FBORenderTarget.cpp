@@ -60,7 +60,7 @@ bool FBORenderTarget::Init(TArray<RTextureOptions> ColourAttachmentOptions, RTex
 
 	TArray<GLenum> Attachments = TArray<GLenum>(ColourAttachments.Size());
 	for (uint32 i = 0; i < ColourAttachments.Size(); i++) {
-		if (ColourAttachmentOptions.IsNotEmpty()) { // options is either empty or same number with attachments, nothing else will work.
+		if (ColourAttachmentOptions.IsNotEmpty() && ColourAttachmentOptions.Size() == ColourAttachments.Size()) { // options is either empty or same number with attachments, nothing else will work.
 
 			ColourAttachments[i]->TextureOptions = ColourAttachmentOptions[i];
 		}

@@ -141,15 +141,30 @@ void GRenderManager::Render(double DeltaTime)
 		RenderCamera->Camera->Frustrum->BoundingBox->RenderDebugBoundingBox(bitMask, Vector4f(1.0, 1.0, 1.0, 0.2), ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
 	}
 
+	if (Options.NumCascades < Options.CascadeIndex) {
+		Options.CascadeIndex = Options.NumCascades;
+	}
 	if (Options.ShowCascadeFrustrumDebug) {
-		for (auto& Cascade : ShadowMap->Cascades) {
-			Cascade->Frustrum->FrustrumBox->RenderDebugBoundingBox(bitMask, Cascade->CascadeDebugColour, ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
+		if (Options.SoloCascadeDebug) {
+			ShadowMap->Cascades[Options.CascadeIndex - 1]->Frustrum->FrustrumBox->RenderDebugBoundingBox(
+				bitMask, ShadowMap->Cascades[Options.CascadeIndex - 1]->CascadeDebugColour, ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
+		}
+		else {
+			for (auto& Cascade : ShadowMap->Cascades) {
+				Cascade->Frustrum->FrustrumBox->RenderDebugBoundingBox(bitMask, Cascade->CascadeDebugColour, ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
+			}
 		}
 	}
 
 	if (Options.ShowCascadeBoundingDebug) {
-		for (auto& Cascade : ShadowMap->Cascades) {
-			Cascade->Frustrum->BoundingBox->RenderDebugBoundingBox(bitMask, Cascade->CascadeDebugColour, ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
+		if (Options.SoloCascadeDebug) {
+			ShadowMap->Cascades[Options.CascadeIndex - 1]->Frustrum->BoundingBox->RenderDebugBoundingBox(
+				bitMask, ShadowMap->Cascades[Options.CascadeIndex - 1]->CascadeDebugColour, ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
+		}
+		else {
+			for (auto& Cascade : ShadowMap->Cascades) {
+				Cascade->Frustrum->BoundingBox->RenderDebugBoundingBox(bitMask, Cascade->CascadeDebugColour, ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
+			}
 		}
 	}
 	
@@ -169,7 +184,7 @@ void GRenderManager::Render(double DeltaTime)
 		PFrustrum LightFrustrum = PFrustrum();
 		TArray<Vector3f> viewCorners;
 		for (int i = 0; i < 8; ++i) {
-			Vector4f viewPos = Inverse(ShadowMap->Cascades[Options.CascadeIndex-1]->CascadeCPVMatrix) * ndcCorners[i];
+			Vector4f viewPos = Inverse(ShadowMap->Cascades[Options.CascadeIndex -1]->CascadeCPVMatrix) * ndcCorners[i];
 			viewCorners.PushBack(Vector3f(viewPos) / viewPos.W);  // Perspective divide (though ortho w == 1)
 		}
 		LightFrustrum.FrustrumBox->Corners = viewCorners;
@@ -210,6 +225,7 @@ void GRenderManager::Render(double DeltaTime)
 
 void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 	Shader* DepthShader = gShaderManager.GetShader("DepthShader");
+//	Shader* DepthShader = gShaderManager.GetShader("LinearDepthShader");
 	DepthShader->Enable();
 
 	if (ShadowMap == nullptr) {
@@ -247,18 +263,6 @@ void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 	}
 
 	for (int i = 0; i < ShadowMap->NumCascades; i++) {
-		FBORenderTarget* ShadowMapRenderTarget = ShadowMap->GetCascade(i)->CascadeFBO;
-		ShadowMapRenderTarget->Bind();
-
-		glViewport(0, 0, ShadowMap->GetCascade(i)->Resolution, ShadowMap->GetCascade(i)->Resolution);
-		glClearColor(1.0, 1.0, 1.0, 1.0);
-		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-		glCullFace(GL_FRONT);
-
-
-		glPolygonOffset(0.8f, 4.0f); 
-		glEnable(GL_POLYGON_OFFSET_FILL);
-
 		//TODO: add a shouldUpdate here to avoid recalculations
 		ShadowMap->UpdateCascadeExtends(
 			Camera->Frustrum->NearPlane,
@@ -268,11 +272,30 @@ void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 		);
 
 		ShadowMap->CalculateLightProjection(
-			i, 
+			i,
 			Camera,
 			ActiveScene->SceneLights.Front()->Light,
 			Options.SquareShadowBox
 		);
+
+		FBORenderTarget* ShadowMapRenderTarget = ShadowMap->GetCascade(i)->CascadeFBO;
+		ShadowMapRenderTarget->Bind();
+
+		glViewport(0, 0, ShadowMap->GetCascade(i)->Resolution, ShadowMap->GetCascade(i)->Resolution);
+		//glClearColor(ShadowMap->GetCascade(i)->Far, ShadowMap->GetCascade(i)->Far, ShadowMap->GetCascade(i)->Far, 1.0);
+		glClearColor(1.0, 1.0, 1.0, 1.0);
+		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+		//glCullFace(GL_FRONT);
+
+
+		glPolygonOffset(0.8f, 4.0f); 
+		glEnable(GL_POLYGON_OFFSET_FILL);
+
+
+
+		DepthShader->SetFloat("near", ShadowMap->GetCascade(i)->Near);
+		DepthShader->SetFloat("far", ShadowMap->GetCascade(i)->Far);
+		DepthShader->SetInt("isOrtho", 1);
 
 		DrawScene(
 			DepthShader, 
@@ -305,7 +328,8 @@ void GRenderManager::AmbientOcclusionPass(PCameraComponent* Camera) {
 
 	LinearDepthShader->SetFloat("near", Camera->Frustrum->NearPlane);
 	LinearDepthShader->SetFloat("far", Camera->Frustrum->FarPlane);
-	
+	LinearDepthShader->SetInt("isOrtho", 0);
+		
 	GLenum depthBuffer[1] = { GL_COLOR_ATTACHMENT0 };
 	glDrawBuffers(1, depthBuffer);
 	float far[4] = { Camera->Frustrum->FarPlane, Camera->Frustrum->FarPlane, Camera->Frustrum->FarPlane, 1.0 };
@@ -547,7 +571,14 @@ void GRenderManager::Init()
 	FBORenderTarget* MainRenderTarget = new FBORenderTarget("Main", 1366, 768);
 	FBORenderTarget * ShadowMapTarget = new FBORenderTarget("ShadowMap",1024, 1024);
 
-	MainRenderTarget->Init();
+
+	RTextureOptions ColourOutputOptions = RTextureOptions(
+		GL_TEXTURE_2D, GL_RGB32F, GL_RGB, GL_FLOAT,
+		GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+		GL_NONE, GL_LESS, false);
+	TArray<RTextureOptions> ColourAttachmentOptions = TArray<RTextureOptions>(1, ColourOutputOptions);
+
+	MainRenderTarget->Init(ColourAttachmentOptions);
 	ShadowMapTarget->Init();
 
 	RenderTargets.PushBack(MainRenderTarget);
@@ -604,11 +635,13 @@ void GRenderManager::DrawOptions() {
 				if (ImGui::SliderFloat("Lambda", &Options.Lambda, 0.0, 1.0)) {
 					ShadowMap->Lambda = Options.Lambda;
 				}
-				ImGui::Checkbox("Show Cascade Frustrums", &Options.ShowCascadeFrustrumDebug);
+				ImGui::Checkbox("Cascade Frustrums", &Options.ShowCascadeFrustrumDebug);
 				ImGui::SameLine();
-				ImGui::Checkbox("Show Cascade AABB", &Options.ShowCascadeBoundingDebug);
+				ImGui::Checkbox("Cascade AABB", &Options.ShowCascadeBoundingDebug);
 				ImGui::SameLine();
-				ImGui::Checkbox("Show Light Frustrum", &Options.ShowLightFrustrumDebug);
+				ImGui::Checkbox("Solo", &Options.SoloCascadeDebug);
+				ImGui::SameLine();
+				ImGui::Checkbox("Light Frustrum", &Options.ShowLightFrustrumDebug);
 				if (ImGui::SliderInt("Cascade Selected", &Options.CascadeIndex, 1, Options.NumCascades))
 
 					//for (int i = 0; i < ShadowMap->NumCascades; i++) {

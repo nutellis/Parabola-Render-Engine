@@ -77,25 +77,22 @@ RAmbientOcclusion::~RAmbientOcclusion()
 
 void RAmbientOcclusion::Init()
 {
+	RTextureOptions ColourOutputOptions = RTextureOptions(
+		GL_TEXTURE_2D, GL_RGB32F, GL_RGB, GL_FLOAT,
+		GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+		GL_NONE, GL_LESS, false);
 
 	TArray<RTextureOptions> ColourInputOptions = TArray<RTextureOptions>(2);
 
-	ColourInputOptions.PushBack(RTextureOptions(
-		GL_TEXTURE_2D, GL_RGB32F, GL_RGB, GL_FLOAT,
-		GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-		GL_NONE, GL_LESS, false));
+	ColourInputOptions.PushBack(ColourOutputOptions);
 	ColourInputOptions.PushBack(RTextureOptions());
 	
 	if (AmbientOcclusionInputFBO) {
 		AmbientOcclusionInputFBO->Init(ColourInputOptions);
 	}
 
-	RTextureOptions ColourOutputOptions = RTextureOptions(
-		GL_TEXTURE_2D, GL_RGB32F, GL_RGB, GL_FLOAT,
-		GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-		GL_NONE, GL_LESS, false);
-
 	TArray<RTextureOptions> ColourAttachmentOptions = TArray<RTextureOptions>(1, ColourOutputOptions);
+
 	if (AmbientOcclusionOutputFBO) {
 		AmbientOcclusionOutputFBO->Init(ColourAttachmentOptions);
 	}

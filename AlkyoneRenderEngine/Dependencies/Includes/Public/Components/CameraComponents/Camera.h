@@ -38,7 +38,7 @@ public:
 
 	PFrustrum(); 
 	~PFrustrum();
-	void CalculateFrustrumCorners(PCameraComponent* Camera);
+	void CalculateFrustrumCorners(PCameraComponent* Camera, float Offset = 0.0);
 
 };
 

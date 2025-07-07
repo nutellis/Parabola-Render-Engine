@@ -17,8 +17,22 @@ uniform vec3 material_emission = vec3(0);
 
 uniform int has_color_texture = 0;
 layout(binding = 1) uniform sampler2D colorMap;
+uniform int has_metalness_texture = 0;
+layout(binding = 2) uniform sampler2D metalnessMap;
+uniform int has_fresnel_texture = 0;
+layout(binding = 3) uniform sampler2D  fresnelMap;
+uniform int has_shininess_texture = 0;
+layout(binding = 4) uniform sampler2D  roughnessMap;
 uniform int has_emission_texture = 0;
 //layout(binding = 5) uniform sampler2D emissiveMap;
+
+struct Material {
+	vec3 colour;
+	float metalness;
+	float fresnel;
+	float roughness;
+	vec3 emission;
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 // Environment
@@ -53,7 +67,7 @@ uniform mat4 viewInverse;
 ///////////////////////////////////////////////////////////////////////////////
 
 uniform vec3 point_light_color = vec3(1.0, 1.0, 1.0);
-uniform float point_light_intensity_multiplier = 1.0;
+uniform float point_light_intensity_multiplier = 1.5;
 
 uniform vec3 LightPosition;
 uniform vec3 LightDirection;
@@ -84,9 +98,9 @@ uniform vec4 farPlanes;
 // PCSS
 ///////////////////////////////////////////////////////////////////////////////
 uniform int usePCSS = 0;
-uniform float lightSize = 0.5; 
-uniform vec4 lightFrustrumWidth = vec4(3.75); 
-uniform vec4 nearPlanes = vec4(9.5); 
+float lightSize = 1.0; 
+uniform vec4 lightFrustrumWidth; 
+vec4 nearPlanes = vec4(1.0); 
 uniform vec4 texelSize;
 
 const vec2 offsets[16] = vec2[](
@@ -209,41 +223,36 @@ float PCSS(float bias, int index) {
     int numBlockers = 0;
 
 	float zReceiver = shadowMapCoord[index].z;
-	// lightSize/lightFrustrumWidth[index]
-	float searchWidth = (7.0) * (zReceiver - 0) / zReceiver;
-	if(searchWidth <= 0){
-        return 0;
-    }
-
+	
+	float searchWidth = lightSize/lightFrustrumWidth[index] * (zReceiver - nearPlanes[index]) / zReceiver;
+	
 	for(int i = 0; i < 16; ++i) {
-		vec2 offset = shadowMapCoord[index].xy + (searchWidth * poisson[i]);
-		offset = clamp(offset, 0.0, 1.0);
-		float shadowMapDepth = texture(shadowMap[index], offset).r;
-		if ( shadowMapDepth < zReceiver ) {
+		vec2 offset = shadowMapCoord[index].xy; + (offsets[i]); //searchWidth *
+		float shadowMapDepth = texture(shadowMap[index], shadowMapCoord[index].xy).r;
+		if (shadowMapDepth < zReceiver ) {
 			blockerSum += shadowMapDepth;
 			numBlockers++;
 		}
 	}
-
-    if (numBlockers < 1)
+	
+    if (numBlockers < 1) {
         return 1.0;
+	}
 
 	zBlocker = blockerSum / numBlockers;
-	//return zBlocker = blockerSum / 16;
 
 	// Step 2: Penumbra size estimation 
-	float penumbraRatio = (zReceiver - zBlocker) / zBlocker;
-    float filterRadius = penumbraRatio * (lightSize/lightFrustrumWidth[index]);
-
+	float penumbraRatio = (zReceiver - zBlocker) * lightFrustrumWidth[index] / zBlocker;
+			
 	// Step 3: PCF filtering
-	return PCF(bias, filterRadius, index);
+	return PCF(bias, penumbraRatio, index);
 }
 
 
 float calculateShadowsCoef(vec3 n, vec3 wi)
 {
 	float viewDepth = abs(viewSpacePosition.z);
-
+	
 	int cascadeIndex = 3;
 	// find the appropriate depth map based on the depth of this fragment
 	if(abs(viewSpacePosition.z) < farPlanes.x)
@@ -253,7 +262,7 @@ float calculateShadowsCoef(vec3 n, vec3 wi)
 	else if(abs(viewSpacePosition.z) < farPlanes.z)
 		cascadeIndex = 2;
 
-	float bias = 0.0005 * (1.0 - dot(n, wi));
+	float bias = 0.000001 * (1.0 - dot(n, wi));
 	bias = clamp(bias, 0.0, 0.01);
 
 	if(usePCSS == 1) {
@@ -266,9 +275,9 @@ float calculateShadowsCoef(vec3 n, vec3 wi)
 
 
 
-vec3 calculateDirectIllumiunation(vec3 wo, vec3 n, vec3 base_color)
+vec3 calculateDirectIllumiunation(vec3 wo, vec3 n, Material mat)
 {
-	vec3 direct_illum = base_color;
+	vec3 direct_illum = mat.colour;
 	//const float distance_to_light = length(viewSpaceLightPosition - viewSpacePosition);
 	//const float falloff_factor = 1.0 / (distance_to_light * distance_to_light);
 	   // constant across the scene
@@ -281,24 +290,24 @@ vec3 calculateDirectIllumiunation(vec3 wo, vec3 n, vec3 base_color)
 	if(dot(wi, n) <= 0.0)
 		return vec3(0.0);
 	float ndotwi = dot(n, wi);
-	vec3 diffuse_term = (1.0 / PI) * base_color * ndotwi * Li;
+	vec3 diffuse_term = (1.0 / PI) * mat.colour * ndotwi * Li;
 	direct_illum = diffuse_term;
 
 	vec3 wh = normalize(wi + wo);
 	float ndotwh = max(0.0001, dot(n, wh));
 	float ndotwo = max(0.0001, dot(n, wo));
 	float wodotwh = max(0.0001, dot(wo, wh));
-	float D = ((material_shininess + 2) / (2.0 * PI)) * pow(ndotwh, material_shininess);
+	float D = ((mat.roughness + 2) / (2.0 * PI)) * pow(ndotwh, mat.roughness);
 	float G = min(1.0, min(2.0 * ndotwh * ndotwo / wodotwh, 2.0 * ndotwh * ndotwi / wodotwh));
-	float F = material_fresnel + (1.0 - material_fresnel) * pow(1.0 - wodotwh, 5.0);
+	float F = mat.fresnel + (1.0 - mat.fresnel) * pow(1.0 - wodotwh, 5.0);
 	F = clamp(F, 0.0, 0.8);
 	float denominator = 4.0 * clamp(ndotwo * ndotwi, 0.0001, 1.0);
 	float brdf = D * F * G / denominator;
 
 	vec3 dielectric_term = brdf * ndotwi * Li + (1.0 - F) * diffuse_term;
-	vec3 metal_term = brdf * base_color * ndotwi * Li;
+	vec3 metal_term = brdf * mat.colour * ndotwi * Li;
 	
-	direct_illum = material_metalness * metal_term + (1.0 - material_metalness) * dielectric_term;
+	direct_illum = mat.metalness * metal_term + (1.0 - mat.metalness) * dielectric_term;
 	
 	return direct_illum;
 }
@@ -342,6 +351,40 @@ vec3 calculateIndirectIllumination(vec3 wo, vec3 n, vec3 base_color)
 	return indirect_illum;
 }
 
+
+Material initMaterial() {
+	Material mat;
+	vec3 base_color = vec3(1, 1, 1);// material_color; // //
+	if(has_color_texture == 1)
+	{
+		mat.colour = base_color * texture(colorMap, texCoord).rgb;
+	} else {
+		mat.colour = material_color;
+	}
+	if(has_metalness_texture == 1)
+	{
+		mat.metalness = texture(metalnessMap, texCoord).b;
+	} else {
+		mat.metalness = material_metalness;
+	}
+	if(has_shininess_texture == 1)
+	{
+		mat.roughness = texture(roughnessMap, texCoord).g;
+	} else {
+		mat.roughness = material_shininess;
+	}
+	if(has_fresnel_texture == 1)
+	{
+		mat.fresnel = texture(fresnelMap, texCoord).g;
+	} else {
+		mat.fresnel = material_fresnel;
+	}
+
+	
+
+	return mat;
+}
+
 void main()
 {
 
@@ -369,8 +412,11 @@ void main()
 	if (enableCMS == 1) {
 		visibility = shadow_ambient * calculateShadowsCoef(n, wi);
 	}
+
+	Material mat = initMaterial();
+
 	// Direct illumination
-	vec3 direct_illumination_term =calculateDirectIllumiunation(wo, n, base_color) * visibility; 
+	vec3 direct_illumination_term = calculateDirectIllumiunation(wo, n, mat) * visibility; 
 
 	// Indirect illumination
 	vec3 indirect_illumination_term = calculateIndirectIllumination(wo, n, base_color) * ssao;
@@ -387,6 +433,7 @@ void main()
 	vec3 shading = direct_illumination_term +  indirect_illumination_term + emission_term; 
 
 	fragmentColor =  vec4(shading, 1.0);
+	//fragmentColor =  vec4(vec3(visibility), 1.0);
 
 	return;
 }

@@ -164,7 +164,7 @@ void GSceneManager::DrawSceneGraph()
 						ImGui::SameLine();
 						ImGui::Checkbox("Uniform Scaling", &useUniformScaling);
 						if (selectedIndex->ActorType == EntityType::LIGHT) {
-							if (ImGui::SliderFloat("Azimuth", &selectedIndex->Light->Azimuth, 0.10f, 360.0f, "%.1f")) {
+							if (ImGui::SliderFloat("Azimuth", &selectedIndex->Light->Azimuth, 0.00f, 360.0f, "%.1f")) {
 								selectedIndex->Light->SetDirection();
 							}
 							if (ImGui::SliderFloat("Zenith", &selectedIndex->Light->Zenith, 0.10f, 120.0f, "%.1f")) {

@@ -25,12 +25,12 @@ PFrustrum::~PFrustrum()
 	delete BoundingBox;
 }
 
-void PFrustrum::CalculateFrustrumCorners(PCameraComponent* Camera)
+void PFrustrum::CalculateFrustrumCorners(PCameraComponent* Camera, float Offset)
 {
 	float TanHalfVFOV = SMath::Tan(DegreesToRadians(FieldOfView) * 0.5f);
 
-	float HNear = 2 * TanHalfVFOV * NearPlane;
-	float HFar = 2 * TanHalfVFOV * FarPlane;
+	float HNear = (2 * TanHalfVFOV * NearPlane) + Offset;
+	float HFar = (2 * TanHalfVFOV * FarPlane) + Offset;
 
 	float WNear = HNear * Ratio;
 	float WFar = HFar * Ratio;
@@ -74,7 +74,7 @@ PCameraComponent::PCameraComponent(PRenderActor* Parent, Vector3f up, float yaw,
 	Pitch = pitch;
 
 	MouseSensitivity = 0.5f;
-	MovementSpeed = 15.0f;
+	MovementSpeed = 1.0f;
 	Zoom = 60.0f;
 
 	Frustrum = new PFrustrum();
