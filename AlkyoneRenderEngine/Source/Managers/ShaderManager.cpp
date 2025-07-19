@@ -228,15 +228,15 @@ void GShaderManager::Init()
 	}
 
 	// SSAO
-	Shader* SSAOInputShader = CompileProgram("SSAOInputShader", "Shaders/position.vert", "Shaders/ssaoInput.frag");
-	if (SSAOInputShader->ID == 0)
-	{
-		LOG(ERROR, "Failed to compile SSAO Input Shader\n");
-	}
-	else
-	{
-		Shaders.PushBack(SSAOInputShader);
-	}
+	//Shader* SSAOInputShader = CompileProgram("SSAOInputShader", "Shaders/position.vert", "Shaders/ssaoInput.frag");
+	//if (SSAOInputShader->ID == 0)
+	//{
+	//	LOG(ERROR, "Failed to compile SSAO Input Shader\n");
+	//}
+	//else
+	//{
+	//	Shaders.PushBack(SSAOInputShader);
+	//}
 
 	Shader* SSAOOutputShader = CompileProgram("SSAOOutputShader", "Shaders/ssaoOutput.vert", "Shaders/ssaoOutput.frag");
 	if (SSAOOutputShader->ID == 0)

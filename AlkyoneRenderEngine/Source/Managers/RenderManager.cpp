@@ -224,8 +224,8 @@ void GRenderManager::Render(double DeltaTime)
 }
 
 void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
-	Shader* DepthShader = gShaderManager.GetShader("DepthShader");
-//	Shader* DepthShader = gShaderManager.GetShader("LinearDepthShader");
+//	Shader* DepthShader = gShaderManager.GetShader("DepthShader");
+	Shader* DepthShader = gShaderManager.GetShader("LinearDepthShader");
 	DepthShader->Enable();
 
 	if (ShadowMap == nullptr) {
@@ -237,10 +237,6 @@ void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 			Camera->Frustrum->FarPlane);
 
 		//set shader
-
-		DepthShader->SetFloat("near_plane",Camera->Frustrum->NearPlane);
-		DepthShader->SetFloat("far_plane", Camera->Frustrum->FarPlane);
-
 		ShadowMap->Init();
 
 	}
@@ -255,9 +251,6 @@ void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 			Camera->Frustrum->FarPlane);
 
 		//set shader
-
-		DepthShader->SetFloat("near_plane", Camera->Frustrum->NearPlane);
-		DepthShader->SetFloat("far_plane", Camera->Frustrum->FarPlane);
 
 		ShadowMap->Init();
 	}
@@ -282,8 +275,8 @@ void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 		ShadowMapRenderTarget->Bind();
 
 		glViewport(0, 0, ShadowMap->GetCascade(i)->Resolution, ShadowMap->GetCascade(i)->Resolution);
-		//glClearColor(ShadowMap->GetCascade(i)->Far, ShadowMap->GetCascade(i)->Far, ShadowMap->GetCascade(i)->Far, 1.0);
-		glClearColor(1.0, 1.0, 1.0, 1.0);
+		glClearColor(ShadowMap->GetCascade(i)->Far, ShadowMap->GetCascade(i)->Far, ShadowMap->GetCascade(i)->Far, 1.0);
+		//glClearColor(1.0, 1.0, 1.0, 1.0);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 		//glCullFace(GL_FRONT);
 
@@ -297,6 +290,7 @@ void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 		DepthShader->SetFloat("far", ShadowMap->GetCascade(i)->Far);
 		DepthShader->SetInt("isOrtho", 1);
 
+		// TODO: draw only shadow casters. Pass a list of meshes to the function
 		DrawScene(
 			DepthShader, 
 			ShadowMap->GetCascade(i)->LightViewMatrix, 
@@ -653,7 +647,7 @@ void GRenderManager::DrawOptions() {
 					ImGui::NewLine();
 				ImGui::Text("Percentage-Close Soft Shadows");
 				ImGui::Checkbox("Enable PCSS", &Options.UsePCSS);
-				ImGui::SliderFloat("Light Size", &Options.LightSize, 0.0f, 1.0f);
+				ImGui::SliderFloat("Light Size", &Options.LightSize, 0.0f, 5.0f);
 				ImGui::EndTabItem();
 			}
 			if(ImGui::BeginTabItem("HBAO+")) {

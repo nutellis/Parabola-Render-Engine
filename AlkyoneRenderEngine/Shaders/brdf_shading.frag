@@ -1,8 +1,5 @@
 #version 450
 
-
-#define USE_HARDWARE_SHADOWS 0
-
 // required by GLSL spec Sect 4.5.3 (though nvidia does not, amd does)
 precision highp float;
 
@@ -98,10 +95,11 @@ uniform vec4 farPlanes;
 // PCSS
 ///////////////////////////////////////////////////////////////////////////////
 uniform int usePCSS = 0;
-float lightSize = 1.0; 
+float lightSize = 1; 
 uniform vec4 lightFrustrumWidth; 
-vec4 nearPlanes = vec4(1.0); 
-uniform vec4 texelSize;
+uniform vec4 near;
+uniform vec4 far;
+uniform vec4 resolution;
 
 const vec2 offsets[16] = vec2[](
     vec2( -0.94201624, -0.39906216 ),
@@ -197,16 +195,15 @@ layout(location = 0) out vec4 fragmentColor;
 float PCF(float bias, float filterRadius, int index) {
     float sum = 0.0;
 
-	float stepSize = 1.0 / texelSize[index];
+	float stepSize = 1.0 / resolution[index];
+	float linearDepth = near[index] + (shadowMapCoord[index].z) * (far[index] - near[index]);
 
     for (int x = 0; x < 64; x++) {
 
         vec2 offset = shadowMapCoord[index].xy + stepSize * poisson[x] * filterRadius;
 
-		offset = clamp(offset, 0.0, 1.0);
-
         float depth = texture(shadowMap[index], offset).r;
-        float visibility = (shadowMapCoord[index].z - bias <= depth) ? 1.0 : 0.0;
+        float visibility = (linearDepth - bias <= depth) ? 1.0 : 0.0;
         sum += visibility;
     }
 
@@ -214,7 +211,7 @@ float PCF(float bias, float filterRadius, int index) {
 }
 
 // https://developer.download.nvidia.com/whitepapers/2008/PCSS_Integration.pdf
-float PCSS(float bias, int index) {
+float PCSS(int index) {
 
 	// Step 1: Blocker step
 	float zBlocker = 0;
@@ -222,13 +219,13 @@ float PCSS(float bias, int index) {
 	float blockerSum = 0.0;
     int numBlockers = 0;
 
-	float zReceiver = shadowMapCoord[index].z;
+	float zReceiver = near[index] + (shadowMapCoord[index].z) * (far[index] - near[index]);
 	
-	float searchWidth = lightSize/lightFrustrumWidth[index] * (zReceiver - nearPlanes[index]) / zReceiver;
-	
+	float searchWidth = max(0.0, lightSize/lightFrustrumWidth[index] * (zReceiver - near[index]) / zReceiver);
+
 	for(int i = 0; i < 16; ++i) {
-		vec2 offset = shadowMapCoord[index].xy; + (offsets[i]); //searchWidth *
-		float shadowMapDepth = texture(shadowMap[index], shadowMapCoord[index].xy).r;
+		vec2 offset = shadowMapCoord[index].xy; + searchWidth * poisson[i];
+		float shadowMapDepth = texture(shadowMap[index],offset).r;
 		if (shadowMapDepth < zReceiver ) {
 			blockerSum += shadowMapDepth;
 			numBlockers++;
@@ -236,16 +233,16 @@ float PCSS(float bias, int index) {
 	}
 	
     if (numBlockers < 1) {
-        return 1.0;
+		return resolution[index] / 1024.0;
 	}
 
-	zBlocker = blockerSum / numBlockers;
-
+	 zBlocker = blockerSum / numBlockers;
 	// Step 2: Penumbra size estimation 
-	float penumbraRatio = (zReceiver - zBlocker) * lightFrustrumWidth[index] / zBlocker;
-			
-	// Step 3: PCF filtering
-	return PCF(bias, penumbraRatio, index);
+	float penumbraRatio = 100 * (zReceiver - zBlocker)  / zBlocker; // * lightFrustrumWidth[index]
+
+	//float filterRadiusUV = penumbraRatio * lightSize/lightFrustrumWidth[index] * near[index] / zReceiver; 
+	//fragmentColor = vec4(vec3(penumbraRatio), 1.0);
+	return penumbraRatio; 
 }
 
 
@@ -263,13 +260,15 @@ float calculateShadowsCoef(vec3 n, vec3 wi)
 		cascadeIndex = 2;
 
 	float bias = 0.000001 * (1.0 - dot(n, wi));
-	bias = clamp(bias, 0.0, 0.01);
+	bias = max(bias, 0.01);
 
+	float filterRadius = 0.0;
 	if(usePCSS == 1) {
-		return PCSS(bias, cascadeIndex);
-	} 
-
-	float filterRadius = texelSize[cascadeIndex] / 1024.0;
+		filterRadius = PCSS(cascadeIndex);
+	} else {
+		filterRadius = resolution[cascadeIndex] / 1024.0;
+	}
+	
 	return PCF(bias, filterRadius, cascadeIndex);
 }
 
@@ -432,8 +431,7 @@ void main()
 
 	vec3 shading = direct_illumination_term +  indirect_illumination_term + emission_term; 
 
-	fragmentColor =  vec4(shading, 1.0);
-	//fragmentColor =  vec4(vec3(visibility), 1.0);
+	fragmentColor = vec4(vec3(visibility), 1.0);
 
 	return;
 }

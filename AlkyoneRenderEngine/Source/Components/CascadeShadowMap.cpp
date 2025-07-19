@@ -92,9 +92,9 @@ void RCascadeShadowMap::Init()
 
 	for (uint32 i = 0; i < NumCascades; i++)
 	{
-		Cascades[i]->CascadeFBO->Init(TArray<RTextureOptions>(), RTextureOptions::InitForShadows());
+		//Cascades[i]->CascadeFBO->Init(TArray<RTextureOptions>(), RTextureOptions::InitForShadows());
 
-		//Cascades[i]->CascadeFBO->Init(ColourAttachmentOptions, RTextureOptions::InitForShadows());
+		Cascades[i]->CascadeFBO->Init(ColourAttachmentOptions, RTextureOptions::InitForShadows());
 	}	
 	// init cascade MVP buffer
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, CascadesMVPBuffer);
@@ -183,11 +183,11 @@ void RCascadeShadowMap::CalculateLightProjection(
 	N = LightSpaceAABB.Min.Z;
 	F = LightSpaceAABB.Max.Z;
 
-	Matrix4f LightProjectionMatrix = Ortho(L, R, B, T, 0, -N * 3);
+	Matrix4f LightProjectionMatrix = Ortho(L, R, B, T, 0.1, -N * 3);
 
 	Cascades[Index]->Near = 0.1;
 
-	Cascades[Index]->Far = -N;
+	Cascades[Index]->Far = -N * 3;
 
 
 	Cascades[Index]->LightViewMatrix = LightViewMatrix;
@@ -251,9 +251,10 @@ void RCascadeShadowMap::PrepareForDraw(
 
 	Matrix4f TextureSpaceMatrix = Scale(Vector3f(0.5f, 0.5f, 0.5f), Translate(Vector3f(0.5f, 0.5f, 0.5f), Matrix4f::IDENTITY));
 	Vector4f FarPlanes = Vector4f::ONE;
-	Vector4f NearPlanes = Vector4f::ONE;
+	Vector4f LightNear = Vector4f::ONE;
+	Vector4f LightFar = Vector4f::ONE;
 	Vector4f LightFrustrumWidth = Vector4f::ONE;
-	Vector4f TexelSizeVector = Vector4f::ZERO;
+	Vector4f Resolutions = Vector4f::ZERO;
 	
 	//In texture space!
 	for (uint32 i = 0; i < NumCascades; i++)
@@ -271,7 +272,7 @@ void RCascadeShadowMap::PrepareForDraw(
 		
 		LightFrustrumWidth[i] = 2.0 / Cascades[i]->LightProjectionMatrix[0][0];
 
-		TexelSizeVector[i] = Cascades[i]->Resolution;
+		Resolutions[i] = Cascades[i]->Resolution;
 
 		// in world space
 		FarPlanes[i] = Cascades[i]->Frustrum->FarPlane;
@@ -279,21 +280,23 @@ void RCascadeShadowMap::PrepareForDraw(
 
 		//in world space
 
-		float m22 = Cascades[i]->LightProjectionMatrix[2][2]; // m[2][2]
-		float m23 = Cascades[i]->LightProjectionMatrix[3][2]; // m[2][3]
+		//float m22 = Cascades[i]->LightProjectionMatrix[2][2]; // m[2][2]
+		//float m23 = Cascades[i]->LightProjectionMatrix[3][2]; // m[2][3]
 
-		float d = -2.0f / m22;
-		float nearPlane = (-d * (1.0f + m23)) * 0.5f;
-		NearPlanes[i] = nearPlane;
+		//float d = -2.0f / m22;
+		//float nearPlane = (-d * (1.0f + m23)) * 0.5f;
+		LightNear[i] = Cascades[i]->Near;
+		LightFar[i] = Cascades[i]->Far;
 	}
 
 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
 	ActiveShader->SetInt("numOfCascades", NumCascades);
 	ActiveShader->SetVec4("farPlanes", FarPlanes);
-	ActiveShader->SetVec4("nearPlanes", NearPlanes);
+	ActiveShader->SetVec4("far", LightFar);
+	ActiveShader->SetVec4("near", LightNear); 
 	ActiveShader->SetVec4("lightFrustrumWidth", LightFrustrumWidth);
-	ActiveShader->SetVec4("texelSize", TexelSizeVector);
+	ActiveShader->SetVec4("resolution", Resolutions);
 
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, CascadesMVPBuffer);
 }
