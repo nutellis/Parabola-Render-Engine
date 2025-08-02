@@ -82,13 +82,13 @@ layout(binding = 16) uniform sampler2D ssaoTexture;
 //Cascade Shadow Information
 ///////////////////////////////////////////////////////////////////////////////
 // textures 10 to 13
-uniform int enableCMS = 0;
+uniform int enableCSM = 0;
 uniform sampler2D shadowMap[4];
 
 
 uniform int numOfCascades; 
 
-in vec3 shadowMapCoord[4];
+in vec4 lightSpacePosition[4];
 uniform vec4 farPlanes;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -100,25 +100,6 @@ uniform vec4 lightFrustrumWidth;
 uniform vec4 near;
 uniform vec4 far;
 uniform vec4 resolution;
-
-const vec2 offsets[16] = vec2[](
-    vec2( -0.94201624, -0.39906216 ),
-    vec2(  0.94558609, -0.76890725 ),
-    vec2( -0.094184101, -0.92938870 ),
-    vec2(  0.34495938,  0.29387760 ),
-    vec2( -0.91588581,  0.45771432 ),
-    vec2( -0.81544232, -0.87912464 ),
-    vec2( -0.38277543,  0.27676845 ),
-    vec2(  0.97484398,  0.75648379 ),
-    vec2(  0.44323325, -0.97511554 ),
-    vec2(  0.53742981, -0.47373420 ),
-    vec2( -0.26496911, -0.41893023 ),
-    vec2(  0.79197514,  0.19090188 ),
-    vec2( -0.24188840,  0.99706507 ),
-    vec2( -0.81409955,  0.91437590 ),
-    vec2(  0.19984126,  0.78641367 ),
-    vec2(  0.14383161, -0.14100790 )
-);
 
 const vec2 poisson[64] = vec2[](
     vec2( 0.5093, -0.3431 ),
@@ -192,57 +173,52 @@ const vec2 poisson[64] = vec2[](
 ///////////////////////////////////////////////////////////////////////////////
 layout(location = 0) out vec4 fragmentColor;
 
-float PCF(float bias, float filterRadius, int index) {
+float PCF(vec2 projectedPos, float depth, float bias, float filterRadius, int index) {
     float sum = 0.0;
-
-	float stepSize = 1.0 / resolution[index];
-	float linearDepth = near[index] + (shadowMapCoord[index].z) * (far[index] - near[index]);
 
     for (int x = 0; x < 64; x++) {
 
-        vec2 offset = shadowMapCoord[index].xy + stepSize * poisson[x] * filterRadius;
+        vec2 offset = projectedPos.xy + poisson[x] * filterRadius;
 
-        float depth = texture(shadowMap[index], offset).r;
-        float visibility = (linearDepth - bias <= depth) ? 1.0 : 0.0;
-        sum += visibility;
+        float sampleDepth = texture(shadowMap[index], offset).r;
+		if(sampleDepth < (depth - bias)) {
+			sum += 1.0;
+		}
     }
 
     return sum / 64.0;
 }
 
 // https://developer.download.nvidia.com/whitepapers/2008/PCSS_Integration.pdf
-float PCSS(int index) {
+float PCSS(vec3 projectedPos float bias, int index) {
 
 	// Step 1: Blocker step
 	float zBlocker = 0;
 
 	float blockerSum = 0.0;
-    int numBlockers = 0;
-
-	float zReceiver = near[index] + (shadowMapCoord[index].z) * (far[index] - near[index]);
+    float numBlockers = 0.0;
 	
-	float searchWidth = max(0.0, lightSize/lightFrustrumWidth[index] * (zReceiver - near[index]) / zReceiver);
+	float zReceiver = lightSpacePosition[index].w;
+	float linearDepth = near[index] + (projectedPos.z) * (far[index] - near[index]);
+
+	float searchWidth = lightSize/lightFrustrumWidth[index] * (zReceiver - near[index]) / zReceiver;
 
 	for(int i = 0; i < 16; ++i) {
-		vec2 offset = shadowMapCoord[index].xy; + searchWidth * poisson[i];
+		vec2 offset = projectedPos.xy + searchWidth * poisson[i];
 		float shadowMapDepth = texture(shadowMap[index],offset).r;
-		if (shadowMapDepth < zReceiver ) {
+		if (shadowMapDepth < linearDepth) {
 			blockerSum += shadowMapDepth;
 			numBlockers++;
 		}
 	}
 	
-    if (numBlockers < 1) {
-		return resolution[index] / 1024.0;
-	}
-
 	 zBlocker = blockerSum / numBlockers;
 	// Step 2: Penumbra size estimation 
-	float penumbraRatio = 100 * (zReceiver - zBlocker)  / zBlocker; // * lightFrustrumWidth[index]
+	float penumbraRatio = (zReceiver - zBlocker) / zBlocker;
 
-	//float filterRadiusUV = penumbraRatio * lightSize/lightFrustrumWidth[index] * near[index] / zReceiver; 
+	float filterRadiusUV = penumbraRatio * lightSize/lightFrustrumWidth[index] * near[index] / zReceiver; 
 	//fragmentColor = vec4(vec3(penumbraRatio), 1.0);
-	return penumbraRatio; 
+	return PCF(projectedPos.xy, linearDepth, bias, filterRadiusUV, index);
 }
 
 
@@ -260,16 +236,22 @@ float calculateShadowsCoef(vec3 n, vec3 wi)
 		cascadeIndex = 2;
 
 	float bias = 0.000001 * (1.0 - dot(n, wi));
-	bias = max(bias, 0.01);
+	//bias = max(bias, 0.01);
 
 	float filterRadius = 0.0;
+
+	vec3 projectedPos = lightSpacePosition[cascadeIndex].xyz / lightSpacePosition[cascadeIndex].w;
+	projectedPos = projectedPos * 0.5 + 0.5;
+
+	if(projectedPos.z < 0.0 || projectedPos.z > 1.0) {
+		return 1.0;
+	}
 	if(usePCSS == 1) {
-		filterRadius = PCSS(cascadeIndex);
+		return PCSS(projectedPos, bias, cascadeIndex);
 	} else {
 		filterRadius = resolution[cascadeIndex] / 1024.0;
+		return PCF(projectedPos.xy, 1.0, bias, filterRadius, cascadeIndex);
 	}
-	
-	return PCF(bias, filterRadius, cascadeIndex);
 }
 
 
@@ -408,7 +390,7 @@ void main()
 	}
 	const float shadow_ambient = 0.9;
 
-	if (enableCMS == 1) {
+	if (enableCSM == 1) {
 		visibility = shadow_ambient * calculateShadowsCoef(n, wi);
 	}
 
@@ -431,7 +413,8 @@ void main()
 
 	vec3 shading = direct_illumination_term +  indirect_illumination_term + emission_term; 
 
-	fragmentColor = vec4(vec3(visibility), 1.0);
 
+	fragmentColor = vec4(vec3(shading), 1.0);
+	
 	return;
 }

@@ -32,7 +32,7 @@ out vec2 texCoord;
 out vec3 viewSpaceNormal;
 out vec3 viewSpacePosition;
 
-out vec3 shadowMapCoord[4];
+out vec4 lightSpacePosition[4];
 
 void main()
 {
@@ -46,7 +46,6 @@ void main()
     vec4 WorldSpacePosition = modelMatrix * vec4(VertexPosition, 1.0);
 
     for (int i = 0; i < numOfCascades; ++i) {
-        vec4 shadowMapCoordTemp = lightMatrices[i] * WorldSpacePosition;
-        shadowMapCoord[i] = shadowMapCoordTemp.xyz / shadowMapCoordTemp.w;
+        lightSpacePosition[i] = lightMatrices[i] * WorldSpacePosition;
     }
 }

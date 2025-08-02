@@ -442,7 +442,7 @@ void GRenderManager::RenderPass(PCameraComponent* Camera)
 		RenderShader->SetBool("usePCSS", Options.UsePCSS);
 		RenderShader->SetFloat("wLight", Options.LightSize);
 		RenderShader->SetBool("enableSSAO", Options.UseSSAO);
-		RenderShader->SetBool("enableCMS", Options.UseShadows);
+		RenderShader->SetBool("enableCSM", Options.UseShadows);
 
 		//TODO: remove this from here. change to deffered shading
 		//bind normal map 

@@ -260,7 +260,7 @@ void RCascadeShadowMap::PrepareForDraw(
 	for (uint32 i = 0; i < NumCascades; i++)
 	{
 		// from light projection space (Crop * Projection * View) to Texture Space
-		CascadeMatrices[i] = TextureSpaceMatrix * Cascades[i]->CascadeCPVMatrix;
+		CascadeMatrices[i] = Cascades[i]->CascadeCPVMatrix;
 		
 		//Bind Textures
 		glActiveTexture(GL_TEXTURE10 + i);
