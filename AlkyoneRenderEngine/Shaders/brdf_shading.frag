@@ -102,70 +102,70 @@ uniform vec4 far;
 uniform vec4 resolution;
 
 const vec2 poisson[64] = vec2[](
-    vec2( 0.5093, -0.3431 ),
-    vec2( -0.3122,  0.5691 ),
-    vec2( 0.1223,  0.7255 ),
-    vec2( 0.3993,  0.0586 ),
-    vec2( 0.5487, -0.0242 ),
-    vec2( -0.6123, -0.3390 ),
-    vec2( -0.4282,  0.3894 ),
-    vec2( 0.3122,  0.5122 ),
-    vec2( -0.3298, -0.3770 ),
-    vec2( -0.6641,  0.1059 ),
-    vec2( 0.2340, -0.5379 ),
-    vec2( -0.2299, -0.6703 ),
-    vec2( 0.5331, -0.1179 ),
-    vec2( 0.0802,  0.2286 ),
-    vec2( -0.4136, -0.2437 ),
-    vec2( 0.3238,  0.0059 ),
-    vec2( 0.6110, -0.1572 ),
-    vec2( 0.1560,  0.5991 ),
-    vec2( 0.2942, -0.4132 ),
-    vec2( -0.4442,  0.1487 ),
-    vec2( 0.4702,  0.4508 ),
-    vec2( 0.3810, -0.4555 ),
-    vec2( -0.1534,  0.4434 ),
-    vec2( 0.5975,  0.1565 ),
-    vec2( -0.2684,  0.3744 ),
-    vec2( -0.0836, -0.2247 ),
-    vec2( 0.4737, -0.4480 ),
-    vec2( -0.4133,  0.5294 ),
-    vec2( 0.2184, -0.2701 ),
-    vec2( -0.6148,  0.1499 ),
-    vec2( 0.0899, -0.5099 ),
-    vec2( -0.5087, -0.4595 ),
-    vec2( 0.2917, -0.1797 ),
-    vec2( -0.2191,  0.0197 ),
-    vec2( 0.4818,  0.5563 ),
-    vec2( -0.3246,  0.4948 ),
-    vec2( 0.4967, -0.1702 ),
-    vec2( 0.3664, -0.3523 ),
-    vec2( -0.3447, -0.2654 ),
-    vec2( 0.2310, -0.3074 ),
-    vec2( -0.5076, -0.0520 ),
-    vec2( 0.1366, -0.1357 ),
-    vec2( -0.0695,  0.3195 ),
-    vec2( -0.4261, -0.0503 ),
-    vec2( 0.4932, -0.4029 ),
-    vec2( -0.2959,  0.1985 ),
-    vec2( 0.2817, -0.5972 ),
-    vec2( -0.4310,  0.2877 ),
-    vec2( 0.0609,  0.3994 ),
-    vec2( 0.5374, -0.3870 ),
-    vec2( 0.1187,  0.4473 ),
-    vec2( -0.3878,  0.2691 ),
-    vec2( -0.2214,  0.1298 ),
-    vec2( -0.2325, -0.4597 ),
-    vec2( 0.0984, -0.6151 ),
-    vec2( -0.0651,  0.5206 ),
-    vec2( -0.0585,  0.2218 ),
-    vec2( 0.3700,  0.2168 ),
-    vec2( 0.1325,  0.5723 ),
-    vec2( -0.2899, -0.2298 ),
-    vec2( 0.5062,  0.2843 ),
-    vec2( 0.3769,  0.3685 ),
-    vec2( -0.5055,  0.0651 ),
-    vec2( 0.2419,  0.4159 )
+    vec2(-0.613392, 0.617481),
+    vec2(0.170019, -0.040254),
+    vec2(-0.299417, 0.791925),
+    vec2(0.645680, 0.493210),
+    vec2(-0.651784, 0.717887),
+    vec2(0.421003, 0.027070),
+    vec2(-0.817194, -0.271096),
+    vec2(-0.705374, -0.668203),
+    vec2(0.977050, -0.108615),
+    vec2(0.063326, 0.142369),
+    vec2(0.203528, 0.214331),
+    vec2(-0.667531, 0.326090),
+    vec2(-0.098422, -0.295755),
+    vec2(-0.885922, 0.215369),
+    vec2(0.566637, 0.605213),
+    vec2(0.039766, -0.396100),
+    vec2(0.751946, 0.453352),
+    vec2(0.078707, -0.715323),
+    vec2(-0.075838, -0.529344),
+    vec2(0.724479, -0.580798),
+    vec2(0.222999, -0.215125),
+    vec2(-0.467574, -0.405438),
+    vec2(-0.248268, -0.814753),
+    vec2(0.354411, -0.887570),
+    vec2(0.175817, 0.382366),
+    vec2(0.487472, -0.063082),
+    vec2(-0.084078, 0.898312),
+    vec2(0.488876, -0.783441),
+    vec2(0.470016, 0.217933),
+    vec2(-0.696890, -0.549791),
+    vec2(-0.149693, 0.605762),
+    vec2(0.034211, 0.979980),
+    vec2(0.503098, -0.308878),
+    vec2(-0.016205, -0.872921),
+    vec2(0.385784, -0.393902),
+    vec2(-0.146886, -0.859249),
+    vec2(0.643361, 0.164098),
+    vec2(0.634388, -0.049471),
+    vec2(-0.688894, 0.007843),
+    vec2(0.464034, -0.188818),
+    vec2(-0.440840, 0.137486),
+    vec2(0.364483, 0.511704),
+    vec2(0.034028, 0.325968),
+    vec2(0.099094, -0.308023),
+    vec2(0.693960, -0.366253),
+    vec2(0.678884, -0.204688),
+    vec2(0.001801, 0.780328),
+    vec2(0.145177, -0.898984),
+    vec2(0.062655, -0.611866),
+    vec2(0.315226, -0.604297),
+    vec2(-0.780145, 0.486251),
+    vec2(-0.371868, 0.882138),
+    vec2(0.200476, 0.494430),
+    vec2(-0.494552, -0.711051),
+    vec2(0.612476, 0.705252),
+    vec2(-0.578845, -0.768792),
+    vec2(-0.772454, -0.090976),
+    vec2(0.504440, 0.372295),
+    vec2(0.155736, 0.065157),
+    vec2(0.391522, 0.849605),
+    vec2(-0.620106, -0.328104),
+    vec2(0.789239, -0.419965),
+    vec2(-0.545396, 0.538133),
+    vec2(-0.178564, -0.596057)
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -173,24 +173,30 @@ const vec2 poisson[64] = vec2[](
 ///////////////////////////////////////////////////////////////////////////////
 layout(location = 0) out vec4 fragmentColor;
 
-float PCF(vec2 projectedPos, float depth, float bias, float filterRadius, int index) {
+float PCF(vec2 projectedPos, float currentDepth, float filterRadius, int index) {
     float sum = 0.0;
+
+	float stepSize = 1.0 / resolution[index];
+
+	float depth = texture(shadowMap[index], projectedPos.xy).r;
+    float visibility = (currentDepth <= depth) ? 1.0 : 0.0;
+	if (visibility == 1.0) {
+		return 1.0;
+	}
 
     for (int x = 0; x < 64; x++) {
 
-        vec2 offset = projectedPos.xy + poisson[x] * filterRadius;
+        vec2 offset = projectedPos.xy + stepSize * poisson[x] * filterRadius;
 
-        float sampleDepth = texture(shadowMap[index], offset).r;
-		if(sampleDepth < (depth - bias)) {
-			sum += 1.0;
-		}
+        float depth = texture(shadowMap[index], offset).r;
+        float visibility = (currentDepth <= depth) ? 1.0 : 0.0;
+        sum += visibility;
     }
-
     return sum / 64.0;
 }
 
 // https://developer.download.nvidia.com/whitepapers/2008/PCSS_Integration.pdf
-float PCSS(vec3 projectedPos float bias, int index) {
+float PCSS(vec3 projectedPos, float bias, int index) {
 
 	// Step 1: Blocker step
 	float zBlocker = 0;
@@ -198,27 +204,31 @@ float PCSS(vec3 projectedPos float bias, int index) {
 	float blockerSum = 0.0;
     float numBlockers = 0.0;
 	
-	float zReceiver = lightSpacePosition[index].w;
-	float linearDepth = near[index] + (projectedPos.z) * (far[index] - near[index]);
+	float zReceiver = projectedPos.z;
 
 	float searchWidth = lightSize/lightFrustrumWidth[index] * (zReceiver - near[index]) / zReceiver;
 
 	for(int i = 0; i < 16; ++i) {
 		vec2 offset = projectedPos.xy + searchWidth * poisson[i];
 		float shadowMapDepth = texture(shadowMap[index],offset).r;
-		if (shadowMapDepth < linearDepth) {
+		if (shadowMapDepth < zReceiver) {
 			blockerSum += shadowMapDepth;
 			numBlockers++;
 		}
 	}
 	
 	 zBlocker = blockerSum / numBlockers;
+
+	 if(numBlockers < 1.0) {
+		return 1.0;
+	}
+
 	// Step 2: Penumbra size estimation 
 	float penumbraRatio = (zReceiver - zBlocker) / zBlocker;
 
 	float filterRadiusUV = penumbraRatio * lightSize/lightFrustrumWidth[index] * near[index] / zReceiver; 
 	//fragmentColor = vec4(vec3(penumbraRatio), 1.0);
-	return PCF(projectedPos.xy, linearDepth, bias, filterRadiusUV, index);
+	return PCF(projectedPos.xy, zReceiver - bias, filterRadiusUV, index);
 }
 
 
@@ -240,17 +250,19 @@ float calculateShadowsCoef(vec3 n, vec3 wi)
 
 	float filterRadius = 0.0;
 
-	vec3 projectedPos = lightSpacePosition[cascadeIndex].xyz / lightSpacePosition[cascadeIndex].w;
+	vec3 projectedPos = lightSpacePosition[cascadeIndex].xyz / lightSpacePosition[cascadeIndex].w ;
 	projectedPos = projectedPos * 0.5 + 0.5;
 
 	if(projectedPos.z < 0.0 || projectedPos.z > 1.0) {
 		return 1.0;
 	}
+
 	if(usePCSS == 1) {
 		return PCSS(projectedPos, bias, cascadeIndex);
 	} else {
+
 		filterRadius = resolution[cascadeIndex] / 1024.0;
-		return PCF(projectedPos.xy, 1.0, bias, filterRadius, cascadeIndex);
+		return PCF(projectedPos.xy, projectedPos.z - bias, filterRadius, cascadeIndex);
 	}
 }
 
