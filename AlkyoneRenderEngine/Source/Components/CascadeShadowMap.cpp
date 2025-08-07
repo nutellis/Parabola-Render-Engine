@@ -183,7 +183,7 @@ void RCascadeShadowMap::CalculateLightProjection(
 	N = LightSpaceAABB.Min.Z;
 	F = LightSpaceAABB.Max.Z;
 
-	Matrix4f LightProjectionMatrix = Ortho(L, R, B, T, 0.1, -N * 3);
+	Matrix4f LightProjectionMatrix = Ortho(L, R, B, T, 0.1, 300);
 
 	Cascades[Index]->Near = 0.1;
 

@@ -95,13 +95,32 @@ uniform vec4 farPlanes;
 // PCSS
 ///////////////////////////////////////////////////////////////////////////////
 uniform int usePCSS = 0;
-float lightSize = 1; 
+float lightSize = 1.5;
 uniform vec4 lightFrustrumWidth; 
 uniform vec4 near;
 uniform vec4 far;
 uniform vec4 resolution;
 
-const vec2 poisson[64] = vec2[](
+const vec2 poisson16[16] = vec2[](
+    vec2(-0.613392, 0.617481),
+    vec2(0.170019, -0.040254),
+    vec2(-0.299417, 0.791925),
+    vec2(0.645680, 0.493210),
+    vec2(-0.651784, 0.717887),
+    vec2(0.421003, 0.027070),
+    vec2(-0.817194, -0.271096),
+    vec2(-0.705374, -0.668203),
+    vec2(0.977050, -0.108615),
+    vec2(0.063326, 0.142369),
+    vec2(0.203528, 0.214331),
+    vec2(-0.667531, 0.326090),
+    vec2(-0.098422, -0.295755),
+    vec2(-0.885922, 0.215369),
+    vec2(0.566637, 0.605213),
+    vec2(0.039766, -0.396100)
+	);
+
+const vec2 poisson64[64] = vec2[](
     vec2(-0.613392, 0.617481),
     vec2(0.170019, -0.040254),
     vec2(-0.299417, 0.791925),
@@ -173,25 +192,19 @@ const vec2 poisson[64] = vec2[](
 ///////////////////////////////////////////////////////////////////////////////
 layout(location = 0) out vec4 fragmentColor;
 
-float PCF(vec2 projectedPos, float currentDepth, float filterRadius, int index) {
+float PCF(vec3 projectedPos, float bias, float filterRadius, int index) {
     float sum = 0.0;
-
-	float stepSize = 1.0 / resolution[index];
-
-	float depth = texture(shadowMap[index], projectedPos.xy).r;
-    float visibility = (currentDepth <= depth) ? 1.0 : 0.0;
-	if (visibility == 1.0) {
-		return 1.0;
-	}
-
     for (int x = 0; x < 64; x++) {
 
-        vec2 offset = projectedPos.xy + stepSize * poisson[x] * filterRadius;
+        vec2 offset = projectedPos.xy + poisson64[x] * filterRadius;
+
+		offset = clamp(offset, 0.0, 1.0);
 
         float depth = texture(shadowMap[index], offset).r;
-        float visibility = (currentDepth <= depth) ? 1.0 : 0.0;
+        float visibility = (projectedPos.z - bias <= depth) ? 1.0 : 0.0;
         sum += visibility;
     }
+
     return sum / 64.0;
 }
 
@@ -206,10 +219,10 @@ float PCSS(vec3 projectedPos, float bias, int index) {
 	
 	float zReceiver = projectedPos.z;
 
-	float searchWidth = lightSize/lightFrustrumWidth[index] * (zReceiver - near[index]) / zReceiver;
+	float searchWidth =  0.1 * lightSize/lightFrustrumWidth[index] * (zReceiver - near[index]) / zReceiver;
 
 	for(int i = 0; i < 16; ++i) {
-		vec2 offset = projectedPos.xy + searchWidth * poisson[i];
+		vec2 offset = projectedPos.xy + poisson16[i] * searchWidth;
 		float shadowMapDepth = texture(shadowMap[index],offset).r;
 		if (shadowMapDepth < zReceiver) {
 			blockerSum += shadowMapDepth;
@@ -218,24 +231,24 @@ float PCSS(vec3 projectedPos, float bias, int index) {
 	}
 	
 	 zBlocker = blockerSum / numBlockers;
-
+	
 	 if(numBlockers < 1.0) {
 		return 1.0;
 	}
-
+	
 	// Step 2: Penumbra size estimation 
 	float penumbraRatio = (zReceiver - zBlocker) / zBlocker;
-
+	
 	float filterRadiusUV = penumbraRatio * lightSize/lightFrustrumWidth[index] * near[index] / zReceiver; 
-	//fragmentColor = vec4(vec3(penumbraRatio), 1.0);
-	return PCF(projectedPos.xy, zReceiver - bias, filterRadiusUV, index);
+	//fragmentColor = vec4(vec3(filterRadiusUV), 1.0);
+	return PCF(projectedPos, bias, filterRadiusUV, index);
 }
 
 
 float calculateShadowsCoef(vec3 n, vec3 wi)
 {
 	float viewDepth = abs(viewSpacePosition.z);
-	
+
 	int cascadeIndex = 3;
 	// find the appropriate depth map based on the depth of this fragment
 	if(abs(viewSpacePosition.z) < farPlanes.x)
@@ -245,25 +258,27 @@ float calculateShadowsCoef(vec3 n, vec3 wi)
 	else if(abs(viewSpacePosition.z) < farPlanes.z)
 		cascadeIndex = 2;
 
-	float bias = 0.000001 * (1.0 - dot(n, wi));
-	//bias = max(bias, 0.01);
-
-	float filterRadius = 0.0;
-
+	
 	vec3 projectedPos = lightSpacePosition[cascadeIndex].xyz / lightSpacePosition[cascadeIndex].w ;
 	projectedPos = projectedPos * 0.5 + 0.5;
 
-	if(projectedPos.z < 0.0 || projectedPos.z > 1.0) {
-		return 1.0;
-	}
+
+
+	float bias = 0.00005 * (1.0 - dot(n, wi));
+	bias = clamp(bias, 0.0, 0.0001);
 
 	if(usePCSS == 1) {
 		return PCSS(projectedPos, bias, cascadeIndex);
-	} else {
+	} 
 
-		filterRadius = resolution[cascadeIndex] / 1024.0;
-		return PCF(projectedPos.xy, projectedPos.z - bias, filterRadius, cascadeIndex);
+	// test the point for visibility. if not visible, do pcf.
+    float depth = texture(shadowMap[cascadeIndex], projectedPos.xy).r;
+    float visibility = (projectedPos.z - bias <= depth) ? 1.0 : 0.0;
+	if(visibility > 0.0) {
+		return visibility;
 	}
+	float filterRadius = 1 / 1024.0;
+	return PCF(projectedPos, bias, filterRadius, cascadeIndex);
 }
 
 
