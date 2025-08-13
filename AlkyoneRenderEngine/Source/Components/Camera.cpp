@@ -65,7 +65,7 @@ void PFrustrum::CalculateFrustrumCorners(PCameraComponent* Camera, float Offset)
 //----------------------------------------------------------------------------------------
 //									CAMERA COMPONENT
 //----------------------------------------------------------------------------------------
-PCameraComponent::PCameraComponent(PRenderActor* Parent, Vector3f up, float yaw, float pitch) : PSceneComponent(Parent), Front(Vector3f(0.0f, 0.0f, -1.0f)), Right(Vector3f(1.0f, 0.0f, 0.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
+PCameraComponent::PCameraComponent(RRenderActor* Parent, Vector3f up, float yaw, float pitch) : PSceneComponent(Parent), Front(Vector3f(0.0f, 0.0f, -1.0f)), Right(Vector3f(1.0f, 0.0f, 0.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
 {
 	Up = up;
 	WorldUp = Up;
@@ -253,7 +253,7 @@ void PCameraComponent::SetDefaults()
 //----------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------
 
-PCameraActor::PCameraActor(std::string NodeName) : PRenderActor(NodeName)
+PCameraActor::PCameraActor(std::string NodeName) : RRenderActor(NodeName)
 {
 	ActorType = EntityType::CAMERA;
 	Camera = new PCameraComponent(this);

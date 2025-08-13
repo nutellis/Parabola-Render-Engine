@@ -42,8 +42,8 @@ public:
 
 
 
-	int NumDirections;
-	int NumSteps;
+	float NumDirections;
+	float NumSteps;
 
 	float Radius = 2.0f;
 	float Bias = 0.5f;

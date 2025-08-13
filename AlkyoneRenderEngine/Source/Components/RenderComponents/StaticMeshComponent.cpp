@@ -15,13 +15,13 @@
 //----------------------------------------------------------------------------------------
 //								STATIC MESH COMPONENT
 //----------------------------------------------------------------------------------------
-PStaticMeshComponent::PStaticMeshComponent(PRenderActor* Parent) : Vertices(), Meshes(), Materials(), Indices()
+PStaticMeshComponent::PStaticMeshComponent(RRenderActor* Parent) : Vertices(), Meshes(), Materials(), Indices()
 {
 	this->Parent = Parent;
 }
 
 
-PStaticMeshComponent::PStaticMeshComponent(PRenderActor* Parent, const char* path) : Vertices(), Meshes(), Materials(), Indices()  //const char* path,PSceneComponent *Default,bool isAbsolute)
+PStaticMeshComponent::PStaticMeshComponent(RRenderActor* Parent, const char* path) : Vertices(), Meshes(), Materials(), Indices()  //const char* path,PSceneComponent *Default,bool isAbsolute)
 {
 	std::cout << "This is a StaticMeshComponent\n";
 	//	ComponentArchive->Load(path);

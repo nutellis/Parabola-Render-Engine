@@ -23,8 +23,8 @@ class PStaticMeshComponent : public PPrimitiveComponent {
 
 public:
 
-	PStaticMeshComponent(PRenderActor* Parent);
-	PStaticMeshComponent(PRenderActor* Parent, const char* path);
+	PStaticMeshComponent(RRenderActor* Parent);
+	PStaticMeshComponent(RRenderActor* Parent, const char* path);
 	PStaticMeshComponent(const PStaticMeshComponent& Other);
 	PStaticMeshComponent(PStaticMeshComponent&& Other) noexcept;
 	~PStaticMeshComponent();

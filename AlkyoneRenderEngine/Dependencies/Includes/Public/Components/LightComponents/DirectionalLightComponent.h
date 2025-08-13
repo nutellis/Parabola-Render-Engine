@@ -34,7 +34,7 @@ public:
 	float ZFar = 1000.f;
 
 public:
-	PDirectionalLightComponent(PRenderActor* Parent);
+	PDirectionalLightComponent(RRenderActor* Parent);
 	PDirectionalLightComponent(PSceneComponent* Default);
 	~PDirectionalLightComponent();
 	void SetupShaderLight(Shader* ActiveShader, Matrix4f ViewMatrix);

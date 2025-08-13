@@ -8,13 +8,13 @@
 #include <Components/Colliders/BoundingHelper.h>
 #include <RenderHelper.h>
 
-PRenderActor::PRenderActor()
+RRenderActor::RRenderActor()
 {
     std::cout << "This is an Actor\n";
   //  RootComponent = new PSceneComponent();
 }
 
-PRenderActor::PRenderActor(std::string NodeName): ObjectName(NodeName)
+RRenderActor::RRenderActor(std::string NodeName): ObjectName(NodeName)
 {
     ObjectPosition = Vector3f::ZERO;
     ObjectRotation = Vector3f::ZERO;
@@ -24,7 +24,7 @@ PRenderActor::PRenderActor(std::string NodeName): ObjectName(NodeName)
 
 }
 
-void PRenderActor::AddLight()
+void RRenderActor::AddLight()
 {
 
     //StaticMesh = ObjectInitializer::CreateSubObject<PStaticMeshComponent>("Assets/ball.asset", this);//new PStaticMeshComponent("ball.asset", RootComponent, false);
@@ -34,37 +34,37 @@ void PRenderActor::AddLight()
     ActorType = EntityType::LIGHT;
 }
 
-void PRenderActor::AddMesh(const char* path)
+void RRenderActor::AddMesh(const char* path)
 {
     StaticMesh = new PStaticMeshComponent(this, path);
 
     ActorType = EntityType::MODEL;
 }
 
-void PRenderActor::AddChild(PRenderActor* Child)
+void RRenderActor::AddChild(RRenderActor* Child)
 {
     Child->Parent = this;
     Children.PushBack(Child);
 }
 
-void PRenderActor::RemoveChild(PRenderActor* Child)
+void RRenderActor::RemoveChild(RRenderActor* Child)
 {
     //Children.Remove(Child);
 }
 
-void PRenderActor::RemoveAllChildren()
+void RRenderActor::RemoveAllChildren()
 {
     Children.Clear();
 }
 
 
 
-Vector3f PRenderActor::GetPosition()
+Vector3f RRenderActor::GetPosition()
 {
     return this->ObjectPosition;
 }
 
-void PRenderActor::SetPosition(Vector3f inPosition)
+void RRenderActor::SetPosition(Vector3f inPosition)
 {
     if (IsMovable) {
         if (Parent == nullptr) {
@@ -83,12 +83,12 @@ void PRenderActor::SetPosition(Vector3f inPosition)
     }
 }
 
-Vector3f PRenderActor::GetRotation()
+Vector3f RRenderActor::GetRotation()
 {
     return ObjectRotation;
 }
 
-void PRenderActor::SetRotation(Vector3f inRotation)
+void RRenderActor::SetRotation(Vector3f inRotation)
 {
     if (Parent == nullptr) {
         ObjectRotation = inRotation;
@@ -106,25 +106,25 @@ void PRenderActor::SetRotation(Vector3f inRotation)
     }
 }
 
-void PRenderActor::AddRotation(Vector3f inRotation)
+void RRenderActor::AddRotation(Vector3f inRotation)
 {
     ObjectRotation = inRotation;
 
 }
 
-void PRenderActor::resetOrientation()
+void RRenderActor::resetOrientation()
 {
     //TODO: resetOrientation
 }
 
-Vector3f PRenderActor::GetScale()
+Vector3f RRenderActor::GetScale()
 {
     //TODO: do something for uniform scaling? Maybe return a float?
     return ObjectScale;
 
 }
 
-void PRenderActor::SetScale(Vector3f inScale)
+void RRenderActor::SetScale(Vector3f inScale)
 {
     ObjectScale = inScale;
     if (ActorType == MODEL) {
@@ -132,7 +132,7 @@ void PRenderActor::SetScale(Vector3f inScale)
     }
 }
 
-void PRenderActor::SetScale(float inScale)
+void RRenderActor::SetScale(float inScale)
 {
     ObjectScale = inScale;
     if (ActorType == MODEL) {
@@ -140,7 +140,7 @@ void PRenderActor::SetScale(float inScale)
     }
 }
 
-void PRenderActor::DrawMeshChildren(Shader * ActiveShader) {
+void RRenderActor::DrawMeshChildren(Shader * ActiveShader) {
     if (StaticMesh != nullptr && ActorType == MODEL) {
         
         StaticMesh->ModelMatrix = Matrix4f::IDENTITY;
@@ -161,7 +161,7 @@ void PRenderActor::DrawMeshChildren(Shader * ActiveShader) {
 }
 
 //TODO: Use this only after a transformation to reduce recalculations
-void PRenderActor::SetupModelMatrix() {
+void RRenderActor::SetupModelMatrix() {
 
     StaticMesh->ModelMatrix = Matrix4f::IDENTITY;
 
@@ -173,7 +173,7 @@ void PRenderActor::SetupModelMatrix() {
 }
 
 
-void PRenderActor::UpdateWorldBoundingBox() {
+void RRenderActor::UpdateWorldBoundingBox() {
     SetupModelMatrix();
 
     for (PStaticMesh* Mesh : StaticMesh->Meshes) {

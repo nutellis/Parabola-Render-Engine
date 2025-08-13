@@ -86,7 +86,7 @@ public:
 	// Constructor with vectors
 	//PCameraComponent(Vector3f up = Vector3f(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
 
-	PCameraComponent(PRenderActor* Parent, Vector3f up = Vector3f(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
+	PCameraComponent(RRenderActor* Parent, Vector3f up = Vector3f(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
 	// Constructor with scalar values
 	PCameraComponent(float upX, float upY, float upZ, float yaw, float pitch);
 
@@ -121,7 +121,7 @@ public:
 
 
 
-class PCameraActor : public PRenderActor
+class PCameraActor : public RRenderActor
 {
 public:
 	PCameraComponent* Camera;
@@ -133,7 +133,7 @@ public:
 	void InitCamera();
 	void ControlCamera(uint32 Width, uint32 Height);
 
-	PCameraActor(PRenderActor* Parent);
+	PCameraActor(RRenderActor* Parent);
 	~PCameraActor();
 	//void SetRotation(Vector3f InRotation);
 

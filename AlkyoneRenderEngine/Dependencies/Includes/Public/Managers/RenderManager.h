@@ -22,6 +22,7 @@ class Shader;
 class FBORenderTarget;
 class PCameraComponent;
 class RAmbientOcclusion;
+class RRenderActor;
 
 struct RenderOptions {
 public:

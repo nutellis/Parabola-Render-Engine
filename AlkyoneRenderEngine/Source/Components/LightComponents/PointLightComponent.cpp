@@ -4,7 +4,7 @@
 
 
 
-PPointLightComponent::PPointLightComponent(PRenderActor* Parent)
+PPointLightComponent::PPointLightComponent(RRenderActor* Parent)
 {
 	std::cout << "This is a PointLightComponent\n";
 	Attributes = new PointLightAttributes();

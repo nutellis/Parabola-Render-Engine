@@ -20,13 +20,13 @@ enum EntityType {
 	SKYBOX
 };
 
-class PRenderActor {
+class RRenderActor {
 
 public:
-	PRenderActor();
-	PRenderActor(std::string NodeName);
+	RRenderActor();
+	RRenderActor(std::string NodeName);
 
-	// std::vector<PRenderActor*> Children; // do i need this? Find out how to access children
+	// std::vector<RRenderActor*> Children; // do i need this? Find out how to access children
 
 	//PSceneComponent* RootComponent; // not sure if this is needed
 
@@ -34,9 +34,9 @@ public:
 
 	void AddMesh(const char* path);
 
-	void AddChild(PRenderActor* Child);
+	void AddChild(RRenderActor* Child);
 
-	void RemoveChild(PRenderActor* Child);
+	void RemoveChild(RRenderActor* Child);
 
 	void RemoveAllChildren();
 
@@ -84,9 +84,9 @@ public:
 
 	EntityType ActorType;
 
-	PRenderActor* Parent;
+	RRenderActor* Parent;
 	//children vector
-	TArray<PRenderActor*> Children;
+	TArray<RRenderActor*> Children;
 
 	PStaticMeshComponent* StaticMesh;
 

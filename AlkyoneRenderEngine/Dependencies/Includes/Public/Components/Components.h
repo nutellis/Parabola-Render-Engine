@@ -15,7 +15,7 @@
 
 // #include <ObjectInitializer.h>
 
-class PRenderActor;
+class RRenderActor;
 class PStaticMesh;
 class Shader;
 
@@ -23,11 +23,11 @@ class Shader;
 class PSceneComponent {
 
 public:
-	PRenderActor* Parent;
+	RRenderActor* Parent;
 
 	PSceneComponent();
 
-	PSceneComponent(PRenderActor* InParent) : Parent(InParent) {}
+	PSceneComponent(RRenderActor* InParent) : Parent(InParent) {}
 
 	bool bAbsoluteLocation;
 	bool bAbsoluteRotation;

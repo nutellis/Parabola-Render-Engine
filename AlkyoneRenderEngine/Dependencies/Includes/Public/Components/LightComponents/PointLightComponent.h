@@ -8,7 +8,7 @@
 class PPointLightComponent : public PSceneComponent
 {
 public:
-	PPointLightComponent(PRenderActor* Parent);
+	PPointLightComponent(RRenderActor* Parent);
 
 	PPointLightComponent(PSceneComponent* Default);
 

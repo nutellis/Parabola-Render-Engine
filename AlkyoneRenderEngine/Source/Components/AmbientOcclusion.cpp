@@ -14,8 +14,8 @@
 
 RAmbientOcclusion::RAmbientOcclusion()
 {
-	NumDirections = 8;
-	NumSteps = 4;
+	NumDirections = 8.0f;
+	NumSteps = 4.0f;
 	AmbientOcclusionInputFBO = new FBORenderTarget("AmbientOcclusionInput", 1366, 768, 2);
 	AmbientOcclusionOutputFBO = new FBORenderTarget("AmbientOcclusionOutput", 1366, 768);
 	AmbientOcclusionBlurFBO = new FBORenderTarget("AmbientOcclusionBlur", 1366, 768);
@@ -106,8 +106,8 @@ void RAmbientOcclusion::PrepareForDraw(Shader* ActiveShader, PCameraComponent * 
 	ActiveShader->SetMat4("projectionMatrix", false, Camera->Projection);
 	ActiveShader->SetFloat("radius", Radius);
 	ActiveShader->SetFloat("bias", Bias);
-	ActiveShader->SetInt("Nd", NumDirections);
-	ActiveShader->SetInt("Ns", NumSteps);
+	ActiveShader->SetFloat("Nd", NumDirections);
+	ActiveShader->SetFloat("Ns", NumSteps);
 	ActiveShader->SetFloat("powerExponent", Exponent);
 	ActiveShader->SetFloat("fieldOfView", DegreesToRadians(Camera->Frustrum->FieldOfView));
 	ActiveShader->SetFloat("aspectRatio", Camera->Frustrum->Ratio);

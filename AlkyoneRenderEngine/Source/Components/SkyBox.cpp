@@ -9,7 +9,7 @@
 #include <Components/Shader.h>
 #include "RenderHelper.h"
 
-RSkyBoxActor::RSkyBoxActor() : PRenderActor()
+RSkyBoxActor::RSkyBoxActor() : RRenderActor()
 {
     ActorType = EntityType::SKYBOX;
     EnviromentMap = nullptr;
@@ -17,7 +17,7 @@ RSkyBoxActor::RSkyBoxActor() : PRenderActor()
     ReflectionMap = nullptr;
 }
 
-RSkyBoxActor::RSkyBoxActor(const char* Name) : PRenderActor(Name)
+RSkyBoxActor::RSkyBoxActor(const char* Name) : RRenderActor(Name)
 {
     ActorType = EntityType::SKYBOX;
 

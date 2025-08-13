@@ -9,7 +9,7 @@
 #include <Core/SingletonBase.h>
 
 class Scene;
-class PRenderActor;
+class RRenderActor;
 class SceneNode;
 class PStaticMesh;
 
@@ -27,7 +27,7 @@ public:
 
 	Scene * GetActiveScene();
 
-	//const PRenderActor* GetActiveSceneElements();
+	//const RRenderActor* GetActiveSceneElements();
 
 	//uint8 AddStaticMesh();
 
@@ -41,9 +41,9 @@ public:
 
 	void FrustrumCull();
 
-	PRenderActor* RecurseSceneChildren(PRenderActor* Root);
+	RRenderActor* RecurseSceneChildren(RRenderActor* Root);
 
-	PStaticMesh* RecurseActorsMeshes(PRenderActor* Root);
+	PStaticMesh* RecurseActorsMeshes(RRenderActor* Root);
 
 private:
 

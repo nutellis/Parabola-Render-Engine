@@ -14,24 +14,24 @@ Scene::Scene() {
 Scene::Scene(GSceneManager * Parent) {
 	Creator = Parent;
 	 
-	Root = new PRenderActor("Root"); //TODO: pool allocator 
+	Root = new RRenderActor("Root"); //TODO: pool allocator 
 }
 
 Scene::~Scene() {
 }
 
-PRenderActor* Scene::GetRoot() {
+RRenderActor* Scene::GetRoot() {
 	return Root;
 }
 
-void Scene::AddChild(PRenderActor* Child)
+void Scene::AddChild(RRenderActor* Child)
 {
 	if(Child != nullptr) {
 		Root->AddChild(Child);
 	}
 }
 
-void Scene::AddToRoot(PRenderActor* Root)
+void Scene::AddToRoot(RRenderActor* Root)
 {
 	if (Root != nullptr) {
 		this->Root = Root;
@@ -39,7 +39,7 @@ void Scene::AddToRoot(PRenderActor* Root)
 	}
 }
 
-void Scene::SortChild(PRenderActor* Child) {
+void Scene::SortChild(RRenderActor* Child) {
 	switch (Child->ActorType)
 	{
 	case LIGHT:
@@ -73,7 +73,7 @@ void Scene::InitScene() {
 		"Assets/envmaps/001_irradiance.hdr", 
 		filenames);
 
-	//PRenderActor* sponza = new PRenderActor("sponza");
+	//RRenderActor* sponza = new RRenderActor("sponza");
 	//this->AddChild(sponza);
 	//sponza->AddMesh("Assets/sponza/sponza.obj");
 	//sponza->SetPosition(Vector3f(0.0, 0.0, 0.0));
@@ -81,7 +81,7 @@ void Scene::InitScene() {
 	//sponza->SetScale(1.0f);
 
 
-	PRenderActor* sponza = new PRenderActor("Scene");
+	RRenderActor* sponza = new RRenderActor("Scene");
 	this->AddChild(sponza);
 	sponza->AddMesh("Assets/city test/city3.obj");
 	sponza->SetPosition(Vector3f(0.0, 0.0, 0.0));
@@ -90,14 +90,14 @@ void Scene::InitScene() {
 
 	SortChild(sponza);
 	
-	/*PRenderActor* landingpad1 = new PRenderActor("landingpad_1");
+	/*RRenderActor* landingpad1 = new RRenderActor("landingpad_1");
 	this->AddChild(landingpad1);
 
 	landingpad1->SetPosition(Vector3f(15.0, 14.0, -25.0));
 	landingpad1->AddMesh("Assets/landingpad.obj");
 	SortChild(landingpad1);*/
 	/*for (int i = 0; i < 15; i++) {
-		PRenderActor* plane1 = new PRenderActor("spaceship_" + std::to_string(i));
+		RRenderActor* plane1 = new RRenderActor("spaceship_" + std::to_string(i));
 		this->AddChild(plane1);
 
 		plane1->SetPosition(Vector3f(0.0, 20.0,-i * 15));
@@ -105,7 +105,7 @@ void Scene::InitScene() {
 		SortChild(plane1);
 	}*/
 
-	/*PRenderActor* plane1 = new PRenderActor("spaceship_1");
+	/*RRenderActor* plane1 = new RRenderActor("spaceship_1");
 	this->AddChild(plane1);
 
 	plane1->SetPosition(Vector3f(0.0, 20.0, 0.0));
@@ -113,7 +113,7 @@ void Scene::InitScene() {
 	SortChild(plane1);
 
 
-	PRenderActor* plane2 = new PRenderActor("spaceship_2");
+	RRenderActor* plane2 = new RRenderActor("spaceship_2");
 	this->AddChild(plane2);
 
 	plane2->SetPosition(Vector3f(15.0, 25.0, -35.0));
@@ -137,7 +137,7 @@ void Scene::InitScene() {
 	SortCamera(secondarycamera);
 	this->SetActiveCamera(camera);
 
-	PRenderActor* light = new PRenderActor("light");
+	RRenderActor* light = new RRenderActor("light");
 	this->AddChild(light);
 
 	light->SetPosition(Vector3f(0.0f, 0.0f, 0.0f));
@@ -145,7 +145,7 @@ void Scene::InitScene() {
 	light->AddLight();
 	SortChild(light);
 
-	/*PRenderActor* lightMesh = new PRenderActor("lightMesh");
+	/*RRenderActor* lightMesh = new RRenderActor("lightMesh");
 	this->AddChild(lightMesh);
 
 	lightMesh->SetPosition(Vector3f(3.0, 1.5, 1.0));
@@ -153,7 +153,7 @@ void Scene::InitScene() {
 	lightMesh->SetScale(Vector3f(0.3));
 	SortChild(lightMesh);
 
-	PRenderActor* aMesh = new PRenderActor("torusMeshActor");
+	RRenderActor* aMesh = new RRenderActor("torusMeshActor");
 	this->AddChild(aMesh);
 
 	aMesh->SetPosition(Vector3f(-3.0, 1.5, 1.0));
@@ -198,7 +198,7 @@ void Scene::SetActiveCamera(PCameraActor* Camera)
 TArray<PAxisAlignedBoundingBox> Scene::GetObjectsByIntersection(PAxisAlignedBoundingBox * BoxToCheck)
 {
 	TArray<PAxisAlignedBoundingBox> ObjectsToReturn = TArray<PAxisAlignedBoundingBox>(100) ;
-	for (PRenderActor * Actor : SceneMeshes) {
+	for (RRenderActor * Actor : SceneMeshes) {
 		TArray<PStaticMesh*> Meshes = Actor->StaticMesh->Meshes;
 		for (PStaticMesh * Mesh : Meshes) {
 			if (IntersectionTest(Mesh->WorldBoundingBox, BoxToCheck)) {
@@ -216,7 +216,7 @@ TArray<PAxisAlignedBoundingBox> Scene::GetObjectsByIntersection(PAxisAlignedBoun
 TArray<PAxisAlignedBoundingBox> Scene::GetShadowCasters(PAxisAlignedBoundingBox* BoxToCheck,Vector3f Colour)
 {
 	TArray<PAxisAlignedBoundingBox> ObjectsToReturn = TArray<PAxisAlignedBoundingBox>(SceneMeshes.Size());
-	for (PRenderActor* Actor : SceneMeshes) {
+	for (RRenderActor* Actor : SceneMeshes) {
 		TArray<PStaticMesh*> Meshes = Actor->StaticMesh->Meshes;
 		for (PStaticMesh * Mesh : Meshes) {
 			if (Mesh->IsCastingShadows && SweepIntersectionTest(Mesh->WorldBoundingBox, BoxToCheck, SceneLights.Front()->Light->LightDirection)) {

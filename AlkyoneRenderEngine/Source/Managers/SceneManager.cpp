@@ -43,10 +43,10 @@ Scene* GSceneManager::GetActiveScene()
 }
 
 
-//const TArray<PRenderActor> GSceneManager::GetActiveSceneElements() {
+//const TArray<RRenderActor> GSceneManager::GetActiveSceneElements() {
 //	
 //
-//	PRenderActor* Root = ActiveScene->GetRoot();
+//	RRenderActor* Root = ActiveScene->GetRoot();
 //
 //	for (auto i = 0; i < Root->Children.Size(); i++) {
 //		
@@ -112,7 +112,7 @@ void GSceneManager::DrawSceneGraph()
 	window_flags |= ImGuiWindowFlags_NoResize;
 	window_flags |= ImGuiWindowFlags_NoScrollbar;
 
-	static PRenderActor* selectedIndex = nullptr;
+	static RRenderActor* selectedIndex = nullptr;
 	static PStaticMesh* selectedMesh = nullptr;
 	static bool useUniformScaling = true;
 	static bool useRelativeTranslation = true;
@@ -120,10 +120,10 @@ void GSceneManager::DrawSceneGraph()
 	{
 		Scene* ActiveScene = GetActiveScene();
 		if (ActiveScene != nullptr) {
-			PRenderActor* Root = ActiveScene->GetRoot();
+			RRenderActor* Root = ActiveScene->GetRoot();
 			ImGui::BeginChild("Graph", ImVec2(ImGui::GetContentRegionAvail().x, 0), ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY);
 
-			PRenderActor* ReturnedValue = RecurseSceneChildren(Root);
+			RRenderActor* ReturnedValue = RecurseSceneChildren(Root);
 			if (ReturnedValue != nullptr) {
 				selectedIndex = ReturnedValue;
 			}
@@ -248,15 +248,15 @@ void GSceneManager::DrawSceneGraph()
 }
 
 
-PRenderActor* GSceneManager::RecurseSceneChildren(PRenderActor* Root) {
-	PRenderActor* SelectedNode = nullptr;
+RRenderActor* GSceneManager::RecurseSceneChildren(RRenderActor* Root) {
+	RRenderActor* SelectedNode = nullptr;
 	ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
 	if (ImGui::TreeNodeEx((void*)(intptr_t)0, node_flags | ImGuiTreeNodeFlags_DefaultOpen, Root->ObjectName.c_str()))
 	{
 		for (int i = 0; i < Root->Children.Size(); i++)
 		{
 			if (Root->Children[i]->Children.IsNotEmpty()) {
-				PRenderActor* ReturnedValue = RecurseSceneChildren(Root->Children[i]);
+				RRenderActor* ReturnedValue = RecurseSceneChildren(Root->Children[i]);
 				if (ReturnedValue != nullptr) {
 					SelectedNode = ReturnedValue;
 				}
@@ -279,7 +279,7 @@ PRenderActor* GSceneManager::RecurseSceneChildren(PRenderActor* Root) {
 	return SelectedNode;
 }
 
-PStaticMesh* GSceneManager::RecurseActorsMeshes(PRenderActor* Root) {
+PStaticMesh* GSceneManager::RecurseActorsMeshes(RRenderActor* Root) {
 	PStaticMesh* SelectedNode = nullptr;
 
 	ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;

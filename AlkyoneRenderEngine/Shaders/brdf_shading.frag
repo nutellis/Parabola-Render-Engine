@@ -219,10 +219,10 @@ float PCSS(vec3 projectedPos, float bias, int index) {
 	
 	float zReceiver = projectedPos.z;
 
-	float searchWidth =  0.1 * lightSize/lightFrustrumWidth[index] * (zReceiver - near[index]) / zReceiver;
+	float searchWidth = 0.1 * lightSize/lightFrustrumWidth[index] * (zReceiver - near[index]) / zReceiver;
 
 	for(int i = 0; i < 16; ++i) {
-		vec2 offset = projectedPos.xy + poisson16[i] * searchWidth;
+		vec2 offset = projectedPos.xy + poisson16[i] * searchWidth ;
 		float shadowMapDepth = texture(shadowMap[index],offset).r;
 		if (shadowMapDepth < zReceiver) {
 			blockerSum += shadowMapDepth;
@@ -264,8 +264,8 @@ float calculateShadowsCoef(vec3 n, vec3 wi)
 
 
 
-	float bias = 0.00005 * (1.0 - dot(n, wi));
-	bias = clamp(bias, 0.0, 0.0001);
+	float bias = 0.0005 * (1.0 - dot(n, wi));
+	bias = clamp(bias, 0.0, 0.01);
 
 	if(usePCSS == 1) {
 		return PCSS(projectedPos, bias, cascadeIndex);
@@ -439,9 +439,8 @@ void main()
 //	}
 
 	vec3 shading = direct_illumination_term +  indirect_illumination_term + emission_term; 
-
-
-	fragmentColor = vec4(vec3(shading), 1.0);
+	
+	fragmentColor = vec4(vec3(ssao), 1.0);
 	
 	return;
 }

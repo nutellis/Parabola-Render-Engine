@@ -8,7 +8,7 @@
 class Image;
 
 
-class RSkyBoxActor: public PRenderActor
+class RSkyBoxActor: public RRenderActor
 {
 public:
     RSkyBoxActor();

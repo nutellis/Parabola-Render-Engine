@@ -197,7 +197,7 @@ void GRenderManager::Render(double DeltaTime)
 	}
 
 	if (Options.ShowBoundingBoxes) {
-		TArray<PRenderActor*> VisibleMeshes = ActiveScene->SceneMeshes;
+		TArray<RRenderActor*> VisibleMeshes = ActiveScene->SceneMeshes;
 		for (int i = 0; i < VisibleMeshes.Size(); i++) {
 			if (Options.ShowEdges) {
 				for (int j = 0; j < VisibleMeshes[i]->StaticMesh->Meshes.Size(); j++) {
@@ -456,7 +456,7 @@ void GRenderManager::RenderPass(PCameraComponent* Camera)
 		}
 
 		//for now get light but later we will need lights!
-		TArray<PRenderActor*> Lights = ActiveScene->SceneLights;
+		TArray<RRenderActor*> Lights = ActiveScene->SceneLights;
 		Lights.Front()->Light->SetupShaderLight(RenderShader, Camera->GetViewMatrix());
 
 		//Prepare shadow Data
@@ -494,16 +494,17 @@ void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix
 	if (ActiveScene != nullptr) {
 
 		//get visible meshes. For now just get all meshes.
-		TArray<PRenderActor *> VisibleMeshes = ActiveScene->SceneMeshes;
+		TArray<RRenderActor *> MeshesToDraw = ActiveScene->SceneMeshes;
 
 		ShaderToUse->SetMat4("viewInverse", false, Inverse(ViewMatrix));
 
-		for (int i = 0; i < VisibleMeshes.Size(); i++) {
-			VisibleMeshes[i]->SetupModelMatrix();
+		for (int i = 0; i < MeshesToDraw.Size(); i++) {
 
-			ShaderToUse->SetMat4("modelMatrix", false, VisibleMeshes[i]->StaticMesh->ModelMatrix);
+			MeshesToDraw[i]->SetupModelMatrix();
 
-			Matrix4f ModelViewMatrix = ViewMatrix * VisibleMeshes[i]->StaticMesh->ModelMatrix;
+			ShaderToUse->SetMat4("modelMatrix", false, MeshesToDraw[i]->StaticMesh->ModelMatrix);
+
+			Matrix4f ModelViewMatrix = ViewMatrix * MeshesToDraw[i]->StaticMesh->ModelMatrix;
 			Matrix4f ModelViewProjectionMatrix = ProjectionMatrix * ModelViewMatrix;
 
 			ShaderToUse->SetMat4("modelViewMatrix", false, ModelViewMatrix);
@@ -512,7 +513,7 @@ void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix
 
 			ShaderToUse->SetMat4("normalMatrix", false, Matrix4f(Inverse(ModelViewMatrix).GetTransposed()));
 			
-			VisibleMeshes[i]->StaticMesh->DrawComponent(ShaderToUse);
+			MeshesToDraw[i]->StaticMesh->DrawComponent(ShaderToUse);
 		}
 
 		//for (int i = 0; i < VisibleMeshes.Size(); i++) {

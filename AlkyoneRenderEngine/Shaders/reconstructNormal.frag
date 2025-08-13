@@ -30,7 +30,7 @@ vec3 ReconstructViewPosition(float depth, vec2 uvPosition) {
 
 	float x = ndc.x * tanHalfFovX;
 	float y = ndc.y * tanHalfFovY;
-	float z = 1.0;
+	float z = -1.0; // camera front is negative!!
 
 	vec3 viewSpacePosition = vec3(x, y, z) * depth;
 	
@@ -51,7 +51,8 @@ vec3 MinDiff(vec3 P, vec3 Pr, vec3 Pl)
 	else return V2;
 }
 
-vec3 ReconstructNormal(float depth, vec2 uv, vec3 viewSpacePosition) {
+// naive normal reconstruction
+vec3 ReconstructNormalNaive(float depth, vec2 uv, vec3 viewSpacePosition) {
 	
 	float depthR = texture(depthTexture, uv + vec2(1.0 / width, 0)).r;
 	float depthL = texture(depthTexture, uv + vec2(-1.0 / width, 0)).r;
@@ -66,6 +67,45 @@ vec3 ReconstructNormal(float depth, vec2 uv, vec3 viewSpacePosition) {
 	vec3 y = MinDiff(viewSpacePosition, Pt, Pb);
 	vec3 x = MinDiff(viewSpacePosition, Pr, Pl);
 	vec3 normal = normalize(cross(y, x));
+
+	return normal * 0.5 + 0.5;
+
+}
+
+vec3 ReconstructNormal(float depth, vec2 uv, vec3 viewSpacePosition) {
+	
+	//Horizontal
+	vec4 horizontal;
+	horizontal.x = texture(depthTexture, uv - vec2(1.0 / width, 0)).r;
+	horizontal.y = texture(depthTexture, uv + vec2(1.0 / width, 0)).r;
+	horizontal.z = texture(depthTexture, uv - vec2(2.0 / width, 0)).r;
+	horizontal.w = texture(depthTexture, uv + vec2(2.0 / width, 0)).r;
+	
+	vec2 he = abs(horizontal.xy * horizontal.zw / (2 * horizontal.zw - horizontal.xy) - depth);
+
+	vec3 hDeriv;
+	if(he.x > he.y) {
+		hDeriv = ReconstructViewPosition(horizontal.y, uv + vec2(1.0 / width, 0)) - viewSpacePosition;
+	} else {
+		hDeriv = viewSpacePosition - ReconstructViewPosition(horizontal.x, uv - vec2(1.0 / width, 0));
+	}
+	//Vertical
+	vec4 vertical;
+	vertical.x = texture(depthTexture, uv - vec2(0, 1.0 / height)).r;
+	vertical.y = texture(depthTexture, uv + vec2(0, 1.0 / height)).r;
+	vertical.z = texture(depthTexture, uv - vec2(0, 2.0 / height)).r;
+	vertical.w = texture(depthTexture, uv + vec2(0, 2.0 / height)).r;
+	
+	vec2 ve = abs(vertical.xy * vertical.zw / (2 * vertical.zw - vertical.xy) - depth);
+
+	vec3 vDeriv;
+	if(ve.x > ve.y) {
+		vDeriv = ReconstructViewPosition(vertical.y, uv + vec2(0, 1.0 / height)) - viewSpacePosition;
+	} else {
+		vDeriv = viewSpacePosition - ReconstructViewPosition(vertical.x, uv - vec2(0, 1.0 / height));
+	}
+
+	vec3 normal = normalize(cross(hDeriv, vDeriv));
 
 	return normal * 0.5 + 0.5;
 

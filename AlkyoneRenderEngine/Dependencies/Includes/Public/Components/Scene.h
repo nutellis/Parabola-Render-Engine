@@ -3,7 +3,7 @@
 #include <Utilities/Containers/Array.h>
 #include <ParabolaMath.h>
 
-class PRenderActor;
+class RRenderActor;
 class PCameraActor;
 class GSceneManager;
 class PCameraComponent;
@@ -21,13 +21,13 @@ public:
 	Scene(GSceneManager* Parent);
 	~Scene();
 
-	PRenderActor* GetRoot();
+	RRenderActor* GetRoot();
 
-	void AddChild(PRenderActor* Child);
+	void AddChild(RRenderActor* Child);
 
-	void AddToRoot(PRenderActor* Root);
+	void AddToRoot(RRenderActor* Root);
 
-	void SortChild(PRenderActor* Child);
+	void SortChild(RRenderActor* Child);
 
 	void SortCamera(PCameraActor* Child);
 
@@ -53,14 +53,14 @@ public:
 	//render scene
 
 public:
-	TArray<PRenderActor *> SceneMeshes;
-	TArray<PRenderActor *> SceneLights;
+	TArray<RRenderActor *> SceneMeshes;
+	TArray<RRenderActor *> SceneLights;
 	TArray<PCameraActor *> SceneCameras;
 private:
 	// SceneManager which created this node
 	GSceneManager* Creator;
 
-	PRenderActor* Root;
+	RRenderActor* Root;
 	bool isActive;
 
 	uint32 SceneMeshesTotal = 0;

@@ -4,7 +4,7 @@
 #include <Components/Shader.h>
 #include <Utilities/CameraUtiltities.h>
 
-PDirectionalLightComponent::PDirectionalLightComponent(PRenderActor* Parent)
+PDirectionalLightComponent::PDirectionalLightComponent(RRenderActor* Parent)
 {
 	std::cout << "This is a DirectionalLightComponent\n";
 
