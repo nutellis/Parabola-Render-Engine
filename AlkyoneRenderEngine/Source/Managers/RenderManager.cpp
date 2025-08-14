@@ -657,7 +657,7 @@ void GRenderManager::DrawOptions() {
 				ImGui::SliderFloat("Radius", &AmbientOcclusion->Radius, 0.0f, 10.0f);
 				ImGui::SliderFloat("Bias", &AmbientOcclusion->Bias, 0.0f, 2.0f);
 				ImGui::SliderFloat("Exponent", &AmbientOcclusion->Exponent, 1.0f, 16.0f);
-
+				ImGui::SliderFloat("Threshold", &AmbientOcclusion->Threshold, 0.0f, 5.0f);
 				ImGui::SliderInt("Blur Filter size", &Options.SSAOBlurFilter, 1, 12);
 				ImGui::EndTabItem();
 			}

@@ -440,7 +440,8 @@ void main()
 
 	vec3 shading = direct_illumination_term +  indirect_illumination_term + emission_term; 
 	
-	fragmentColor = vec4(vec3(ssao), 1.0);
+	//fragmentColor = vec4(vec3(ssao), 1.0);
+	fragmentColor = vec4(vec3(shading), 1.0);
 	
 	return;
 }

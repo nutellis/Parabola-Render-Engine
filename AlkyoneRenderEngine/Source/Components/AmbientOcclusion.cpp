@@ -40,7 +40,7 @@ RAmbientOcclusion::RAmbientOcclusion()
 	// generate noise texture
 	// ----------------------
 	TArray<Vector3f> NoiseArray = TArray<Vector3f>(16);
-	for (unsigned int i = 0; i < 16; i++)
+	for (unsigned int i = 0; i < 256; i++)
 	{
 		float Angle = RandomFloat() * 2.0f * PI / NumDirections;
 
@@ -51,7 +51,7 @@ RAmbientOcclusion::RAmbientOcclusion()
 
 	glGenTextures(1, &NoiseMap);
 	glBindTexture(GL_TEXTURE_2D, NoiseMap);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 4, 4, 0, GL_RGB, GL_FLOAT, &NoiseArray[0]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 16, 16, 0, GL_RGB, GL_FLOAT, &NoiseArray[0]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -108,6 +108,7 @@ void RAmbientOcclusion::PrepareForDraw(Shader* ActiveShader, PCameraComponent * 
 	ActiveShader->SetFloat("bias", Bias);
 	ActiveShader->SetFloat("Nd", NumDirections);
 	ActiveShader->SetFloat("Ns", NumSteps);
+	ActiveShader->SetFloat("threshold", Threshold);
 	ActiveShader->SetFloat("powerExponent", Exponent);
 	ActiveShader->SetFloat("fieldOfView", DegreesToRadians(Camera->Frustrum->FieldOfView));
 	ActiveShader->SetFloat("aspectRatio", Camera->Frustrum->Ratio);

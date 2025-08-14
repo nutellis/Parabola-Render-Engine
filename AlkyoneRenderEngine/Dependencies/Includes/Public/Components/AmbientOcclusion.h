@@ -48,6 +48,7 @@ public:
 	float Radius = 2.0f;
 	float Bias = 0.5f;
 	float Exponent = 2.0f;
+	float Threshold = 1.0;
 
 	TArray<Vector3f> Kernel;
 
