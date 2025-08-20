@@ -5,7 +5,7 @@
 #include <ParabolaMath.h>
 #include <Utilities/Containers/Array.h>
 
-class PStaticMeshComponent;
+class RStaticMeshGroup;
 
 enum CornerEnum {
 	FAR_LEFT_BOTTOM = 6,
@@ -35,6 +35,7 @@ public:
 
 	Vector3f Center;
 	Vector3f HalfWidth;
+	Vector2f Extents;
 
 
 	Vector3f Min;
@@ -55,7 +56,7 @@ public:
 
 	Vector3f DebugColour = Vector3f(0.0, 0.0, 1.0);
 //private:
-	PStaticMeshComponent* DebugFrustrumMesh;
+	RStaticMeshGroup* DebugFrustrumMesh;
 
 public:
 

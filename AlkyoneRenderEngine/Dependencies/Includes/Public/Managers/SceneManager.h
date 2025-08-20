@@ -11,7 +11,7 @@
 class Scene;
 class RRenderActor;
 class SceneNode;
-class PStaticMesh;
+class RStaticMesh;
 
 
 class GSceneManager : SingletonManagerBase<GSceneManager>
@@ -43,7 +43,7 @@ public:
 
 	RRenderActor* RecurseSceneChildren(RRenderActor* Root);
 
-	PStaticMesh* RecurseActorsMeshes(RRenderActor* Root);
+	RStaticMesh* RecurseActorsMeshes(RRenderActor* Root);
 
 private:
 

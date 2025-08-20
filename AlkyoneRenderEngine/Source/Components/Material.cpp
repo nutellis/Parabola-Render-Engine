@@ -2,14 +2,14 @@
 #include <Components/Texture.h>
 
 
-PChannel::PChannel() :
+RChannel::RChannel() :
 	HasTexture(false),
 	ChannelTexture(nullptr), 
 	Colours(Vector4f())
 {}
 
 // Copy constructor
-PChannel::PChannel(const PChannel& Other)
+RChannel::RChannel(const RChannel& Other)
 	: Name(Other.Name),
 	Colours(Other.Colours),
 	HasTexture(Other.HasTexture),
@@ -18,7 +18,7 @@ PChannel::PChannel(const PChannel& Other)
 }
 
 // Move constructor
-PChannel::PChannel(PChannel&& Other) noexcept
+RChannel::RChannel(RChannel&& Other) noexcept
 	: Name(Utilities::Move(Other.Name)),
 	Colours(Other.Colours),
 	HasTexture(Other.HasTexture),
@@ -27,12 +27,12 @@ PChannel::PChannel(PChannel&& Other) noexcept
 	Other.ChannelTexture = nullptr;
 }
 
-PChannel::~PChannel()
+RChannel::~RChannel()
 {
 }
 
 // Copy assignment
-PChannel& PChannel::operator=(const PChannel& Other)
+RChannel& RChannel::operator=(const RChannel& Other)
 {
 	if (this == &Other) return *this;
 	Name = Other.Name;
@@ -44,7 +44,7 @@ PChannel& PChannel::operator=(const PChannel& Other)
 }
 
 // Move assignment
-PChannel& PChannel::operator=(PChannel&& Other) noexcept
+RChannel& RChannel::operator=(RChannel&& Other) noexcept
 {
 	if (this == &Other) return *this;
 	Name = Other.Name;
@@ -59,13 +59,13 @@ PChannel& PChannel::operator=(PChannel&& Other) noexcept
 }
 
 
-PMaterial::PMaterial() : ShaderName("BRDF")
+RMaterial::RMaterial() : ShaderName("BRDF")
 {	//TextureSlot = 0;
 	//isActive = false;
 }
 
 //Copy Constructor
-PMaterial::PMaterial(const PMaterial& Other)
+RMaterial::RMaterial(const RMaterial& Other)
 	: Name(Other.Name),
 	MaterialID(Other.MaterialID),
 	ShaderName(Other.ShaderName),
@@ -77,13 +77,14 @@ PMaterial::PMaterial(const PMaterial& Other)
 	Specular(Other.Specular),
 	Normal(Other.Normal),
 	Transparency(Other.Transparency),
-	IOR(Other.IOR)
+	IOR(Other.IOR),
+	HasTransparency(Other.HasTransparency)
 {
 }
 
 
 // Move constructor
-PMaterial::PMaterial(PMaterial&& Other) noexcept
+RMaterial::RMaterial(RMaterial&& Other) noexcept
 	: Name(Utilities::Move(Other.Name)),
 	MaterialID(Other.MaterialID),
 	ShaderName(Utilities::Move(Other.ShaderName)),
@@ -99,7 +100,7 @@ PMaterial::PMaterial(PMaterial&& Other) noexcept
 {
 }
 
-//PMaterial::PMaterial(UArchive &Ar) : mShinness(0)
+//RMaterial::RMaterial(UArchive &Ar) : mShinness(0)
 //{
 //	mEmissive = new Channel();
 //	mAmbient = new Channel();
@@ -113,7 +114,7 @@ PMaterial::PMaterial(PMaterial&& Other) noexcept
 //}
 
 
-PMaterial::~PMaterial()
+RMaterial::~RMaterial()
 {
 	//delete Emissive;
 	//delete Ambient;
@@ -123,7 +124,7 @@ PMaterial::~PMaterial()
 
 
 // Copy assignment
-PMaterial& PMaterial::operator=(const PMaterial& Other)
+RMaterial& RMaterial::operator=(const RMaterial& Other)
 {
 	if (this == &Other) return *this;
 
@@ -145,7 +146,7 @@ PMaterial& PMaterial::operator=(const PMaterial& Other)
 
 
 // Move assignment
-PMaterial& PMaterial::operator=(PMaterial&& Other) noexcept
+RMaterial& RMaterial::operator=(RMaterial&& Other) noexcept
 {
 	if (this == &Other) return *this;
 
@@ -167,7 +168,7 @@ PMaterial& PMaterial::operator=(PMaterial&& Other) noexcept
 
 
 /*
-void PMaterial::SetupMaterial() 
+void RMaterial::SetupMaterial() 
 {
 	mEmissive->SetupChannel();
 	mAmbient->SetupChannel();
@@ -175,7 +176,7 @@ void PMaterial::SetupMaterial()
 	mSpecular->SetupChannel();
 }
 
-void PMaterial::SetActiveMaterial(Shader s) 
+void RMaterial::SetActiveMaterial(Shader s) 
 {
 	mEmissive->SetShader(s,TextureSlot);
 	mAmbient->SetShader(s, TextureSlot);
@@ -188,7 +189,7 @@ void PMaterial::SetActiveMaterial(Shader s)
 	isActive = true;
 }
 
-void PMaterial::Serialize(UArchive &Ar)
+void RMaterial::Serialize(UArchive &Ar)
 {
 	mEmissive->Serialize(Ar);
 	mAmbient->Serialize(Ar);
@@ -199,7 +200,7 @@ void PMaterial::Serialize(UArchive &Ar)
 
 }
 
-void PMaterial::Deserialize(UArchive & Ar)
+void RMaterial::Deserialize(UArchive & Ar)
 {
 	std::cout << "Emmisive" << std::endl;
 	mEmissive->Deserialize(Ar);

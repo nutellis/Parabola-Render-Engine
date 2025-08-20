@@ -4,7 +4,7 @@
 
 #include <Components/Colliders/BoundingBox.h>
 
-class PStaticMeshComponent;
+class RStaticMeshGroup;
 
 
 /** A 3D box aligned with the x/y/z axes.

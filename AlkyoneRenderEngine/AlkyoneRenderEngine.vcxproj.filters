@@ -141,10 +141,10 @@
     <ClCompile Include="Source\Components\Material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Dependencies\Includes\Public\Components\RenderComponents\StaticMeshComponent.h">
+    <ClCompile Include="Dependencies\Includes\Public\Components\RenderComponents\StaticMeshGroup.h">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Components\RenderComponents\StaticMeshComponent.cpp">
+    <ClCompile Include="Source\Components\RenderComponents\StaticMeshGroup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Components\SkyBox.cpp">

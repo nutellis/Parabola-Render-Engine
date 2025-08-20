@@ -4,7 +4,7 @@
 
 #include <ParabolaMath.h>
 
-class PChannel
+class RChannel
 {
 public:
 	const char* Name;
@@ -16,29 +16,29 @@ public:
 	RTexture *ChannelTexture;
 
 public:
-	PChannel();
-	PChannel(const PChannel& other);
-	PChannel(PChannel&& other) noexcept;
-	~PChannel();
+	RChannel();
+	RChannel(const RChannel& other);
+	RChannel(RChannel&& other) noexcept;
+	~RChannel();
 
-	PChannel& operator=(const PChannel& other);
+	RChannel& operator=(const RChannel& other);
 
-	PChannel& operator=(PChannel&& other) noexcept;
+	RChannel& operator=(RChannel&& other) noexcept;
 
 	//void Serialize(Archive &Ar);
 	//void Deserialize(Archive &Ar);
 };
 
-class PMaterial
+class RMaterial
 {
 public:
-	PMaterial();
-	PMaterial(const PMaterial& Other);
-	PMaterial(PMaterial&& Other) noexcept;
-	~PMaterial();
-	PMaterial& operator=(const PMaterial& Other);
-	PMaterial& operator=(PMaterial&& Other) noexcept;
-	//PMaterial *Initialize(const FbxSurfaceMaterial * pMaterial);
+	RMaterial();
+	RMaterial(const RMaterial& Other);
+	RMaterial(RMaterial&& Other) noexcept;
+	~RMaterial();
+	RMaterial& operator=(const RMaterial& Other);
+	RMaterial& operator=(RMaterial&& Other) noexcept;
+	//RMaterial *Initialize(const FbxSurfaceMaterial * pMaterial);
 
 	// Set material colors and binding diffuse texture if exists.
 	//void SetCurrentMaterial() const;
@@ -57,15 +57,16 @@ public:
 //private:
 
 	//TODO: Add roughness and more later
-	PChannel Diffuse;
-	PChannel Metalness;
-	PChannel Roughness;
-	PChannel Fresnel;
-	PChannel Emissive;
-	PChannel Specular;
-	PChannel Normal;
+	RChannel Diffuse;
+	RChannel Metalness;
+	RChannel Roughness;
+	RChannel Fresnel;
+	RChannel Emissive;
+	RChannel Specular;
+	RChannel Normal;
 	float Transparency;
 	float IOR;
+	bool HasTransparency;
 
 	/*
 	glm::vec3 m_color;

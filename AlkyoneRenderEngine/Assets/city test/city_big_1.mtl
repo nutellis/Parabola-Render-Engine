@@ -1,0 +1,72 @@
+# Blender 4.4.3 MTL File: 'Untitled.blend'
+# www.blender.org
+
+newmtl FBXASC0481_01_WorldCitySeaSG
+Ns 0.000000
+Ka 0.200000 0.200000 0.200000
+Ks 0.200000 0.200000 0.200000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 3
+map_Kd textures_big_city/Level1Sea_Texture.png
+
+newmtl FBXASC0481_03_WorldCityStreetSG
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.200000 0.200000 0.200000
+Ke 0.000000 0.000000 0.000000
+Ni 1.100000
+d 1.000000
+illum 2
+map_Kd textures_big_city/Level1Street_Texture.png
+
+newmtl FBXASC0481_04_WorldCityTransparentSG
+Ns 0.000000
+Ka 0.200000 0.200000 0.200000
+Ks 0.200000 0.200000 0.200000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+illum 3
+map_Kd textures_big_city/Level1Transparent_Texture.png
+map_d textures_big_city/Level1Transparent_Texture.png
+
+newmtl FBXASC0482_02_WorldCityWavesSG
+Ns 0.000000
+Ka 0.200000 0.200000 0.200000
+Ks 0.200000 0.200000 0.200000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 3
+map_Kd textures_big_city/Level1Waves_Texture.png
+
+newmtl FBXASC0482_03_WorldCityOpaqueSG
+Ns 18.000004
+Ka 0.200000 0.200000 0.200000
+Ks 0.200000 0.200000 0.200000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 3
+map_Kd textures_big_city/Level1Transparent_Texture.png
+
+newmtl FBXASC0482_06_WorldCityBuildingsSG
+Ns 0.000000
+Ka 0.130909 0.130909 0.130909
+Ks 0.200000 0.200000 0.200000
+Ke 0.000000 0.000000 0.000000
+Ni 1.200000
+d 1.000000
+illum 3
+map_Kd textures_big_city/Level1Buildings_Texture.png
+
+newmtl FBXASC0482_07_WorldCityMiscSG
+Ns 4.721003
+Ka 0.203636 0.203636 0.203636
+Ks 0.200000 0.200000 0.200000
+Ke 0.000000 0.000000 0.000000
+Ni 1.200000
+d 1.000000
+illum 3
+map_Kd textures_big_city/Objects_Texture.png

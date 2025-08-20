@@ -4,7 +4,7 @@
 #include <string>
 #include <Components/Texture.h>
 #include <Utilities/Containers/Array.h>
-#include <Components/RenderComponents/StaticMeshComponent.h>
+#include <Components/RenderComponents/StaticMeshGroup.h>
 #include <Components/CameraComponents/Camera.h>
 #include <Components/Shader.h>
 #include "RenderHelper.h"
@@ -25,7 +25,7 @@ RSkyBoxActor::RSkyBoxActor(const char* Name) : RRenderActor(Name)
     IrradianceMap = nullptr;
     ReflectionMap = nullptr;
 
-	StaticMesh = new PStaticMeshComponent(this);
+	StaticMesh = new RStaticMeshGroup(this);
 
     //VertexArray SkyVertices = RenderHelper::CreateFullScreenQuad();
 

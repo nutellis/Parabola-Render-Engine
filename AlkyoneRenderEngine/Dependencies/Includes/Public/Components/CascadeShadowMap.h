@@ -25,7 +25,7 @@ public:
 	
 	FBORenderTarget* CascadeFBO;
 
-	Matrix4f CascadeCPVMatrix;
+	Matrix4f CascadePVMatrix;
 
 	Matrix4f LightViewMatrix;
 	Matrix4f LightProjectionMatrix;
@@ -73,6 +73,18 @@ public:
 	float Lambda = 0.25f;
 	float TransitionOverlap = 0.95;
 	float LightDistance = 50.0f;
+
+	/* Options */
+	bool ShowCascadeFrustrumDebug = false;
+	bool ShowCascadeBoundingDebug = false;
+	bool SoloCascadeDebug = false;
+	bool ShowLightFrustrumDebug = false;
+	int32 CascadeIndex = 1;
+	bool ShowShadowMapDebug = false;
+	bool SquareShadowBox = false;
+	bool ShowCascade[4] = { true, true, true, true };
+	bool ToggleShadowView = false;
+	bool ShouldUpdate = false;
 
 private:
 	uint32 ShadowMapSSBO;

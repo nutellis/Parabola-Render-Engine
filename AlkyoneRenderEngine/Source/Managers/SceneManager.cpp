@@ -6,7 +6,7 @@
 #include <Components/RenderActor.h>
 #include <Components/LightComponents/DirectionalLightComponent.h>
 #include <Components/CameraComponents/Camera.h>
-#include <Components/RenderComponents/StaticMeshComponent.h>
+#include <Components/RenderComponents/StaticMeshGroup.h>
 #include <Components/StaticMesh.h>
 #include <Components/Colliders/AxisAlignedBoundingBox.h>
 
@@ -64,6 +64,8 @@ void GSceneManager::Init()
 
 	ActiveScene->InitScene();
 
+	ActiveScene->SortScene();
+
 	//Root = new Octree(NULL);
 	//MaxDepth = 6;
 
@@ -113,7 +115,7 @@ void GSceneManager::DrawSceneGraph()
 	window_flags |= ImGuiWindowFlags_NoScrollbar;
 
 	static RRenderActor* selectedIndex = nullptr;
-	static PStaticMesh* selectedMesh = nullptr;
+	static RStaticMesh* selectedMesh = nullptr;
 	static bool useUniformScaling = true;
 	static bool useRelativeTranslation = true;
 	ImGui::Begin("SceneGraph", 0, window_flags);
@@ -164,15 +166,17 @@ void GSceneManager::DrawSceneGraph()
 						ImGui::SameLine();
 						ImGui::Checkbox("Uniform Scaling", &useUniformScaling);
 						if (selectedIndex->ActorType == EntityType::LIGHT) {
+							if (ImGui::InputFloat3("Light Direction", &selectedIndex->Light->LightDirection[0], "%.3f")) {
+								selectedIndex->Light->SetDirection();
+							}
 							if (ImGui::SliderFloat("Azimuth", &selectedIndex->Light->Azimuth, 0.00f, 360.0f, "%.1f")) {
 								selectedIndex->Light->SetDirection();
 							}
 							if (ImGui::SliderFloat("Zenith", &selectedIndex->Light->Zenith, 0.10f, 120.0f, "%.1f")) {
 								selectedIndex->Light->SetDirection();
 							}
-							if (ImGui::InputFloat("By Pass", &selectedIndex->Light->Intensity, ImGuiInputTextFlags_EnterReturnsTrue)) {
-								//selectedIndex->SetRotation(LocalRotation);
-							}
+							ImGui::SliderFloat("Light Distance", &selectedIndex->Light->LightDistance, 15.0f, 120.0f, "%.1f");
+
 						}
 						if (selectedIndex->ActorType == EntityType::CAMERA) {
 							PCameraActor* Camera = static_cast<PCameraActor*>(selectedIndex);
@@ -199,7 +203,7 @@ void GSceneManager::DrawSceneGraph()
 					if (selectedIndex->ActorType == MODEL && selectedIndex->StaticMesh != nullptr) {
 						if (ImGui::BeginTabItem("Meshes"))
 						{
-							PStaticMesh* ReturnedValue = RecurseActorsMeshes(selectedIndex);
+							RStaticMesh* ReturnedValue = RecurseActorsMeshes(selectedIndex);
 							if (ReturnedValue != nullptr) {
 								selectedMesh = ReturnedValue;
 							}
@@ -279,13 +283,13 @@ RRenderActor* GSceneManager::RecurseSceneChildren(RRenderActor* Root) {
 	return SelectedNode;
 }
 
-PStaticMesh* GSceneManager::RecurseActorsMeshes(RRenderActor* Root) {
-	PStaticMesh* SelectedNode = nullptr;
+RStaticMesh* GSceneManager::RecurseActorsMeshes(RRenderActor* Root) {
+	RStaticMesh* SelectedNode = nullptr;
 
 	ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
 	if (ImGui::TreeNodeEx((void*)(intptr_t)0, node_flags | ImGuiTreeNodeFlags_DefaultOpen, Root->ObjectName.c_str()))
 	{
-		TArray<PStaticMesh*> Meshes = Root->StaticMesh->Meshes;
+		TArray<RStaticMesh*> Meshes = Root->StaticMesh->Meshes;
 		for (int i = 0; i < Meshes.Size(); i++)
 		{
 			node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;

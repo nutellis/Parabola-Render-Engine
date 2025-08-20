@@ -1,6 +1,6 @@
 #include <Components/Colliders/AxisAlignedBoundingBox.h>
 #include <Core/RenderCore.h>
-#include <Components/RenderComponents/StaticMeshComponent.h>
+#include <Components/RenderComponents/StaticMeshGroup.h>
 #include <Managers/ShaderManager.h>
 #include <Components/Shader.h>
 

@@ -73,9 +73,10 @@ uniform vec3 viewSpaceLightPosition;
 uniform vec3 viewSpaceLightDir;
 
 ///////////////////////////////////////////////////////////////////////////////
-//SSAO
+//AO
 ///////////////////////////////////////////////////////////////////////////////
-uniform int enableSSAO = 0;
+uniform int enableAO = 0;
+uniform int debugAO = 0;
 layout(binding = 16) uniform sampler2D ssaoTexture;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -398,9 +399,13 @@ void main()
 
 	float visibility = 1.0;
 	float ssao = 1.0;
-    if (enableSSAO == 1) {
+    if (enableAO == 1) {
 		ssao = texture(ssaoTexture, gl_FragCoord.xy / textureSize(ssaoTexture, 0).xy).r; // Fetch SSAO value
-    }
+		if(debugAO == 1) {
+			fragmentColor = vec4(vec3(ssao), 1.0);
+			return; // early out
+		}
+	}
 	vec3 wo = -normalize(viewSpacePosition);
 
 	vec3 n = normalize(viewSpaceNormal);
@@ -441,7 +446,7 @@ void main()
 	vec3 shading = direct_illumination_term +  indirect_illumination_term + emission_term; 
 	
 	//fragmentColor = vec4(vec3(ssao), 1.0);
-	fragmentColor = vec4(vec3(shading), 1.0);
+	fragmentColor = vec4(vec3(shading), texture(colorMap, texCoord).a);
 	
 	return;
 }

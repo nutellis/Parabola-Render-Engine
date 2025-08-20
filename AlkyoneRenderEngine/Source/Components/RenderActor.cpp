@@ -1,11 +1,12 @@
 #include <Components\RenderActor.h>
-#include <Components\RenderComponents\StaticMeshComponent.h>
+#include <Components\RenderComponents\StaticMeshGroup.h>
 #include <ParabolaMath.h>
 #include <Components/CameraComponents/Camera.h>
 #include <Components/LightComponents/DirectionalLightComponent.h>
 #include <Components/StaticMesh.h>
 #include <Components/Colliders/BoundingBox.h>
 #include <Components/Colliders/BoundingHelper.h>
+#include <Components/Material.h>
 #include <RenderHelper.h>
 
 RRenderActor::RRenderActor()
@@ -27,7 +28,7 @@ RRenderActor::RRenderActor(std::string NodeName): ObjectName(NodeName)
 void RRenderActor::AddLight()
 {
 
-    //StaticMesh = ObjectInitializer::CreateSubObject<PStaticMeshComponent>("Assets/ball.asset", this);//new PStaticMeshComponent("ball.asset", RootComponent, false);
+    //StaticMesh = ObjectInitializer::CreateSubObject<RStaticMeshGroup>("Assets/ball.asset", this);//new RStaticMeshGroup("ball.asset", RootComponent, false);
     
     Light = new PDirectionalLightComponent(this);
 
@@ -36,7 +37,7 @@ void RRenderActor::AddLight()
 
 void RRenderActor::AddMesh(const char* path)
 {
-    StaticMesh = new PStaticMeshComponent(this, path);
+    StaticMesh = new RStaticMeshGroup(this, path);
 
     ActorType = EntityType::MODEL;
 }
@@ -176,7 +177,7 @@ void RRenderActor::SetupModelMatrix() {
 void RRenderActor::UpdateWorldBoundingBox() {
     SetupModelMatrix();
 
-    for (PStaticMesh* Mesh : StaticMesh->Meshes) {
+    for (RStaticMesh* Mesh : StaticMesh->Meshes) {
         if (Mesh->WorldBoundingBox == nullptr) {
             Mesh->WorldBoundingBox = new AABB();
         }

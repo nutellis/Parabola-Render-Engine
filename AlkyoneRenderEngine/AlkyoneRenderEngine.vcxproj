@@ -178,8 +178,8 @@
     <ClCompile Include="Source\Components\LightComponents\PointLightComponent.cpp" />
     <ClCompile Include="Source\Utilities\PrimitiveShapes.cpp" />
     <ClCompile Include="Source\Components\CascadeShadowMap.cpp" />
-    <ClCompile Include="Source\Components\RenderComponents\StaticMeshComponent.cpp" />
-    <ClCompile Include="Dependencies\Includes\Public\Components\RenderComponents\StaticMeshComponent.h" />
+    <ClCompile Include="Source\Components\RenderComponents\StaticMeshGroup.cpp" />
+    <ClCompile Include="Dependencies\Includes\Public\Components\RenderComponents\StaticMeshGroup.h" />
     <ClCompile Include="Source\Components\Colliders\AxisAlignedBoundingBox.cpp" />
     <ClCompile Include="Source\Components\Camera.cpp" />
     <ClCompile Include="Source\Components\Clock.cpp" />

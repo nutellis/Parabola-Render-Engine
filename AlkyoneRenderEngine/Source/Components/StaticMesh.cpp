@@ -3,15 +3,15 @@
 #include <Components/Colliders/BoundingBox.h>
 #include <Components/Colliders/AxisAlignedBoundingBox.h>
 
-PStaticMesh::PStaticMesh() : Vertices(),
+RStaticMesh::RStaticMesh() : Vertices(),
 Indices()
 {
 	LocalBoundingBox = new AABB();
 }
 
 // Copy constructor
-PStaticMesh::PStaticMesh(const PStaticMesh& Other)
-	: PDrawableMesh(Other),
+RStaticMesh::RStaticMesh(const RStaticMesh& Other)
+	: RDrawableMesh(Other),
 	Vertices(Other.Vertices),
 	Indices(Other.Indices),
 	MaterialIndex(Other.MaterialIndex),
@@ -34,8 +34,8 @@ PStaticMesh::PStaticMesh(const PStaticMesh& Other)
 }
 
 // Move constructor
-PStaticMesh::PStaticMesh(PStaticMesh&& Other) noexcept
-	: PDrawableMesh(Utilities::Move(Other)),
+RStaticMesh::RStaticMesh(RStaticMesh&& Other) noexcept
+	: RDrawableMesh(Utilities::Move(Other)),
 	Vertices(Utilities::Move(Other.Vertices)),
 	Indices(Utilities::Move(Other.Indices)),
 	MaterialIndex(Other.MaterialIndex),
@@ -51,7 +51,7 @@ PStaticMesh::PStaticMesh(PStaticMesh&& Other) noexcept
 
 
 
-PStaticMesh::PStaticMesh(Asset* Mesh)
+RStaticMesh::RStaticMesh(Asset* Mesh)
 	: Vertices(), Indices()
 {
 	if (!Mesh->isEmpty())
@@ -61,7 +61,7 @@ PStaticMesh::PStaticMesh(Asset* Mesh)
 	}
 }
 
-PStaticMesh::PStaticMesh(const char * filepath) : Vertices(), Indices()
+RStaticMesh::RStaticMesh(const char * filepath) : Vertices(), Indices()
 {
 	//ObjLoader load = ObjLoader();
 	//FbxLoader load = FbxLoader();
@@ -88,7 +88,7 @@ PStaticMesh::PStaticMesh(const char * filepath) : Vertices(), Indices()
 
 }
 
-PStaticMesh::PStaticMesh(const VertexArray & vertex, IndexArray & index) :
+RStaticMesh::RStaticMesh(const VertexArray & vertex, IndexArray & index) :
 	Vertices(vertex),
 	Indices(index)
 {
@@ -102,7 +102,7 @@ PStaticMesh::PStaticMesh(const VertexArray & vertex, IndexArray & index) :
 
 }
 
-PStaticMesh::~PStaticMesh()
+RStaticMesh::~RStaticMesh()
 {
 	//Vertices.~TArray();
 	//Indices.~TArray();
@@ -110,12 +110,12 @@ PStaticMesh::~PStaticMesh()
 
 
 // Copy assignment operator
-PStaticMesh& PStaticMesh::operator=(const PStaticMesh& Other)
+RStaticMesh& RStaticMesh::operator=(const RStaticMesh& Other)
 {
 	if (this == &Other)
 		return *this;
 
-	PDrawableMesh::operator=(Other);
+	RDrawableMesh::operator=(Other);
 	Vertices = Other.Vertices;
 	Indices = Other.Indices;
 	MaterialIndex = Other.MaterialIndex;
@@ -139,12 +139,12 @@ PStaticMesh& PStaticMesh::operator=(const PStaticMesh& Other)
 }
 
 // Move assignment operator
-PStaticMesh & PStaticMesh::operator=(PStaticMesh&& Other) noexcept
+RStaticMesh & RStaticMesh::operator=(RStaticMesh&& Other) noexcept
 {
 	if (this == &Other)
 		return *this;
 
-	PDrawableMesh::operator=(Utilities::Move(Other));
+	RDrawableMesh::operator=(Utilities::Move(Other));
 	Vertices = Utilities::Move(Other.Vertices);
 	Indices = Utilities::Move(Other.Indices);
 	MaterialIndex = Other.MaterialIndex;
@@ -163,7 +163,7 @@ PStaticMesh & PStaticMesh::operator=(PStaticMesh&& Other) noexcept
 	return *this;
 }
 
-void PStaticMesh::SetupBuffers()
+void RStaticMesh::SetupBuffers()
 {
 	//VAO.CreateArray();
 	//VBO.CreateBuffer(Vertices.SizeOf(), Vertices.Begin());
@@ -197,7 +197,7 @@ void PStaticMesh::SetupBuffers()
 
 }
 
-void PStaticMesh::Deserialize(const char * path)
+void RStaticMesh::Deserialize(const char * path)
 {
 	int i = 0;
 
@@ -230,7 +230,7 @@ void PStaticMesh::Deserialize(const char * path)
 
 }
 
-//PStaticMesh::PStaticMesh(UArchive &Ar) {
+//RStaticMesh::RStaticMesh(UArchive &Ar) {
 //	//vertices = VertexArray(0);
 //	//indices = IndexArray(0);
 //
@@ -241,7 +241,7 @@ void PStaticMesh::Deserialize(const char * path)
 //}
 
 
-//PStaticMesh::PStaticMesh(vector<Vertex> vertices, vector<uint32> indices, vector<RTexture> textures)
+//RStaticMesh::RStaticMesh(vector<Vertex> vertices, vector<uint32> indices, vector<RTexture> textures)
 //{
 //	this->vertices = vertices;
 //	this->indices = indices;
@@ -252,7 +252,7 @@ void PStaticMesh::Deserialize(const char * path)
 //
 //}
 
-//void PStaticMesh::Draw(Shader shader)
+//void RStaticMesh::Draw(Shader shader)
 //{
 ///*
 //	// bind appropriate textures
@@ -291,7 +291,7 @@ void PStaticMesh::Deserialize(const char * path)
 //	//glActiveTexture(GL_TEXTURE0);
 //}
 //
-//void PStaticMesh::setupStaticMesh()
+//void RStaticMesh::setupStaticMesh()
 //{
 //	// create buffers/arrays
 //	glGenVertexArrays(1, &VAO);
@@ -337,7 +337,7 @@ void PStaticMesh::Deserialize(const char * path)
 //}
 
 //
-//void PStaticMesh::Deserialize(const char* path) {
+//void RStaticMesh::Deserialize(const char* path) {
 //
 //	int i = 0;
 //
@@ -367,7 +367,7 @@ void PStaticMesh::Deserialize(const char * path)
 //}
 //
 //
-//void PStaticMesh::Deserialize(UArchive &Ar) {
+//void RStaticMesh::Deserialize(UArchive &Ar) {
 //
 //	uint32 i = 0;
 //

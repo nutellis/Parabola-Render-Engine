@@ -12,17 +12,17 @@
 
 #include <Utilities/AssetLoader.h>
 
-class PStaticMeshComponent;
+class RStaticMeshGroup;
 class PAxisAlignedBoundingBox;
 
-class PDrawableMesh 
+class RDrawableMesh 
 {
 public:
 	std::string Name;
 
 };
 
-class PStaticMesh : public PDrawableMesh
+class RStaticMesh : public RDrawableMesh
 {
 public:
 	VertexArray Vertices;
@@ -36,25 +36,26 @@ public:
 	PAxisAlignedBoundingBox * WorldBoundingBox;
 
 	bool IsCastingShadows = true;
+	bool HasTransparency = true;
 
 public:
 	
-	PStaticMesh();
+	RStaticMesh();
 
-	PStaticMesh(const PStaticMesh& other);
+	RStaticMesh(const RStaticMesh& other);
 
-	PStaticMesh(PStaticMesh&& other) noexcept;
+	RStaticMesh(RStaticMesh&& other) noexcept;
 
-	PStaticMesh(Asset* Mesh);
+	RStaticMesh(Asset* Mesh);
 
-	PStaticMesh(const char * filepath);
+	RStaticMesh(const char * filepath);
 
-	PStaticMesh(const VertexArray & vertex, IndexArray & index);
+	RStaticMesh(const VertexArray & vertex, IndexArray & index);
 
-	~PStaticMesh();
+	~RStaticMesh();
 
-	PStaticMesh& operator=(const PStaticMesh& Other);
-	PStaticMesh& operator=(PStaticMesh&& Other) noexcept;
+	RStaticMesh& operator=(const RStaticMesh& Other);
+	RStaticMesh& operator=(RStaticMesh&& Other) noexcept;
 
 	void SetupBuffers();
 
@@ -65,15 +66,15 @@ public:
 
 	//IndexBufferObject IBuffer;
 	
-	//PMaterial *materials;
+	//RMaterial *materials;
 	//vector<RTexture> textures;
 	
 
 	/*  Functions  */
 	// constructor
-	//PStaticMesh(UArchive & Ar);
+	//RStaticMesh(UArchive & Ar);
 	
-	//PStaticMesh(vector<Vertex> vertices, vector<uint32> indices, vector<RTexture> textures);
+	//RStaticMesh(vector<Vertex> vertices, vector<uint32> indices, vector<RTexture> textures);
 	// render the StaticMesh
 	//void Draw(Shader shader);
 

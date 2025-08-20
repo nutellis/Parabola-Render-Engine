@@ -1,6 +1,6 @@
 #include <Components/Colliders/BoundingBox.h>
 #include <Core/RenderCore.h>
-#include <Components/RenderComponents/StaticMeshComponent.h>
+#include <Components/RenderComponents/StaticMeshGroup.h>
 #include <Managers/ShaderManager.h>
 #include <Components/Shader.h>
 
@@ -16,7 +16,7 @@ PBoundingBox::PBoundingBox(const PBoundingBox& Other) :Min(Other.Min), Max(Other
 {
 	Corners = Other.Corners;
 	if (Other.DebugFrustrumMesh)
-		DebugFrustrumMesh = new PStaticMeshComponent(*Other.DebugFrustrumMesh);  // deep copy
+		DebugFrustrumMesh = new RStaticMeshGroup(*Other.DebugFrustrumMesh);  // deep copy
 	else
 		DebugFrustrumMesh = nullptr;
 }
@@ -35,7 +35,7 @@ PBoundingBox::PBoundingBox(TArray<Vector3f> InCorners)
 {
 	CalculateFromCorners(InCorners);
 	DebugFrustrumMesh = nullptr;
-	//DebugFrustrumMesh = new PStaticMeshComponent(nullptr);
+	//DebugFrustrumMesh = new RStaticMeshGroup(nullptr);
 	//if (DebugFrustrumMesh != nullptr) {
 	//	DebugFrustrumMesh->Vertices = TArray<VertexFormat>(24);
 	//}
@@ -45,7 +45,7 @@ PBoundingBox::PBoundingBox(Vector3f Min, Vector3f Max) : Min(Min), Max(Max)
 {
 	Corners = TArray<Vector3f>(8);
 	DebugFrustrumMesh = nullptr;
-	//DebugFrustrumMesh = new PStaticMeshComponent(nullptr);
+	//DebugFrustrumMesh = new RStaticMeshGroup(nullptr);
 	//if (DebugFrustrumMesh != nullptr) {
 	//	DebugFrustrumMesh->Vertices = TArray<VertexFormat>(24);
 	//}
@@ -203,7 +203,7 @@ void PBoundingBox::SetupDebugFrustrumPlanes()
 void PBoundingBox::RenderDebugBoundingBox(int RenderOption, Vector4f Colour, Matrix4f Projection, Matrix4f View, Matrix4f Model)
 {
 	if (DebugFrustrumMesh == nullptr) {
-		DebugFrustrumMesh = new PStaticMeshComponent(nullptr);
+		DebugFrustrumMesh = new RStaticMeshGroup(nullptr);
 		if (DebugFrustrumMesh != nullptr) {
 			DebugFrustrumMesh->Vertices = TArray<VertexFormat>(24);
 		}

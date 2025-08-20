@@ -34,25 +34,16 @@ public:
 
 	//Cascade Shadow Mapping
 	bool UseShadows = true;
-	bool ShowCascadeFrustrumDebug = false;
-	bool ShowCascadeBoundingDebug = false;
-	bool SoloCascadeDebug = false;
-	bool ShowLightFrustrumDebug = false;
-	int32 CascadeIndex = 1;
-	bool ShowShadowMapDebug = false;
-	bool SquareShadowBox = false;
-	bool ShowCascade[4] = { true, true, true, true };
-	bool ToggleShadowView = false;
 	int32 NumCascades = 4;
-	float Lambda = 0.25;
+
 
 	//Percentage-Closer Soft Shadows
 	bool UsePCSS = false;
 	float LightSize = 0.1f;
 
 	// SSAO
-	bool UseSSAO = false;
-	int32 SSAOBlurFilter = 3;
+	bool UseAO = false;
+	bool DebugAO = false;
 
 	int32 TargetToRender = 100;
 

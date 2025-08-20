@@ -49,6 +49,7 @@ public:
 	float Bias = 0.5f;
 	float Exponent = 2.0f;
 	float Threshold = 1.0;
+	int32 BlurFilter = 3;
 
 	TArray<Vector3f> Kernel;
 

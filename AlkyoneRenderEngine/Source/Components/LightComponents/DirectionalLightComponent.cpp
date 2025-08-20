@@ -78,3 +78,16 @@ void PDirectionalLightComponent::SetDirection()
 
 	LightDirection = Normalize(Vector4f(X, Y, Z, 0.0));
 }
+
+void PDirectionalLightComponent::UpdateLight(Vector3f Center)
+{
+	// Update the LightViewMatrix and LightProjectionMatrix // (Center.X, 0.0, Center.Z) 
+	LightViewMatrix = LookAt(Vector3f::ZERO + LightDirection * LightDistance, Vector3f::ZERO, Vector3f(0.0f, 1.0f, 0.0f));
+
+//	float Height = 2 * SMath::Tan(FieldOfView * 0.5f) * ZFar;
+	//float Width = Height * AspectRation;
+
+	//LightProjectionMatrix = OrthoCentered(Width, Height, ZNear, ZFar);
+
+	//LightViewProjectionMatrix = LightProjectionMatrix * LightViewMatrix;
+}

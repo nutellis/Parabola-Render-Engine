@@ -40,6 +40,9 @@ namespace BoundingHelper {
 		}
 		NewAABB.GetCornersFromMinMax();
 		NewAABB.Center = NewAABB.Max.MidPoint(NewAABB.Min);
+		NewAABB.Extents.X = NewAABB.Max.X - NewAABB.Min.X;
+		NewAABB.Extents.Y = NewAABB.Max.Y - NewAABB.Min.Y;
+
 
 		return NewAABB;
 	}

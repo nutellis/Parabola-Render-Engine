@@ -13,7 +13,7 @@
 //public:
 //	/*  Model Data */
 //	vector<RTexture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
-//	vector<PStaticMesh> meshes;
+//	vector<RStaticMesh> meshes;
 //	string directory;
 //	bool gammaCorrection;
 //

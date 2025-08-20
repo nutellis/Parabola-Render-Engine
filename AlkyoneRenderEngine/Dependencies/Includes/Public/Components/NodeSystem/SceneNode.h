@@ -36,7 +36,7 @@ public:
 	SceneNode(const char* NodeName);
 	// SceneNode(SceneNode* Parent, const TArray<SceneNode*>& Children) : Node("test", true), Parent(Parent), Children(Children)  {}
 	
-	/*SceneNode(SceneNode* Parent, const Vector3f& Position, const Vector3f& Rotation, const Vector3f& Scale, const TArray<SceneNode*>& Children, PStaticMesh* Mesh)
+	/*SceneNode(SceneNode* Parent, const Vector3f& Position, const Vector3f& Rotation, const Vector3f& Scale, const TArray<SceneNode*>& Children, RStaticMesh* Mesh)
 		: Parent(Parent), Position(Position), Rotation(Rotation), Scale(Scale), Children(Children), Mesh(Mesh) {}
 	*/
 	~SceneNode();

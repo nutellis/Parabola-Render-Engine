@@ -9,7 +9,7 @@
 #include "VertexBuffers.h"
 
 
-class PStaticMeshComponent;
+class RStaticMeshGroup;
 class PDirectionalLightComponent;
 class PCameraComponent;
 
@@ -88,7 +88,7 @@ public:
 	//children vector
 	TArray<RRenderActor*> Children;
 
-	PStaticMeshComponent* StaticMesh;
+	RStaticMeshGroup* StaticMesh;
 
 	PDirectionalLightComponent* Light;
 
@@ -103,6 +103,7 @@ public:
 	Vector3f ObjectScale;
 
 	bool IsMovable;
+	bool HasTransparency = false;
 };
 
 class RQuadRenderActor {

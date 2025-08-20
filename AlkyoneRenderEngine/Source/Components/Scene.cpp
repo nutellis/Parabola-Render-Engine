@@ -4,7 +4,7 @@
 #include <Components/CameraComponents/Camera.h>
 #include <Components/Colliders/IntersectionTests.h>
 #include <Components/StaticMesh.h>
-#include <Components/RenderComponents/StaticMeshComponent.h>
+#include <Components/RenderComponents/StaticMeshGroup.h>
 #include <Components/Colliders/AxisAlignedBoundingBox.h>
 #include <Components/LightComponents/DirectionalLightComponent.h>
 
@@ -46,7 +46,7 @@ void Scene::SortChild(RRenderActor* Child) {
 		SceneLights.PushBack(Child);
 		break;
 	case MODEL:
-		SceneMeshes.PushBack(Child);
+	//	SceneMeshes.PushBack(Child);
 		break;
 	default:
 		break;
@@ -83,11 +83,13 @@ void Scene::InitScene() {
 
 	RRenderActor* sponza = new RRenderActor("Scene");
 	this->AddChild(sponza);
-	sponza->AddMesh("Assets/city test/city3.obj");
+	sponza->AddMesh("Assets/city test/city_big_1.obj");
+	
 	sponza->SetPosition(Vector3f(0.0, 0.0, 0.0));
 	sponza->SetRotation(Vector3f(0.0, 0.0, 0.0));
 	sponza->SetScale(1.0f);
 
+	RegisterMesh(sponza->StaticMesh);
 	SortChild(sponza);
 	
 	/*RRenderActor* landingpad1 = new RRenderActor("landingpad_1");
@@ -162,10 +164,40 @@ void Scene::InitScene() {
 	SortChild(aMesh);*/
 }
 
+
+void Scene::SortScene() {
+	//// sort scene objects with transparent objects last
+	//for (RRenderActor* Actor : SceneMeshes) {
+	//	if (Actor->HasTransparency == true) {
+	//		for (int i = SceneMeshes.Size() - 1; i >= 0; i--) {
+	//			if (SceneMeshes[i]->HasTransparency == false) {
+	//				Utilities::Swap(Actor, SceneMeshes[i]);
+	//				break;
+	//			}
+	//		}
+	//	}
+	//}
+
+}
+
 void Scene::ResetScene() {
 	// Root->RemoveAllChildren();
 	Root = nullptr;
 }
+
+void Scene::RegisterMeshes(RStaticMeshGroup* NewMeshGroup)
+{
+	if (NewMeshGroup != nullptr) {
+		//check if has transparency
+		if (NewMeshGroup->HasTransparency) {
+			
+		}
+		else {
+			
+		}
+	}
+}
+
 
 PCameraActor* Scene::GetActiveCamera()
 {
@@ -199,8 +231,8 @@ TArray<PAxisAlignedBoundingBox> Scene::GetObjectsByIntersection(PAxisAlignedBoun
 {
 	TArray<PAxisAlignedBoundingBox> ObjectsToReturn = TArray<PAxisAlignedBoundingBox>(100) ;
 	for (RRenderActor * Actor : SceneMeshes) {
-		TArray<PStaticMesh*> Meshes = Actor->StaticMesh->Meshes;
-		for (PStaticMesh * Mesh : Meshes) {
+		TArray<RStaticMesh*> Meshes = Actor->StaticMesh->Meshes;
+		for (RStaticMesh * Mesh : Meshes) {
 			if (IntersectionTest(Mesh->WorldBoundingBox, BoxToCheck)) {
 				ObjectsToReturn.PushBack(*Mesh->WorldBoundingBox);
 				//Mesh->WorldBoundingBox->DebugColour = Vector3f(0.0, 1.0, 0.0);
@@ -217,8 +249,8 @@ TArray<PAxisAlignedBoundingBox> Scene::GetShadowCasters(PAxisAlignedBoundingBox*
 {
 	TArray<PAxisAlignedBoundingBox> ObjectsToReturn = TArray<PAxisAlignedBoundingBox>(SceneMeshes.Size());
 	for (RRenderActor* Actor : SceneMeshes) {
-		TArray<PStaticMesh*> Meshes = Actor->StaticMesh->Meshes;
-		for (PStaticMesh * Mesh : Meshes) {
+		TArray<RStaticMesh*> Meshes = Actor->StaticMesh->Meshes;
+		for (RStaticMesh * Mesh : Meshes) {
 			if (Mesh->IsCastingShadows && SweepIntersectionTest(Mesh->WorldBoundingBox, BoxToCheck, SceneLights.Front()->Light->LightDirection)) {
 				//if (Mesh->LocalBoundingBox->Max.Y - Mesh->LocalBoundingBox->Min.Y > 0.8) {
 					ObjectsToReturn.PushBack(*Mesh->WorldBoundingBox);

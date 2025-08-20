@@ -120,9 +120,15 @@ void GRenderManager::Render(double DeltaTime)
 	ActiveCamera->ControlCamera(1366, 768);
 	RenderCamera->ControlCamera(1366, 768);
 
+
 	//TODO: this should be moved inside a generic camera update
 	TArray<PAxisAlignedBoundingBox> Receivers = gSceneManager.GetActiveScene()->GetObjectsByIntersection(RenderCamera->Camera->Frustrum->BoundingBox);
 	RenderCamera->Camera->AdjustPlanesBasedOnObjects(Receivers);
+
+	//TODO: move this somewhere better
+	//Update directional light
+	PDirectionalLightComponent* Light = ActiveScene->SceneLights.Front()->Light;
+	Light->UpdateLight(RenderCamera->Camera->Frustrum->FrustrumBox->Center);
 
 	ShadowMapPass(RenderCamera->Camera);
 
@@ -130,7 +136,7 @@ void GRenderManager::Render(double DeltaTime)
 
 	RenderPass(ActiveCamera->Camera);
 
-	PDirectionalLightComponent * light = ActiveScene->SceneLights.Front()->Light;
+
 	int bitMask = Options.ShowEdges << 1 | Options.ShowPlanes;
 	if (Options.ShowCameraFrustrum) {
 		
@@ -141,13 +147,13 @@ void GRenderManager::Render(double DeltaTime)
 		RenderCamera->Camera->Frustrum->BoundingBox->RenderDebugBoundingBox(bitMask, Vector4f(1.0, 1.0, 1.0, 0.2), ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
 	}
 
-	if (Options.NumCascades < Options.CascadeIndex) {
-		Options.CascadeIndex = Options.NumCascades;
+	if (ShadowMap->NumCascades < ShadowMap->CascadeIndex) {
+		ShadowMap->CascadeIndex = ShadowMap->NumCascades;
 	}
-	if (Options.ShowCascadeFrustrumDebug) {
-		if (Options.SoloCascadeDebug) {
-			ShadowMap->Cascades[Options.CascadeIndex - 1]->Frustrum->FrustrumBox->RenderDebugBoundingBox(
-				bitMask, ShadowMap->Cascades[Options.CascadeIndex - 1]->CascadeDebugColour, ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
+	if (ShadowMap->ShowCascadeFrustrumDebug) {
+		if (ShadowMap->SoloCascadeDebug) {
+			ShadowMap->Cascades[ShadowMap->CascadeIndex - 1]->Frustrum->FrustrumBox->RenderDebugBoundingBox(
+				bitMask, ShadowMap->Cascades[ShadowMap->CascadeIndex - 1]->CascadeDebugColour, ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
 		}
 		else {
 			for (auto& Cascade : ShadowMap->Cascades) {
@@ -156,10 +162,10 @@ void GRenderManager::Render(double DeltaTime)
 		}
 	}
 
-	if (Options.ShowCascadeBoundingDebug) {
-		if (Options.SoloCascadeDebug) {
-			ShadowMap->Cascades[Options.CascadeIndex - 1]->Frustrum->BoundingBox->RenderDebugBoundingBox(
-				bitMask, ShadowMap->Cascades[Options.CascadeIndex - 1]->CascadeDebugColour, ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
+	if (ShadowMap->ShowCascadeBoundingDebug) {
+		if (ShadowMap->SoloCascadeDebug) {
+			ShadowMap->Cascades[ShadowMap->CascadeIndex - 1]->Frustrum->BoundingBox->RenderDebugBoundingBox(
+				bitMask, ShadowMap->Cascades[ShadowMap->CascadeIndex - 1]->CascadeDebugColour, ActiveCamera->Camera->Projection, ActiveCamera->Camera->View);
 		}
 		else {
 			for (auto& Cascade : ShadowMap->Cascades) {
@@ -168,7 +174,7 @@ void GRenderManager::Render(double DeltaTime)
 		}
 	}
 	
-	if (Options.ShowLightFrustrumDebug) {
+	if (ShadowMap->ShowLightFrustrumDebug) {
 		static TArray<Vector4f> ndcCorners;
 		ndcCorners = {
 		{-1, 1, -1, 1},
@@ -184,7 +190,7 @@ void GRenderManager::Render(double DeltaTime)
 		PFrustrum LightFrustrum = PFrustrum();
 		TArray<Vector3f> viewCorners;
 		for (int i = 0; i < 8; ++i) {
-			Vector4f viewPos = Inverse(ShadowMap->Cascades[Options.CascadeIndex -1]->CascadeCPVMatrix) * ndcCorners[i];
+			Vector4f viewPos = Inverse(ShadowMap->Cascades[ShadowMap->CascadeIndex -1]->CascadePVMatrix) * ndcCorners[i];
 			viewCorners.PushBack(Vector3f(viewPos) / viewPos.W);  // Perspective divide (though ortho w == 1)
 		}
 		LightFrustrum.FrustrumBox->Corners = viewCorners;
@@ -240,7 +246,7 @@ void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 		ShadowMap->Init();
 
 	}
-	else if (ShadowMap->NumCascades != Options.NumCascades) {
+	else if (ShadowMap->ShouldUpdate) {
 		delete ShadowMap;
 
 		ShadowMap = new RCascadeShadowMap(
@@ -249,8 +255,6 @@ void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 			Camera->Frustrum->Ratio,
 			Camera->Frustrum->NearPlane,
 			Camera->Frustrum->FarPlane);
-
-		//set shader
 
 		ShadowMap->Init();
 	}
@@ -268,7 +272,7 @@ void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 			i,
 			Camera,
 			ActiveScene->SceneLights.Front()->Light,
-			Options.SquareShadowBox
+			ShadowMap->SquareShadowBox
 		);
 
 		FBORenderTarget* ShadowMapRenderTarget = ShadowMap->GetCascade(i)->CascadeFBO;
@@ -390,7 +394,7 @@ void GRenderManager::AmbientOcclusionPass(PCameraComponent* Camera) {
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	AOBlurShader->SetInt("filterSize", AmbientOcclusion->FilterSizes[Options.SSAOBlurFilter - 1]);
+	AOBlurShader->SetInt("filterSize", AmbientOcclusion->FilterSizes[AmbientOcclusion->BlurFilter - 1]);
 
 	glActiveTexture(GL_TEXTURE11);
 	glBindTexture(GL_TEXTURE_2D, AOOutputRenderTarget->ColourAttachments[0]->TextureID);
@@ -419,9 +423,10 @@ void GRenderManager::RenderPass(PCameraComponent* Camera)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		DrawSkyBox(Camera);
-
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		Shader* RenderShader;
-		if (Options.ShowShadowMapDebug) {
+		if (ShadowMap->ShowShadowMapDebug) {
 			
 			RenderShader = gShaderManager.GetShader("CSM_Debug");
 		}
@@ -441,15 +446,16 @@ void GRenderManager::RenderPass(PCameraComponent* Camera)
 		// Shader Options
 		RenderShader->SetBool("usePCSS", Options.UsePCSS);
 		RenderShader->SetFloat("wLight", Options.LightSize);
-		RenderShader->SetBool("enableSSAO", Options.UseSSAO);
+		RenderShader->SetBool("enableAO", Options.UseAO);
 		RenderShader->SetBool("enableCSM", Options.UseShadows);
+		RenderShader->SetBool("debugAO", Options.DebugAO);
 
 		//TODO: remove this from here. change to deffered shading
 		//bind normal map 
 		glActiveTexture(GL_TEXTURE20);
 		glBindTexture(GL_TEXTURE_2D, AmbientOcclusion->AmbientOcclusionInputFBO->ColourAttachments[0]->TextureID);
 
-		if (Options.UseSSAO) {
+		if (Options.UseAO) {
 			// Bind the SSAO texture
 			glActiveTexture(GL_TEXTURE16);
 			glBindTexture(GL_TEXTURE_2D, AmbientOcclusion->AmbientOcclusionBlurFBO->ColourAttachments[0]->TextureID);
@@ -467,6 +473,8 @@ void GRenderManager::RenderPass(PCameraComponent* Camera)
 		DrawScene(RenderShader, Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
 
 		ShadowMap->CleanUp();
+
+		glDisable(GL_BLEND);
 	}
 }
 
@@ -489,7 +497,7 @@ void GRenderManager::DrawSkyBox(PCameraComponent* Camera) {
 
 void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix4f ProjectionMatrix)
 {
-	std::unordered_map<uint32, TArray<PStaticMeshComponent*>> ShaderPerMeshMap;
+	std::unordered_map<uint32, TArray<RStaticMeshGroup*>> ShaderPerMeshMap;
 
 	if (ActiveScene != nullptr) {
 
@@ -517,7 +525,7 @@ void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix
 		}
 
 		//for (int i = 0; i < VisibleMeshes.Size(); i++) {
-		//	PStaticMeshComponent * MeshToRender = VisibleMeshes[i]->StaticMesh;
+		//	RStaticMeshGroup * MeshToRender = VisibleMeshes[i]->StaticMesh;
 		//	
 		//	//TODO: for now we are using hardcoded BRDF_Default for all the meshes
 		//	if (MeshToRender != nullptr) {
@@ -528,7 +536,7 @@ void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix
 
 		//for (const auto& Pair : ShaderPerMeshMap) {
 		//	Shader* ShaderToUse = gShaderManager.GetShader(Pair.first);
-		//	TArray <PStaticMeshComponent*> MeshesToRender = Pair.second;
+		//	TArray <RStaticMeshGroup*> MeshesToRender = Pair.second;
 		//	
 		//	ShaderToUse->Enable();
 		//	//camera
@@ -623,21 +631,21 @@ void GRenderManager::DrawOptions() {
 			if (ImGui::BeginTabItem("CSM")) {
 				//Cascade Shadow Map
 				ImGui::Checkbox("Enable Shadows", &Options.UseShadows);
-				ImGui::Checkbox("CSM Debug View", &Options.ShowShadowMapDebug);
+				ImGui::Checkbox("CSM Debug View", &ShadowMap->ShowShadowMapDebug);
 				ImGui::SameLine();
-				ImGui::Checkbox("Square Box", &Options.SquareShadowBox);
-				ImGui::SliderInt("Cascades Number", &Options.NumCascades, 1, 4);
-				if (ImGui::SliderFloat("Lambda", &Options.Lambda, 0.0, 1.0)) {
-					ShadowMap->Lambda = Options.Lambda;
+				ImGui::Checkbox("Square Box", &ShadowMap->SquareShadowBox);
+				if (ImGui::SliderInt("Cascades Number", &Options.NumCascades, 1, 4)) {
+					ShadowMap->ShouldUpdate = true;
 				}
-				ImGui::Checkbox("Cascade Frustrums", &Options.ShowCascadeFrustrumDebug);
+				ImGui::SliderFloat("Lambda", &ShadowMap->Lambda, 0.0, 1.0);
+				ImGui::Checkbox("Cascade Frustrums", &ShadowMap->ShowCascadeFrustrumDebug);
 				ImGui::SameLine();
-				ImGui::Checkbox("Cascade AABB", &Options.ShowCascadeBoundingDebug);
+				ImGui::Checkbox("Cascade AABB", &ShadowMap->ShowCascadeBoundingDebug);
 				ImGui::SameLine();
-				ImGui::Checkbox("Solo", &Options.SoloCascadeDebug);
+				ImGui::Checkbox("Solo", &ShadowMap->SoloCascadeDebug);
 				ImGui::SameLine();
-				ImGui::Checkbox("Light Frustrum", &Options.ShowLightFrustrumDebug);
-				if (ImGui::SliderInt("Cascade Selected", &Options.CascadeIndex, 1, Options.NumCascades))
+				ImGui::Checkbox("Light Frustrum", &ShadowMap->ShowLightFrustrumDebug);
+				if (ImGui::SliderInt("Cascade Selected", &ShadowMap->CascadeIndex, 1, ShadowMap->NumCascades))
 
 					//for (int i = 0; i < ShadowMap->NumCascades; i++) {
 					//	std::string CascadeTitle = "CSM Level " + std::to_string(i);
@@ -652,13 +660,14 @@ void GRenderManager::DrawOptions() {
 				ImGui::EndTabItem();
 			}
 			if(ImGui::BeginTabItem("HBAO+")) {
-				//ImGui::Text("HBAO");
-				ImGui::Checkbox("Enable HBAO", &Options.UseSSAO);
-				ImGui::SliderFloat("Radius", &AmbientOcclusion->Radius, 0.0f, 10.0f);
+
+				ImGui::Checkbox("Enable HBAO", &Options.UseAO); ImGui::SameLine();
+				ImGui::Checkbox("Debug AO", &Options.DebugAO);
+				ImGui::SliderFloat("Radius", &AmbientOcclusion->Radius, 0.3f, 5.0f, "%.3f");
 				ImGui::SliderFloat("Bias", &AmbientOcclusion->Bias, 0.0f, 2.0f);
 				ImGui::SliderFloat("Exponent", &AmbientOcclusion->Exponent, 1.0f, 16.0f);
 				ImGui::SliderFloat("Threshold", &AmbientOcclusion->Threshold, 0.0f, 5.0f);
-				ImGui::SliderInt("Blur Filter size", &Options.SSAOBlurFilter, 1, 12);
+				ImGui::SliderInt("Blur Filter size", &AmbientOcclusion->BlurFilter, 1, 12);
 				ImGui::EndTabItem();
 			}
 			ImGui::EndTabBar();
@@ -708,11 +717,11 @@ void GRenderManager::DrawPreview()
 
 void GRenderManager::DrawDepthMaps() {
 	int CascadesToShow = 0;
-	for (auto& ShowCascade : Options.ShowCascade) {
+	for (auto& ShowCascade : ShadowMap->ShowCascade) {
 		if (ShowCascade)
 			CascadesToShow++;
 	}
-	CascadesToShow = CascadesToShow > Options.NumCascades ? Options.NumCascades : CascadesToShow;
+	CascadesToShow = CascadesToShow > ShadowMap->NumCascades ? ShadowMap->NumCascades : CascadesToShow;
 	if (CascadesToShow > 0) {
 		float Width = (132 * CascadesToShow) + (8 * (CascadesToShow - 1)) + (2 * ImGui::GetStyle().WindowPadding.x);
 		ImGui::SetNextWindowSize(ImVec2(Width, 168));
@@ -727,7 +736,7 @@ void GRenderManager::DrawDepthMaps() {
 		ImGui::Begin("CSM Levels", 0, window_flags);
 		{
 			for (int i = 0; i < ShadowMap->NumCascades; i++) {
-				if (Options.ShowCascade[i]) {
+				if (ShadowMap->ShowCascade[i]) {
 					uint32 Target = ShadowMap->Cascades[i]->CascadeFBO->ColourAttachments[0]->TextureID;
 					
 					ImGui::Image(

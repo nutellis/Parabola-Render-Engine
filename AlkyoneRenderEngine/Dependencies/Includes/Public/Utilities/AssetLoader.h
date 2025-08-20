@@ -23,9 +23,9 @@
 
 
 
-class PChannel;
-class PMaterial;
-class PStaticMesh;
+class RChannel;
+class RMaterial;
+class RStaticMesh;
 
 struct Asset {
 
@@ -35,8 +35,8 @@ struct Asset {
 	const char* name;
 	TArray<VertexFormat> Vertices;
 	IndexArray Indices;
-	TArray<PMaterial *> Materials;
-	TArray<PStaticMesh *> Meshes;
+	TArray<RMaterial *> Materials;
+	TArray<RStaticMesh *> Meshes;
 	IndexArray MaterialIndexMapping;
 
 	//AxisAlignedBoundingBox BoundingBox;
@@ -46,7 +46,7 @@ struct Asset {
 	//std::vector<int64> indices;
 	//std::vector<VertexFormat2> Vertex;
 
-	//PMaterial *material;
+	//RMaterial *material;
 };
 
 //TArray<Vector3f> RawPositions;
@@ -57,7 +57,7 @@ struct Asset {
 //  std::vector<VertexFormat2> s_Vertices;
 //  std::vector<int64> s_Indices;
 
-//  PMaterial *mat;
+//  RMaterial *mat;
 
 //std::unordered_map<VertexFormat, uint32> s_IndexMapping;
 
@@ -147,9 +147,9 @@ private:
 	//Vector3f FetchBinormal(FbxMesh* mesh, int controlPointIndex, int gVertexCounter);
 	//Vector3f FetchTangent(FbxMesh* mesh, int controlPointIndex, int gVertexCounter);
 	
-	TArray<PMaterial> FetchMaterial(FbxNode * node);
+	TArray<RMaterial> FetchMaterial(FbxNode * node);
 
-	PChannel* GetMaterialProperty(const FbxSurfaceMaterial* pMaterial, const char* pPropertyName, const char* pFactorPropertyName);
+	RChannel* GetMaterialProperty(const FbxSurfaceMaterial* pMaterial, const char* pPropertyName, const char* pFactorPropertyName);
 
 	const char *path;
 

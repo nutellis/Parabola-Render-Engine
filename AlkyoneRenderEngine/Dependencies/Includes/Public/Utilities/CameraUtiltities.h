@@ -51,6 +51,24 @@ inline Matrix4f Ortho(
 	return Result;
 }
 
+// Centered ortho
+inline Matrix4f OrthoCentered(
+	const float& Width,
+	const float& Height,
+	const float& ZNear = 0.1f, 
+	const float& ZFar = 100.0f
+)
+{
+	Matrix4f Result = Matrix4f::IDENTITY;
+
+	Result[0][0] = 2.0f / Width;
+	Result[1][1] = 2.0f / Height;
+	Result[2][2] = -2.0f / (ZFar - ZNear);
+	Result[3][2] = - (ZFar + ZNear) / (ZFar - ZNear);
+
+	return Result;
+}
+
 inline Matrix4f Perspective(
 	const float& FieldOfView,
 	const float& AspectRatio,

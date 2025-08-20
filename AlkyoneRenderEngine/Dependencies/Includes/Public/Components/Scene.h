@@ -33,7 +33,11 @@ public:
 
 	void InitScene();
 
+	void SortScene();
+
 	void ResetScene();
+
+	void RegisterMeshes(RStaticMeshGroup * NewMeshGroup);
 
 	PCameraActor* GetActiveCamera();
 	RSkyBoxActor* GetSkyBox();
@@ -53,7 +57,7 @@ public:
 	//render scene
 
 public:
-	TArray<RRenderActor *> SceneMeshes;
+	TArray<RStaticMesh *> SceneMeshes;
 	TArray<RRenderActor *> SceneLights;
 	TArray<PCameraActor *> SceneCameras;
 private:

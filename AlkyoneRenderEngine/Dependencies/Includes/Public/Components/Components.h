@@ -16,7 +16,7 @@
 // #include <ObjectInitializer.h>
 
 class RRenderActor;
-class PStaticMesh;
+class RStaticMesh;
 class Shader;
 
 //Component that has Transformation info but cannot be rendered.

@@ -680,13 +680,13 @@ Vector2f FbxLoader::FetchUVs(FbxMesh * mesh, int inCtrlPointIndex, int inTexture
 //	return result;
 //}
 
-TArray<PMaterial> FbxLoader::FetchMaterial(FbxNode *node)
+TArray<RMaterial> FbxLoader::FetchMaterial(FbxNode *node)
 {
-	TArray<PMaterial> Materials = TArray<PMaterial>();
+	TArray<RMaterial> Materials = TArray<RMaterial>();
 	int MaterialCount = node->GetMaterialCount();
 	for (int i = 0; i < MaterialCount; i++)
 	{
-		PMaterial NewMaterial = PMaterial();
+		RMaterial NewMaterial = RMaterial();
 		FbxSurfaceMaterial* FbxMaterial = node->GetMaterial(i);
 
 		NewMaterial.MaterialID = FbxMaterial->GetUniqueID();
@@ -716,11 +716,11 @@ TArray<PMaterial> FbxLoader::FetchMaterial(FbxNode *node)
 }
 // 
 
-PChannel* FbxLoader::GetMaterialProperty(const FbxSurfaceMaterial* pMaterial,
+RChannel* FbxLoader::GetMaterialProperty(const FbxSurfaceMaterial* pMaterial,
 	const char* pPropertyName,
 	const char* pFactorPropertyName)
 {
-	PChannel* lResult = new PChannel();
+	RChannel* lResult = new RChannel();
 	const FbxProperty lProperty = pMaterial->FindProperty(pPropertyName);
 	const FbxProperty lFactorProperty = pMaterial->FindProperty(pFactorPropertyName);
 	if (lProperty.IsValid() && lFactorProperty.IsValid())
@@ -887,7 +887,7 @@ void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals)
 //	std::cout << data->indices[2]<< std::endl;
 //	//in.close();
 //	
-//	//data->material = new PMaterial();
+//	//data->material = new RMaterial();
 //	//data->material->Deserialize(Ar);
 //
 //	return data;
@@ -902,7 +902,7 @@ void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals)
 ////								MATERIAL
 ////-----------------------------------------------------------------------
 ///*
-//PMaterial::PMaterial() : mShinness(0)
+//RMaterial::RMaterial() : mShinness(0)
 //{
 //	mEmissive = new Channel();
 //	mAmbient = new Channel();
@@ -910,7 +910,7 @@ void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals)
 //	mSpecular = new Channel();
 //}
 //
-//PMaterial::~PMaterial()
+//RMaterial::~RMaterial()
 //{
 //	delete mEmissive;
 //	delete mAmbient;
@@ -927,7 +927,7 @@ void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals)
 
 ///*
 //// "C:/Users/Nutellis/Documents/Visual Studio 2015/Projects/OpenGLTutorial/Engine-core/Resources/container2.png"
-////RTexture *PMaterial::LoadTexture(const char * filename) //, GLenum image_format, int internal_format, int level, int border
+////RTexture *RMaterial::LoadTexture(const char * filename) //, GLenum image_format, int internal_format, int level, int border
 ////{
 ////	RTexture *tempTexture = new RTexture();
 ////	bool TextureLoaded = true;
@@ -1009,7 +1009,7 @@ void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals)
 //
 //
 //
-//void PMaterial::Serialize(Archive &Ar)
+//void RMaterial::Serialize(Archive &Ar)
 //{
 //	std::cout << "mEmissive" << std::endl;
 //
@@ -1028,7 +1028,7 @@ void BaseLoader::InsertVertex(bool hasUVs, bool hasNormals)
 //
 //}
 //
-//void PMaterial::Deserialize(Archive & Ar)
+//void RMaterial::Deserialize(Archive & Ar)
 //{
 //	mEmissive->Deserialize(Ar);
 //	mAmbient->Deserialize(Ar);
@@ -1166,25 +1166,26 @@ Asset * ObjLoader::Read(const char * Filepath)
 	///////////////////////////////////////////////////////////////////////
 	for (const auto& m : materials)
 	{
-		PMaterial * material = new PMaterial();
+		RMaterial * material = new RMaterial();
 		material->Name = m.name;
-
 		//Diffuse
-		material->Diffuse = PChannel();
+		material->Diffuse = RChannel();
 		material->Diffuse.Colours = Vector4f(m.diffuse[0], m.diffuse[1], m.diffuse[2],1);
+
 		if (m.diffuse_texname != "")
 		{
-			/*if (m.diffuse_texname.find("lion") != std::string::npos) {
-				__debugbreak();
-			}*/
 			material->Diffuse.HasTexture = true;
 			material->Diffuse.ChannelTexture = new RTexture();
 
 			material->Diffuse.ChannelTexture->Generate(directory + m.diffuse_texname);
+
+			if (m.alpha_texname != "") {
+				material->HasTransparency = true;
+			}
 		}
 
 		// Metalness
-		material->Metalness = PChannel();
+		material->Metalness = RChannel();
 		material->Metalness.Colours = Vector4f(m.metallic, m.metallic, m.metallic, 1);
 		if (m.metallic_texname != "")
 		{
@@ -1195,7 +1196,7 @@ Asset * ObjLoader::Read(const char * Filepath)
 		}
 
 		//Fresnel
-		material->Fresnel = PChannel();
+		material->Fresnel = RChannel();
 		material->Fresnel.Colours = Vector4f(m.specular[0], m.specular[0], m.specular[0], 1);
 		if (m.specular_texname != "")
 		{
@@ -1206,7 +1207,7 @@ Asset * ObjLoader::Read(const char * Filepath)
 		}
 
 		//Roughness
-		material->Roughness = PChannel();
+		material->Roughness = RChannel();
 		//material->Roughness.Colours = Vector4f(m.roughness, m.roughness, m.roughness, 1);
 		material->Roughness.Colours = Vector4f(0.6, 0.6, 0.6, 1);
 		if (m.roughness_texname != "")
@@ -1217,7 +1218,7 @@ Asset * ObjLoader::Read(const char * Filepath)
 			material->Roughness.ChannelTexture->Generate(directory + m.roughness_texname);
 		}
 
-		material->Emissive = PChannel();
+		material->Emissive = RChannel();
 		material->Emissive.Colours = Vector4f(m.emission[0], m.emission[1], m.emission[2], 1);
 		if (m.emissive_texname != "")
 		{
@@ -1301,8 +1302,9 @@ Asset * ObjLoader::Read(const char * Filepath)
 			next_material_index = -1;
 			next_material_starting_face = -1;
 			// Process a new Mesh with a unique material
-			PStaticMesh * mesh = new PStaticMesh();
+			RStaticMesh * mesh = new RStaticMesh();
 			mesh->Name = shape.name + "_" + materials[current_material_index].name;
+			mesh->HasTransparency = materials[current_material_index].alpha_texname != "";
 			mesh->MaterialIndex = current_material_index;
 			mesh->IndexStart = vertices_so_far;
 			number_of_materials_in_shape += 1;
@@ -1392,7 +1394,7 @@ Asset * ObjLoader::Read(const char * Filepath)
 	}
 
 	std::sort(asset->Meshes.Begin(), asset->Meshes.End(),
-		[](const PStaticMesh *a, const PStaticMesh *b) { return a->Name < b->Name; });
+		[](const RStaticMesh *a, const RStaticMesh *b) { return a->Name < b->Name; });
 
 	return asset;
 }
@@ -1441,8 +1443,8 @@ Asset::~Asset()
 	
 	Vertices.~TArray<VertexFormat>();
 	Indices.~TArray<uint32>();
-	Materials.~TArray<PMaterial *>();
-	Meshes.~TArray<PStaticMesh *>();
+	Materials.~TArray<RMaterial *>();
+	Meshes.~TArray<RStaticMesh *>();
 }
 
 bool Asset::isEmpty()

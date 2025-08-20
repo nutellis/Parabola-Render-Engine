@@ -37,7 +37,7 @@ public:
 	void Enable();
 	void Disable() const;
 
-	//void setMaterial(PMaterial *material);
+	//void setMaterial(RMaterial *material);
 
 	// utility uniform functions
 	// ------------------------------------------------------------------------

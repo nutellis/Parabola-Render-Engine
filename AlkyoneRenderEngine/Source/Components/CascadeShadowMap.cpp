@@ -12,7 +12,7 @@
 #include <Managers/SceneManager.h>
 #include <Components/Scene.h>
 #include <Components/RenderActor.h>
-#include <Components/RenderComponents/StaticMeshComponent.h>
+#include <Components/RenderComponents/StaticMeshGroup.h>
 #include <Components/StaticMesh.h>
 #include <Components/Colliders/IntersectionTests.h>
 #include <Components/Colliders/BoundingHelper.h>
@@ -135,69 +135,74 @@ void RCascadeShadowMap::CalculateLightProjection(
 	// Calculate the Corners in world space!
 	Cascades[Index]->Frustrum->CalculateFrustrumCorners(Camera, 5.0);
 
-	Vector3f Center = Cascades[Index]->Frustrum->FrustrumBox->Center;
-
-	Matrix4f LightViewMatrix = LookAt(Vector3f::ZERO + Light->LightDirection * LightDistance, Vector3f::ZERO, Vector3f(0.0f, 1.0f, 0.0f));
-	//Matrix4f LightViewMatrix = LookAt(Vector3f::ZERO, - Light->LightDirection, Vector3f(0.0f, 1.0f, 0.0f));
-
 	// World Space Frustrum -> Light Space
-	PBoundingBox LightSpaceTransform = BoundingHelper::TransformCreate(*Cascades[Index]->Frustrum->FrustrumBox, LightViewMatrix);
+	PBoundingBox LightSpaceTransform = BoundingHelper::TransformCreate(*Cascades[Index]->Frustrum->FrustrumBox, Light->LightViewMatrix);
 	
 	PAxisAlignedBoundingBox LightSpaceAABB = BoundingHelper::CalculateAABBFromCorners(LightSpaceTransform.Corners);
 
 	//TArray<PAxisAlignedBoundingBox> ShadowCasters = gSceneManager.GetActiveScene()->GetShadowCasters(Cascades[Index]->Frustrum->BoundingBox, Vector3f(Cascades[Index]->CascadeDebugColour));
 	//if (ShadowCasters.IsNotEmpty()) {
 	//	for (int i = 0; i < ShadowCasters.Size(); ++i) {
-	//		BoundingHelper::Transform(ShadowCasters[i], LightViewMatrix);
+	//		BoundingHelper::Transform(ShadowCasters[i], Light->LightViewMatrix);
 	//	}
 	//	// get the union of all shadow casters in light space
 	//	PAxisAlignedBoundingBox LightSpaceCasters = BoundingHelper::UnionAABB(ShadowCasters);
 
-		//LightSpaceAABB.Min.X = SMath::Min(LightSpaceAABB.Min.X, LightSpaceCasters.Min.X);
-		//LightSpaceAABB.Max.X = SMath::Max(LightSpaceAABB.Max.X, LightSpaceCasters.Max.X);
-		//LightSpaceAABB.Min.Y = SMath::Min(LightSpaceAABB.Min.Y, LightSpaceCasters.Min.Y);
-		//LightSpaceAABB.Max.Y = SMath::Max(LightSpaceAABB.Max.Y, LightSpaceCasters.Max.Y);
-		//LightSpaceAABB.Min.Z = SMath::Min(LightSpaceAABB.Min.Z, LightSpaceCasters.Min.Z);
-		//LightSpaceAABB.Max.Z = SMath::Max(LightSpaceAABB.Max.Z, LightSpaceCasters.Max.Z);
+	//	LightSpaceAABB.Min.X = SMath::Min(LightSpaceAABB.Min.X, LightSpaceCasters.Min.X);
+	//	LightSpaceAABB.Max.X = SMath::Max(LightSpaceAABB.Max.X, LightSpaceCasters.Max.X);
+	//	LightSpaceAABB.Min.Y = SMath::Min(LightSpaceAABB.Min.Y, LightSpaceCasters.Min.Y);
+	//	LightSpaceAABB.Max.Y = SMath::Max(LightSpaceAABB.Max.Y, LightSpaceCasters.Max.Y);
+	//	LightSpaceAABB.Min.Z = SMath::Min(LightSpaceAABB.Min.Z, LightSpaceCasters.Min.Z);
+	//	LightSpaceAABB.Max.Z = SMath::Max(LightSpaceAABB.Max.Z, LightSpaceCasters.Max.Z);
 	//}
 
-	float Width = LightSpaceAABB.Max.X - LightSpaceAABB.Min.X;
-	float Height = LightSpaceAABB.Max.Y - LightSpaceAABB.Min.Y;
-	float Extent = SMath::Max(Width, Height);
-
 	if (SquareBox) {
-		Width = Extent;
-		Height = Extent;
+		float Extent = SMath::Max(LightSpaceAABB.Extents.X, LightSpaceAABB.Extents.Y);
+
+		float DiffW = Extent - LightSpaceAABB.Extents.X;
+		if (DiffW > 0) {
+			LightSpaceAABB.Min.X -= DiffW * 0.5f;
+			LightSpaceAABB.Max.X += DiffW * 0.5f;
+		}
+		float DiffH = Extent - LightSpaceAABB.Extents.Y;
+		if (DiffH > 0) {
+			LightSpaceAABB.Min.Y -= DiffH * 0.5f;
+			LightSpaceAABB.Max.Y += DiffH * 0.5f;
+		}
+		LightSpaceAABB.Extents.X = Extent;
+		LightSpaceAABB.Extents.Y = Extent;
 	}
 
 	// Texel Snapping 
-	float WorldUnitsPerTexel = Extent / static_cast<float>(Cascades[Index]->Resolution);
-	LightSpaceAABB.Center.X = std::floor(LightSpaceAABB.Center.X / WorldUnitsPerTexel) * WorldUnitsPerTexel;
-	LightSpaceAABB.Center.Y = std::floor(LightSpaceAABB.Center.Y / WorldUnitsPerTexel) * WorldUnitsPerTexel;
+	float WorldUnitsPerTexel = LightSpaceAABB.Extents.X / static_cast<float>(Cascades[Index]->Resolution);
+	LightSpaceAABB.Min.X = std::round(LightSpaceAABB.Min.X / WorldUnitsPerTexel) * WorldUnitsPerTexel;
+	LightSpaceAABB.Max.X = std::round(LightSpaceAABB.Max.X / WorldUnitsPerTexel) * WorldUnitsPerTexel;
+	LightSpaceAABB.Min.Y = std::round(LightSpaceAABB.Min.Y / WorldUnitsPerTexel) * WorldUnitsPerTexel;
+	LightSpaceAABB.Max.Y = std::round(LightSpaceAABB.Max.Y / WorldUnitsPerTexel) * WorldUnitsPerTexel;
 
-	// Now set L, R, B, T using snapped center
-	L = LightSpaceAABB.Center.X - Width * 0.5f;
-	R = LightSpaceAABB.Center.X + Width * 0.5f;
-	B = LightSpaceAABB.Center.Y - Height * 0.5f;
-	T = LightSpaceAABB.Center.Y + Height * 0.5f;
-	N = LightSpaceAABB.Min.Z;
-	F = LightSpaceAABB.Max.Z;
-
-	Matrix4f LightProjectionMatrix = Ortho(L, R, B, T, 0.1, 300);
-
-	Cascades[Index]->Near = 0.1;
-
-	Cascades[Index]->Far = -N * 3;
+	L = LightSpaceAABB.Min.X;
+	R = LightSpaceAABB.Max.X;
+	B = LightSpaceAABB.Min.Y;
+	T = LightSpaceAABB.Max.Y;
+	N = 0.1;
+	F = Light->LightDistance * 2.0f;
 
 
-	Cascades[Index]->LightViewMatrix = LightViewMatrix;
+	Cascades[Index]->LightProjectionMatrix =  Ortho(L, R, B, T, N, F);
 
-	Cascades[Index]->LightProjectionMatrix = LightProjectionMatrix;
+	Cascades[Index]->Near = N;
 
-	Cascades[Index]->CascadeCPVMatrix = LightProjectionMatrix * LightViewMatrix;
+	Cascades[Index]->Far = F;
+
+	Cascades[Index]->LightViewMatrix = Light->LightViewMatrix;
+
+
+
+	Cascades[Index]->CascadePVMatrix = Cascades[Index]->LightProjectionMatrix * Light->LightViewMatrix;
 
 }
 
+// NOT USED
 void RCascadeShadowMap::UpdateCascadeBuffer(Matrix4f CameraViewMatrix) {
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, CascadesMVPBuffer);
 
@@ -211,7 +216,7 @@ void RCascadeShadowMap::UpdateCascadeBuffer(Matrix4f CameraViewMatrix) {
 	//In texture space!
 	for (uint32 i = 0; i < NumCascades; i++)
 	{
-		CascadeMatrices[i] = TextureSpaceMatrix * Cascades[i]->CascadeCPVMatrix * Inverse(CameraViewMatrix);
+		CascadeMatrices[i] = TextureSpaceMatrix * Cascades[i]->CascadePVMatrix * Inverse(CameraViewMatrix);
 	}
 
 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
@@ -260,7 +265,7 @@ void RCascadeShadowMap::PrepareForDraw(
 	for (uint32 i = 0; i < NumCascades; i++)
 	{
 		// from light projection space (Crop * Projection * View) to Texture Space
-		CascadeMatrices[i] = Cascades[i]->CascadeCPVMatrix;
+		CascadeMatrices[i] = Cascades[i]->CascadePVMatrix;
 		
 		//Bind Textures
 		glActiveTexture(GL_TEXTURE10 + i);

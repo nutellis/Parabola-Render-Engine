@@ -23,15 +23,18 @@ public:
 
 	Vector4f LightDirection = Vector4f(1.0, 0.0, 0.0, 0.0);
 
+	float LightDistance = 50.0f;
+
 	//ArrowShape DirectionArrow;
 
 	Matrix4f LightProjectionMatrix;
 	Matrix4f LightViewMatrix;
+	Matrix4f LightViewProjectionMatrix;
 
-	float FieldOfView = 60.0f;
+	float FieldOfView = 90.0f;
 	float AspectRation = 1.7779;
 	float ZNear = 0.5f;
-	float ZFar = 1000.f;
+	float ZFar = 50.0f;
 
 public:
 	PDirectionalLightComponent(RRenderActor* Parent);
@@ -39,6 +42,9 @@ public:
 	~PDirectionalLightComponent();
 	void SetupShaderLight(Shader* ActiveShader, Matrix4f ViewMatrix);
 	void SetDirection();
+
+	void UpdateLight(Vector3f Center);
+
 };
 
 #endif // !DIRECTIONAL_LIGHT_COMPONENT_H
