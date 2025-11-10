@@ -172,6 +172,7 @@
     <ClCompile Include="Dependencies\Includes\Private\ImGUI\imgui_impl_opengl3.cpp" />
     <ClCompile Include="Dependencies\Includes\Private\ImGUI\imgui_tables.cpp" />
     <ClCompile Include="Dependencies\Includes\Private\ImGUI\imgui_widgets.cpp" />
+    <ClCompile Include="Source\Utilities\Parsers\JsonParser.cpp" />
     <ClCompile Include="Source\Components\AmbientOcclusion.cpp" />
     <ClCompile Include="Source\Components\Colliders\BoundingBox.cpp" />
     <ClCompile Include="Source\Components\LightComponents\DirectionalLightComponent.cpp" />
@@ -741,6 +742,7 @@
     <ClInclude Include="Dependencies\Includes\Public\Utilities\Containers\Map.h" />
     <ClInclude Include="Dependencies\Includes\Public\Utilities\Containers\String.h" />
     <ClInclude Include="Dependencies\Includes\Public\Utilities\Configuration.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Utilities\Loaders\gltfLoader.h" />
     <ClInclude Include="Dependencies\Includes\Public\Utilities\ModelLoader.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\RenderSystem.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\RenderTarget.h" />
@@ -761,6 +763,7 @@
     <ClInclude Include="Dependencies\Includes\Public\Utilities\Containers\Array.h" />
     <ClInclude Include="Dependencies\Includes\Public\Core\PODTypes.h" />
     <ClInclude Include="Dependencies\Includes\Public\Core\UDTypes.h" />
+    <ClInclude Include="Dependencies\Includes\Public\Utilities\Parsers\JsonParser.h" />
     <ClInclude Include="Dependencies\Includes\Public\Utilities\PrimitiveShapes.h" />
     <ClInclude Include="Dependencies\Includes\Public\Win32\Win32RenderWindow.h" />
     <ClInclude Include="Dependencies\Includes\Public\Components\SkyBox.h" />
