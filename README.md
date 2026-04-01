@@ -34,6 +34,8 @@ The project was moved on GitHub from Bitbucket in 2024. There are monstrocities 
 * glfw
 * Dear ImGui
 * tinyobjloader
+* stb_image
+* probably FBX SDK?
 
 # Screenshots
 Shadows + AO
