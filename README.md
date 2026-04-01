@@ -33,7 +33,7 @@ The project was moved on GitHub from Bitbucket in 2024. There are monstrocities 
 ## Dependencies
 * glfw
 * Dear ImGui
-* tinyobj
+* tinyobjloader
 
 # Screenshots
 Shadows + AO
