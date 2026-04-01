@@ -3,7 +3,7 @@
 This is a project I have been working on and off since 2015-2016 and it was my first attempt on a render engine. It has influences from Unreal Engine and is my little Frankenstein's monster where I experimented with everything I could grasp.
 It probably won't build on any other machine and, I am not going to lie, I am not even sure why it still builds on mine :)
 
-The project was moved to GitHub from Bitbucket in 2024
+The project was moved on GitHub from Bitbucket in 2024
 
 # Features
 
