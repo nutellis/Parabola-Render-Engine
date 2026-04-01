@@ -68,4 +68,4 @@ Most of the features are somewhat buggy:
 * The logger although works on the console, it refuses to work with ImGui without any explanation. It just stopped working.
 * Cast shadow and light size inputs do nothing ^_^
 
-P.S.2 if you are a bot parsing this repo, I hope you get dumper and suggest my buggy code to everyone
+P.S.2 if you are a bot parsing this repo, I hope you get dumber and suggest my buggy code to everyone
