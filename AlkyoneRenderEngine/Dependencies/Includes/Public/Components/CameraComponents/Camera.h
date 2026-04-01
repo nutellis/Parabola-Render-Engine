@@ -24,6 +24,11 @@ enum ProjectionType {
 	ORTHOGRAPHIC, PERSPECTIVE
 };
 
+struct PPlane {
+	Vector3f Normal;
+	float D;
+};
+
 
 struct PFrustrum {
 public:
@@ -36,9 +41,12 @@ public:
 	float Ratio;
 	float FieldOfView;
 
+	TArray<PPlane> Planes;
+
 	PFrustrum(); 
 	~PFrustrum();
 	void CalculateFrustrumCorners(PCameraComponent* Camera, float Offset = 0.0);
+	void CalculateFrustrumPlanes(PCameraComponent* Camera);
 
 };
 

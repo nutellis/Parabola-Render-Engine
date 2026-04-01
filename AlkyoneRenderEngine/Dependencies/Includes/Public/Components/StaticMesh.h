@@ -37,6 +37,7 @@ public:
 
 	bool IsCastingShadows = true;
 	bool HasTransparency = true;
+	bool ShouldRender = true;
 
 public:
 	

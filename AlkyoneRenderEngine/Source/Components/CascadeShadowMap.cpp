@@ -134,6 +134,7 @@ void RCascadeShadowMap::CalculateLightProjection(
 
 	// Calculate the Corners in world space!
 	Cascades[Index]->Frustrum->CalculateFrustrumCorners(Camera, 5.0);
+	Cascades[Index]->Frustrum->CalculateFrustrumPlanes(Camera);
 
 	// World Space Frustrum -> Light Space
 	PBoundingBox LightSpaceTransform = BoundingHelper::TransformCreate(*Cascades[Index]->Frustrum->FrustrumBox, Light->LightViewMatrix);

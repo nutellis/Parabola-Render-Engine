@@ -62,6 +62,8 @@ public:
 
 	virtual void CalculateFromCorners(TArray<Vector3f> Corners);
 
+	virtual Vector3f GetCorner(CornerEnum CornerToGet) const;
+
 	void SetupDebugFrustrumEdges();
 
 	void SetupDebugFrustrumPlanes();

@@ -25,7 +25,7 @@ RSkyBoxActor::RSkyBoxActor(const char* Name) : RRenderActor(Name)
     IrradianceMap = nullptr;
     ReflectionMap = nullptr;
 
-	StaticMesh = new RStaticMeshGroup(this);
+	StaticMeshGroup = new RStaticMeshGroup(this);
 
     //VertexArray SkyVertices = RenderHelper::CreateFullScreenQuad();
 

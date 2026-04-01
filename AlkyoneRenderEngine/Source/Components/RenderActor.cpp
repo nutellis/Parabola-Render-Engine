@@ -28,7 +28,7 @@ RRenderActor::RRenderActor(std::string NodeName): ObjectName(NodeName)
 void RRenderActor::AddLight()
 {
 
-    //StaticMesh = ObjectInitializer::CreateSubObject<RStaticMeshGroup>("Assets/ball.asset", this);//new RStaticMeshGroup("ball.asset", RootComponent, false);
+    //StaticMeshGroup = ObjectInitializer::CreateSubObject<RStaticMeshGroup>("Assets/ball.asset", this);//new RStaticMeshGroup("ball.asset", RootComponent, false);
     
     Light = new PDirectionalLightComponent(this);
 
@@ -37,7 +37,7 @@ void RRenderActor::AddLight()
 
 void RRenderActor::AddMesh(const char* path)
 {
-    StaticMesh = new RStaticMeshGroup(this, path);
+    StaticMeshGroup = new RStaticMeshGroup(this, path);
 
     ActorType = EntityType::MODEL;
 }
@@ -142,19 +142,19 @@ void RRenderActor::SetScale(float inScale)
 }
 
 void RRenderActor::DrawMeshChildren(Shader * ActiveShader) {
-    if (StaticMesh != nullptr && ActorType == MODEL) {
+    if (StaticMeshGroup != nullptr && ActorType == MODEL) {
         
-        StaticMesh->ModelMatrix = Matrix4f::IDENTITY;
+        StaticMeshGroup->ModelMatrix = Matrix4f::IDENTITY;
 
-        StaticMesh->ModelMatrix = Scale(this->ObjectScale, StaticMesh->ModelMatrix);
+        StaticMeshGroup->ModelMatrix = Scale(this->ObjectScale, StaticMeshGroup->ModelMatrix);
 
-        // fix angle parameter (StaticMesh->angle)
-        // ModelMatrix = Rotate(this->ObjectRotation, StaticMesh->angle, ModelMatrix);
+        // fix angle parameter (StaticMeshGroup->angle)
+        // ModelMatrix = Rotate(this->ObjectRotation, StaticMeshGroup->angle, ModelMatrix);
 
-        StaticMesh->ModelMatrix = Translate(this->ObjectPosition, StaticMesh->ModelMatrix);
+        StaticMeshGroup->ModelMatrix = Translate(this->ObjectPosition, StaticMeshGroup->ModelMatrix);
 
 
-        StaticMesh->DrawComponent(ActiveShader);
+        StaticMeshGroup->DrawGroup(ActiveShader);
     }
     for (auto i = 0; i < Children.Size(); i++) {
         Children[i]->DrawMeshChildren(ActiveShader);
@@ -164,25 +164,25 @@ void RRenderActor::DrawMeshChildren(Shader * ActiveShader) {
 //TODO: Use this only after a transformation to reduce recalculations
 void RRenderActor::SetupModelMatrix() {
 
-    StaticMesh->ModelMatrix = Matrix4f::IDENTITY;
+    StaticMeshGroup->ModelMatrix = Matrix4f::IDENTITY;
 
     Matrix4f S = Scale(GetScale(), Matrix4f::IDENTITY);
     Matrix4f R = Rotate(GetRotation(), Matrix4f::IDENTITY);
     Matrix4f T = Translate(GetPosition(), Matrix4f::IDENTITY);
 
-    StaticMesh->ModelMatrix = T * R * S;
+    StaticMeshGroup->ModelMatrix = T * R * S;
 }
 
 
 void RRenderActor::UpdateWorldBoundingBox() {
     SetupModelMatrix();
 
-    for (RStaticMesh* Mesh : StaticMesh->Meshes) {
+    for (RStaticMesh* Mesh : StaticMeshGroup->Meshes) {
         if (Mesh->WorldBoundingBox == nullptr) {
             Mesh->WorldBoundingBox = new AABB();
         }
         *Mesh->WorldBoundingBox = BoundingHelper::TransformAABB(
-                Mesh->LocalBoundingBox, StaticMesh->ModelMatrix
+                Mesh->LocalBoundingBox, StaticMeshGroup->ModelMatrix
         );
     }
 }

@@ -30,12 +30,12 @@ public:
 
 	PAxisAlignedBoundingBox& operator=(PAxisAlignedBoundingBox&& other) noexcept;
 
-	Vector3f GetCorner(CornerEnum cornerToGet) const;
+	Vector3f GetCorner(CornerEnum cornerToGet) const override;
 
 	void CalculateFromCorners(TArray<Vector3f> Corners) override;
 
 	// Gets the centre of the box
-	Vector3f GetCenter(void) const;
+	Vector3f GetCenter(void) const ;
 
 	TArray<Vector3f> GetAllCorners(void) const;
 

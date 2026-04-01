@@ -102,7 +102,30 @@ void PBoundingBox::CalculateFromCorners(TArray<Vector3f> Corners)
 	this->Center = this->Center / Corners.Size();
 }
 
-
+Vector3f PBoundingBox::GetCorner(CornerEnum CornerToGet) const
+{
+	switch (CornerToGet)
+	{
+	case FAR_LEFT_BOTTOM:
+		return Corners[6];
+	case FAR_LEFT_TOP:
+		return Corners[4];
+	case FAR_RIGHT_TOP:
+		return Corners[5];
+	case FAR_RIGHT_BOTTOM:
+		return Corners[7];
+	case NEAR_RIGHT_BOTTOM:
+		return Corners[3];
+	case NEAR_LEFT_BOTTOM:
+		return Corners[2];
+	case NEAR_LEFT_TOP:
+		return Corners[0];
+	case NEAR_RIGHT_TOP:
+		return Corners[1];
+	default:
+		return Vector3f();
+	}
+}
 
 void PBoundingBox::SetupDebugFrustrumEdges()
 {

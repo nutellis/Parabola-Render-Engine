@@ -23,13 +23,15 @@ RStaticMeshGroup::RStaticMeshGroup(RRenderActor* Parent) : Vertices(), Meshes(),
 
 RStaticMeshGroup::RStaticMeshGroup(RRenderActor* Parent, const char* path) : Vertices(), Meshes(), Materials(), Indices()  //const char* path,PSceneComponent *Default,bool isAbsolute)
 {
-	std::cout << "This is a StaticMeshComponent\n";
+	//std::cout << "This is a StaticMeshGroup\n";
 	//	ComponentArchive->Load(path);
 	//	Deserialize(*ComponentArchive);
 
 	this->Parent = Parent;
 
-	std::cout << "Parent is " + Parent->ObjectName + "\n";
+	glGenBuffers(1, &IndirectBuffer);
+
+	//std::cout << "Parent is " + Parent->ObjectName + "\n";
 
 	Asset* AssetToLoad = gAssetLoader.LoadAsset(path);
 	
@@ -233,16 +235,39 @@ void RStaticMeshGroup::SetShaderMaterial(Shader* ActiveShader, RMaterial* Materi
 
 }
 
-void RStaticMeshGroup::DrawComponent(Shader* ActiveShader) {
+void RStaticMeshGroup::DrawGroup(Shader* ActiveShader) {
 
 	VAO.Bind();
 
-	// for each material
-	for (auto& Mesh : Meshes)
-	{
-		SetShaderMaterial(ActiveShader, Materials[Mesh->MaterialIndex]);
-		glDrawArrays(GL_TRIANGLES, Mesh->IndexStart, (GLsizei)Mesh->NumVertices);
+	std::unordered_map<RMaterial*, TArray<RStaticMesh*>> Batches;
+	for (RStaticMesh* Mesh : Meshes) {
+		if (Mesh->ShouldRender) {
+			Batches[Materials[Mesh->MaterialIndex]].PushBack(Mesh);
+		}
+	}
 
+	// Render per material batch
+	for (auto& [Material, Meshes] : Batches) {
+		if (Meshes.IsEmpty()) continue;
+
+		TArray<DrawArraysIndirectCommand> VisibleCommands;
+
+		SetShaderMaterial(ActiveShader, Material);
+
+		for (RStaticMesh* Mesh : Meshes) {
+			DrawArraysIndirectCommand cmd;
+			cmd.count = Mesh->NumVertices;
+			cmd.instanceCount = 1;
+			cmd.first = Mesh->IndexStart;
+			cmd.baseInstance = 0;
+			VisibleCommands.PushBack(cmd);
+		}
+
+		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IndirectBuffer);
+		glBufferData(GL_DRAW_INDIRECT_BUFFER, VisibleCommands.Size() * sizeof(DrawArraysIndirectCommand),
+			VisibleCommands.Begin(), GL_DYNAMIC_DRAW);
+
+		glMultiDrawArraysIndirect(GL_TRIANGLES, nullptr, VisibleCommands.Size(), 0);
 	}
 }
 

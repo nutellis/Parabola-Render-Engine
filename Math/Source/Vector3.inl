@@ -286,7 +286,7 @@ inline const size_t std::hash<TVector3<T>>::operator()(const TVector3<T>& key) c
 template <typename Type>
 void TVector3<Type>::Print()
 {
-	// std::cout << X << "\t " << Y << "\t " << Z << "\n";
+	//std::cout << X << "\t " << Y << "\t " << Z << "\n";
 }
 /*
 inline const  TVector3 TVector3::SetX()

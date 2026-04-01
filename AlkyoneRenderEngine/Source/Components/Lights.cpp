@@ -7,21 +7,21 @@ Shader Light::SetShader(Shader shader, int index)
 
 Light::Light() : Object()
 {
-	//StaticMesh = ModelMatrix();
+	//StaticMeshGroup = ModelMatrix();
 	color = glm::vec3(1.0f);
 	intensity = 1.0f;
 }
 
 Light::Light(float inten, glm::vec3 col) : Object()
 {
-	//StaticMesh = ModelMatrix();
+	//StaticMeshGroup = ModelMatrix();
 	color = col;
 	intensity = inten;
 }
 
 void Light::Draw(Shader shader)
 {
-	//StaticMesh.Draw(shader);
+	//StaticMeshGroup.Draw(shader);
 }
 
 

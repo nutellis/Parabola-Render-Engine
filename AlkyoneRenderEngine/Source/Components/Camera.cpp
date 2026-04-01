@@ -61,6 +61,32 @@ void PFrustrum::CalculateFrustrumCorners(PCameraComponent* Camera, float Offset)
 	BoundingBox->CalculateFromCorners(FrustrumCorners);
 }
 
+void PFrustrum::CalculateFrustrumPlanes(PCameraComponent* Camera)
+{
+	auto MakePlane = [](const Vector3f& A, const Vector3f& B, const Vector3f& C)
+	{
+		PPlane NewPlane;
+		Vector3f Normal = Normalize(Cross(B - A, C - A));
+		NewPlane.Normal = Normal;
+		NewPlane.D = -Dot(Normal, A);
+
+		return NewPlane;
+	};
+	Planes.Clear();
+	// 1. Left Plane
+	Planes.PushBack(MakePlane(FrustrumBox->GetCorner(NEAR_LEFT_BOTTOM), FrustrumBox->GetCorner(FAR_LEFT_TOP), FrustrumBox->GetCorner(NEAR_LEFT_TOP)));
+	// 2. Right Plane
+	Planes.PushBack(MakePlane(FrustrumBox->GetCorner(NEAR_RIGHT_TOP), FrustrumBox->GetCorner(FAR_RIGHT_BOTTOM), FrustrumBox->GetCorner(NEAR_RIGHT_BOTTOM)));
+	// 3. Top Plane
+	Planes.PushBack(MakePlane(FrustrumBox->GetCorner(NEAR_LEFT_TOP), FrustrumBox->GetCorner(FAR_RIGHT_TOP), FrustrumBox->GetCorner(NEAR_RIGHT_TOP)));
+	// 4. Bottom Plane
+	Planes.PushBack(MakePlane(FrustrumBox->GetCorner(NEAR_RIGHT_BOTTOM), FrustrumBox->GetCorner(FAR_LEFT_BOTTOM), FrustrumBox->GetCorner(NEAR_LEFT_BOTTOM)));
+	// 5. Near Plane 
+	Planes.PushBack(MakePlane(FrustrumBox->GetCorner(NEAR_LEFT_BOTTOM), FrustrumBox->GetCorner(NEAR_RIGHT_TOP), FrustrumBox->GetCorner(NEAR_RIGHT_BOTTOM)));
+	// 6. Far Plane
+	Planes.PushBack(MakePlane(FrustrumBox->GetCorner(FAR_RIGHT_BOTTOM), FrustrumBox->GetCorner(FAR_LEFT_TOP), FrustrumBox->GetCorner(FAR_LEFT_BOTTOM)));
+}
+
 //----------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------
 //									CAMERA COMPONENT
@@ -232,6 +258,7 @@ void PCameraComponent::UpdateCamera(uint32 Width, uint32 Height) {
 	UpdateCameraVectors();
 
 	Frustrum->CalculateFrustrumCorners(this);
+	Frustrum->CalculateFrustrumPlanes(this);
 
 	Projection = Perspective(Frustrum->FieldOfView, Frustrum->Ratio, Frustrum->NearPlane, Frustrum->FarPlane);
 

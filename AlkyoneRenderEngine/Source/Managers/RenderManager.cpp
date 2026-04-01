@@ -22,7 +22,7 @@
 #include <Components/SkyBox.h>
 
 
-#include<Components/RenderComponents/StaticMeshComponent.h>
+#include<Components/RenderComponents/StaticMeshGroup.h>
 
 #include <Components/FBORenderTarget.h>
 
@@ -36,6 +36,7 @@
 #include <Components/Colliders/AxisAlignedBoundingBox.h>
 #include <Components/StaticMesh.h>
 #include <RenderHelper.h>
+#include <Components/Colliders/IntersectionTests.h>
 
 
 
@@ -125,6 +126,19 @@ void GRenderManager::Render(double DeltaTime)
 	TArray<PAxisAlignedBoundingBox> Receivers = gSceneManager.GetActiveScene()->GetObjectsByIntersection(RenderCamera->Camera->Frustrum->BoundingBox);
 	RenderCamera->Camera->AdjustPlanesBasedOnObjects(Receivers);
 
+
+	//Get all meshgroups
+	RenderList.Clear();
+	for(RRenderActor * Actors: ActiveScene->SceneActors) 
+	{
+		RenderList.PushBack(Actors->StaticMeshGroup);
+	}
+
+	// Frustrum Cull RenderList
+	FrustrumCull(RenderCamera->Camera);
+
+
+
 	//TODO: move this somewhere better
 	//Update directional light
 	PDirectionalLightComponent* Light = ActiveScene->SceneLights.Front()->Light;
@@ -203,13 +217,13 @@ void GRenderManager::Render(double DeltaTime)
 	}
 
 	if (Options.ShowBoundingBoxes) {
-		TArray<RRenderActor*> VisibleMeshes = ActiveScene->SceneMeshes;
+		TArray<RRenderActor*> VisibleMeshes = ActiveScene->SceneActors;
 		for (int i = 0; i < VisibleMeshes.Size(); i++) {
 			if (Options.ShowEdges) {
-				for (int j = 0; j < VisibleMeshes[i]->StaticMesh->Meshes.Size(); j++) {
-					VisibleMeshes[i]->StaticMesh->Meshes[j]->WorldBoundingBox->RenderDebugBoundingBox(
+				for (int j = 0; j < VisibleMeshes[i]->StaticMeshGroup->Meshes.Size(); j++) {
+					VisibleMeshes[i]->StaticMeshGroup->Meshes[j]->WorldBoundingBox->RenderDebugBoundingBox(
 						Options.ShowEdges << 1,
-						VisibleMeshes[i]->StaticMesh->Meshes[j]->WorldBoundingBox->DebugColour,
+						VisibleMeshes[i]->StaticMeshGroup->Meshes[j]->WorldBoundingBox->DebugColour,
 						ActiveCamera->Camera->Projection,
 						ActiveCamera->Camera->View
 					);
@@ -228,6 +242,37 @@ void GRenderManager::Render(double DeltaTime)
 
 	glUseProgram(0);	
 }
+
+
+void GRenderManager::FrustrumCull(PCameraComponent* Camera) {
+	TArray<RStaticMesh*> VisibleMeshes = TArray<RStaticMesh*>();
+	PBoundingBox* CameraFrustrumBox = Camera->Frustrum->FrustrumBox;
+
+	bool IsInside = true;
+	for (RStaticMeshGroup* Group : RenderList) {
+		TArray<RStaticMesh*> Meshes = Group->Meshes;
+		for (RStaticMesh* Mesh : Meshes) {
+			IsInside = true;
+			for (int i = 0; i < 6; ++i)
+			{
+				PPlane & Plane = Camera->Frustrum->Planes[i];
+
+				// Pick vertex furthest in direction of plane normal
+				Vector3f Vertex = Mesh->WorldBoundingBox->Min;
+				if (Plane.Normal.X >= 0) Vertex.X = Mesh->WorldBoundingBox->Max.X;
+				if (Plane.Normal.Y >= 0) Vertex.Y = Mesh->WorldBoundingBox->Max.Y;
+				if (Plane.Normal.Z >= 0) Vertex.Z = Mesh->WorldBoundingBox->Max.Z;
+
+				if (Dot(Plane.Normal, Vertex) + Plane.D < 0) {
+					IsInside = false;
+					break;
+				}
+			}
+			Mesh->ShouldRender = IsInside;
+		}
+	}
+}
+
 
 void GRenderManager::ShadowMapPass(PCameraComponent * Camera) {
 	Shader* DepthShader = gShaderManager.GetShader("DepthShader");
@@ -502,7 +547,7 @@ void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix
 	if (ActiveScene != nullptr) {
 
 		//get visible meshes. For now just get all meshes.
-		TArray<RRenderActor *> MeshesToDraw = ActiveScene->SceneMeshes;
+		TArray<RRenderActor *> MeshesToDraw = ActiveScene->SceneActors;
 
 		ShaderToUse->SetMat4("viewInverse", false, Inverse(ViewMatrix));
 
@@ -510,9 +555,9 @@ void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix
 
 			MeshesToDraw[i]->SetupModelMatrix();
 
-			ShaderToUse->SetMat4("modelMatrix", false, MeshesToDraw[i]->StaticMesh->ModelMatrix);
+			ShaderToUse->SetMat4("modelMatrix", false, MeshesToDraw[i]->StaticMeshGroup->ModelMatrix);
 
-			Matrix4f ModelViewMatrix = ViewMatrix * MeshesToDraw[i]->StaticMesh->ModelMatrix;
+			Matrix4f ModelViewMatrix = ViewMatrix * MeshesToDraw[i]->StaticMeshGroup->ModelMatrix;
 			Matrix4f ModelViewProjectionMatrix = ProjectionMatrix * ModelViewMatrix;
 
 			ShaderToUse->SetMat4("modelViewMatrix", false, ModelViewMatrix);
@@ -521,11 +566,11 @@ void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix
 
 			ShaderToUse->SetMat4("normalMatrix", false, Matrix4f(Inverse(ModelViewMatrix).GetTransposed()));
 			
-			MeshesToDraw[i]->StaticMesh->DrawComponent(ShaderToUse);
+			MeshesToDraw[i]->StaticMeshGroup->DrawGroup(ShaderToUse);
 		}
 
 		//for (int i = 0; i < VisibleMeshes.Size(); i++) {
-		//	RStaticMeshGroup * MeshToRender = VisibleMeshes[i]->StaticMesh;
+		//	RStaticMeshGroup * MeshToRender = VisibleMeshes[i]->StaticMeshGroup;
 		//	
 		//	//TODO: for now we are using hardcoded BRDF_Default for all the meshes
 		//	if (MeshToRender != nullptr) {
@@ -548,7 +593,7 @@ void GRenderManager::DrawScene(Shader * ShaderToUse, Matrix4f ViewMatrix, Matrix
 
 		//	for (int i = 0; i < MeshesToRender.Size(); i++) {
 		//		MeshesToRender[i]->SetupModelMatrix(ShaderToUse);
-		//		MeshesToRender[i]->DrawComponent(ShaderToUse);
+		//		MeshesToRender[i]->DrawGroup(ShaderToUse);
 		//	}
 		//}
 	}
@@ -712,7 +757,7 @@ void GRenderManager::DrawPreview()
 		ImGui::End();
 	}
 
-	DrawDepthMaps();
+	//DrawDepthMaps();
 }
 
 void GRenderManager::DrawDepthMaps() {

@@ -200,7 +200,7 @@ void GSceneManager::DrawSceneGraph()
 						
 						ImGui::EndTabItem();
 					}
-					if (selectedIndex->ActorType == MODEL && selectedIndex->StaticMesh != nullptr) {
+					if (selectedIndex->ActorType == MODEL && selectedIndex->StaticMeshGroup != nullptr) {
 						if (ImGui::BeginTabItem("Meshes"))
 						{
 							RStaticMesh* ReturnedValue = RecurseActorsMeshes(selectedIndex);
@@ -289,7 +289,7 @@ RStaticMesh* GSceneManager::RecurseActorsMeshes(RRenderActor* Root) {
 	ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
 	if (ImGui::TreeNodeEx((void*)(intptr_t)0, node_flags | ImGuiTreeNodeFlags_DefaultOpen, Root->ObjectName.c_str()))
 	{
-		TArray<RStaticMesh*> Meshes = Root->StaticMesh->Meshes;
+		TArray<RStaticMesh*> Meshes = Root->StaticMeshGroup->Meshes;
 		for (int i = 0; i < Meshes.Size(); i++)
 		{
 			node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
@@ -409,10 +409,10 @@ RStaticMesh* GSceneManager::RecurseActorsMeshes(RRenderActor* Root) {
 //		shader.enable();
 //		//std::cout << "Setting Up Lights" << std::endl;
 //		it->second->Light->Attributes->SetShader(shader, it->second->RootComponent->RelativeLocation);
-//		//std::cout << it->second->StaticMesh->RelativeLocation.x << std::endl;
+//		//std::cout << it->second->StaticMeshGroup->RelativeLocation.x << std::endl;
 //		light.enable();
-//		it->second->StaticMesh->SetShader(light);
-//		it->second->StaticMesh->GetMesh()->Draw(light);
+//		it->second->StaticMeshGroup->SetShader(light);
+//		it->second->StaticMeshGroup->GetMesh()->Draw(light);
 //		it++;
 //	}
 //	////Set up Camera
@@ -424,16 +424,16 @@ RStaticMesh* GSceneManager::RecurseActorsMeshes(RRenderActor* Root) {
 //	shader.enable();
 //	ActorMap.find(ActorType::CAMERA)->second->Camera->SetShader(shader);
 //	//Set up Actors
-//	//ActorMap.find(ActorType::ACTOR)->second->StaticMesh->SetShader(shader);
+//	//ActorMap.find(ActorType::ACTOR)->second->StaticMeshGroup->SetShader(shader);
 //	
 //	//Draw everything
 //	//it = ActorMap.begin();
 //	while (it != ActorMap.end() )
 //	{
 //		if (it->first == ActorType::ACTOR) {
-//			it->second->StaticMesh->SetShader(shader);
-//			it->second->StaticMesh->GetMesh()->Draw(shader);
-//			//ActorMap.find(ActorType::ACTOR)->second->StaticMesh->GetMesh()->Draw(shader);
+//			it->second->StaticMeshGroup->SetShader(shader);
+//			it->second->StaticMeshGroup->GetMesh()->Draw(shader);
+//			//ActorMap.find(ActorType::ACTOR)->second->StaticMeshGroup->GetMesh()->Draw(shader);
 //		}
 //		it++;
 //	}

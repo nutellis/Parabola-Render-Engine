@@ -88,7 +88,7 @@ public:
 	//children vector
 	TArray<RRenderActor*> Children;
 
-	RStaticMeshGroup* StaticMesh;
+	RStaticMeshGroup* StaticMeshGroup;
 
 	PDirectionalLightComponent* Light;
 

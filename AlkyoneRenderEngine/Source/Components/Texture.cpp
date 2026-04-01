@@ -91,8 +91,8 @@ void RTexture::Generate(std::string filename, bool IsHDRImage)
         glTextureSubImage2D(TextureID, 0, 0, 0, Width, Height, GL_RGB, GL_FLOAT, TextureImage->GetDataFloat());
     }
     else {
-        glTextureStorage2D(TextureID, 1, GL_RGBA8, Width, Height);
-        glTextureSubImage2D(TextureID, 0, 0, 0, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, TextureImage->GetDataUint8());
+        glTextureStorage2D(TextureID, 1, GL_RGB8, Width, Height);
+        glTextureSubImage2D(TextureID, 0, 0, 0, Width, Height, GL_RGB, GL_UNSIGNED_BYTE, TextureImage->GetDataUint8());
     }
     if (TextureOptions.EnableMipMapping == GL_TRUE)
     {

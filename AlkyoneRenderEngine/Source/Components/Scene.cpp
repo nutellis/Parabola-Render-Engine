@@ -46,7 +46,7 @@ void Scene::SortChild(RRenderActor* Child) {
 		SceneLights.PushBack(Child);
 		break;
 	case MODEL:
-	//	SceneMeshes.PushBack(Child);
+		SceneActors.PushBack(Child);
 		break;
 	default:
 		break;
@@ -73,24 +73,38 @@ void Scene::InitScene() {
 		"Assets/envmaps/001_irradiance.hdr", 
 		filenames);
 
-	//RRenderActor* sponza = new RRenderActor("sponza");
-	//this->AddChild(sponza);
-	//sponza->AddMesh("Assets/sponza/sponza.obj");
-	//sponza->SetPosition(Vector3f(0.0, 0.0, 0.0));
-	//sponza->SetRotation(Vector3f(0.0, 90.0, 0.0));
-	//sponza->SetScale(1.0f);
-
-
-	RRenderActor* sponza = new RRenderActor("Scene");
+	RRenderActor* sponza = new RRenderActor("sponza");
 	this->AddChild(sponza);
-	sponza->AddMesh("Assets/city test/city_big_1.obj");
-	
+	sponza->AddMesh("Assets/sponza/sponza.obj");
 	sponza->SetPosition(Vector3f(0.0, 0.0, 0.0));
-	sponza->SetRotation(Vector3f(0.0, 0.0, 0.0));
+	sponza->SetRotation(Vector3f(0.0, 90.0, 0.0));
 	sponza->SetScale(1.0f);
 
-	RegisterMesh(sponza->StaticMesh);
+
+	//RRenderActor* sponza = new RRenderActor("Scene");
+	//this->AddChild(sponza);
+	//
+	//sponza->AddMesh("Assets/city test/city3.obj");
+	//
+	//sponza->SetPosition(Vector3f(0.0, 0.0, 0.0));
+	//sponza->SetRotation(Vector3f(0.0, 0.0, 0.0));
+	//sponza->SetScale(1.0f);
+
+	//RegisterMesh(sponza->StaticMeshGroup);
 	SortChild(sponza);
+
+
+	RRenderActor* city = new RRenderActor("Scene2");
+	this->AddChild(city);
+
+	city->AddMesh("Assets/city test/city3.obj");
+
+	city->SetPosition(Vector3f(32.0, 0.0, 0.0));
+	city->SetRotation(Vector3f(0.0, 90.0, 0.0));
+	city->SetScale(1.0f);
+
+	//RegisterMesh(sponza->StaticMeshGroup);
+	SortChild(city);
 	
 	/*RRenderActor* landingpad1 = new RRenderActor("landingpad_1");
 	this->AddChild(landingpad1);
@@ -167,11 +181,11 @@ void Scene::InitScene() {
 
 void Scene::SortScene() {
 	//// sort scene objects with transparent objects last
-	//for (RRenderActor* Actor : SceneMeshes) {
+	//for (RRenderActor* Actor : SceneActors) {
 	//	if (Actor->HasTransparency == true) {
-	//		for (int i = SceneMeshes.Size() - 1; i >= 0; i--) {
-	//			if (SceneMeshes[i]->HasTransparency == false) {
-	//				Utilities::Swap(Actor, SceneMeshes[i]);
+	//		for (int i = SceneActors.Size() - 1; i >= 0; i--) {
+	//			if (SceneActors[i]->HasTransparency == false) {
+	//				Utilities::Swap(Actor, SceneActors[i]);
 	//				break;
 	//			}
 	//		}
@@ -183,19 +197,6 @@ void Scene::SortScene() {
 void Scene::ResetScene() {
 	// Root->RemoveAllChildren();
 	Root = nullptr;
-}
-
-void Scene::RegisterMeshes(RStaticMeshGroup* NewMeshGroup)
-{
-	if (NewMeshGroup != nullptr) {
-		//check if has transparency
-		if (NewMeshGroup->HasTransparency) {
-			
-		}
-		else {
-			
-		}
-	}
 }
 
 
@@ -230,8 +231,8 @@ void Scene::SetActiveCamera(PCameraActor* Camera)
 TArray<PAxisAlignedBoundingBox> Scene::GetObjectsByIntersection(PAxisAlignedBoundingBox * BoxToCheck)
 {
 	TArray<PAxisAlignedBoundingBox> ObjectsToReturn = TArray<PAxisAlignedBoundingBox>(100) ;
-	for (RRenderActor * Actor : SceneMeshes) {
-		TArray<RStaticMesh*> Meshes = Actor->StaticMesh->Meshes;
+	for (RRenderActor * Actor : SceneActors) {
+		TArray<RStaticMesh*> Meshes = Actor->StaticMeshGroup->Meshes;
 		for (RStaticMesh * Mesh : Meshes) {
 			if (IntersectionTest(Mesh->WorldBoundingBox, BoxToCheck)) {
 				ObjectsToReturn.PushBack(*Mesh->WorldBoundingBox);
@@ -247,9 +248,9 @@ TArray<PAxisAlignedBoundingBox> Scene::GetObjectsByIntersection(PAxisAlignedBoun
 
 TArray<PAxisAlignedBoundingBox> Scene::GetShadowCasters(PAxisAlignedBoundingBox* BoxToCheck,Vector3f Colour)
 {
-	TArray<PAxisAlignedBoundingBox> ObjectsToReturn = TArray<PAxisAlignedBoundingBox>(SceneMeshes.Size());
-	for (RRenderActor* Actor : SceneMeshes) {
-		TArray<RStaticMesh*> Meshes = Actor->StaticMesh->Meshes;
+	TArray<PAxisAlignedBoundingBox> ObjectsToReturn = TArray<PAxisAlignedBoundingBox>(SceneActors.Size());
+	for (RRenderActor* Actor : SceneActors) {
+		TArray<RStaticMesh*> Meshes = Actor->StaticMeshGroup->Meshes;
 		for (RStaticMesh * Mesh : Meshes) {
 			if (Mesh->IsCastingShadows && SweepIntersectionTest(Mesh->WorldBoundingBox, BoxToCheck, SceneLights.Front()->Light->LightDirection)) {
 				//if (Mesh->LocalBoundingBox->Max.Y - Mesh->LocalBoundingBox->Min.Y > 0.8) {

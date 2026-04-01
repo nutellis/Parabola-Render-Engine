@@ -239,24 +239,8 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
-/Engine-core/Resources/duck.fbm
-/Engine-core/Resources/duck.fbx
-/Engine-core/Resources/textureTest2.fbx
-/Engine-core/Resources/textureTest.fbx
-/Tools/textureTest2.asset
-/Tools/textureTest.asset
-/Tools/Depedencies/FreeImage
-/Engine-core/Resources/test.png
-/Tools/container.png
-/Tools/test.png
-/Tools/yo
-/Engine-core/Resources/plane.fbx
-/Engine-core/Resources/plane.mb
-/Tools/Actor.generated.h
-/Engine-core/Assets
 /Engine-core/Tools/libgit2-0.28.1/libgit2-0.28.1
 /Engine-core/Tools/libgit2-0.28.1.zip
-/Engine-core/Source/UNREAL GENERATED FILES/TowerDefense
 /Engine-core/New folder
 /Engine-core/Dependencies/Includes/Generated
 /Engine-core/Dependencies/Includes/TPP
@@ -273,7 +257,6 @@ ModelManifest.xml
 /AlkyoneRenderEngine/diffuse.png
 /AlkyoneRenderEngine/cube.fbx
 /AlkyoneRenderEngine/ball.asset
-/AlkyoneRenderEngine/Dependencies/Includes/Private/assimp
 /Engine-core/Dependencies/Includes/Private
 /Engine-core/Dependencies/Libraries
 /AlkyoneRenderEngine/Source/Win32
@@ -281,4 +264,7 @@ ModelManifest.xml
 /Engine-core/Tools/glfw-3.3.2
 /Engine-core/Resources
 /Tools
+/Containers
 AlkyoneRenderEngine/log.logfile
+/Containers/Containers.vcxproj
+/Containers/Containers.vcxproj.filters

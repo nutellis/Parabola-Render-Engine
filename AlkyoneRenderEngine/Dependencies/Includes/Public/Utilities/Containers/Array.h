@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/PODTypes.h>
+#include <core/PODTypes.h>
 
 #include <Core/Utilities.h>
 

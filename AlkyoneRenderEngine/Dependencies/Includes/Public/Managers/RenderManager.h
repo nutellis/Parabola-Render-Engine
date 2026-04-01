@@ -23,6 +23,7 @@ class FBORenderTarget;
 class PCameraComponent;
 class RAmbientOcclusion;
 class RRenderActor;
+class RStaticMeshGroup;
 
 struct RenderOptions {
 public:
@@ -77,6 +78,8 @@ private:
 
 	RenderOptions Options;
 
+	TArray<RStaticMeshGroup*> RenderList;
+
 public:
 
 	void GetContextInfo();
@@ -86,6 +89,8 @@ public:
 	//void SetCommonUniforms(const PCameraComponent& Camera);
 
 	void Render(double currentTime);
+
+	void FrustrumCull(PCameraComponent* Camera);
 
 	void ShadowMapPass(PCameraComponent* Camera);
 

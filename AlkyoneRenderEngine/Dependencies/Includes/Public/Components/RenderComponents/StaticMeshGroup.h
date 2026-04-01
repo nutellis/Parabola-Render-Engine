@@ -39,7 +39,7 @@ public:
 
 	void SetupVertexBuffers(VertexArray Vertices);
 
-	void DrawComponent(Shader* ActiveShader);
+	void DrawGroup(Shader* ActiveShader);
 
 	void BindVAO();
 
@@ -63,8 +63,20 @@ public:
 
 	VertexBufferObject VBO, EBO;
 
-	
 	IndexArray Indices;
+
+private:
+	GLuint IndirectBuffer;
 };
+
+
+// TODO: MOVE THIS!!!
+struct DrawArraysIndirectCommand {
+	GLuint count;        // Number of vertices for this draw
+	GLuint instanceCount;// Usually 1 (unless instanced)
+	GLuint first;        // Start index in the vertex buffer
+	GLuint baseInstance; // Offset for gl_InstanceID
+};
+
 
 #endif
