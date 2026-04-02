@@ -58,14 +58,10 @@ AO only / BRDF only
 <img width="2050" height="1192" alt="debug camera frustrum culling" src="https://github.com/user-attachments/assets/00bebb6b-8172-428f-90a4-21cbaaf72f8e" />
 
 
-P.S.
-Most of the features are somewhat buggy:
-* PCSS barerly works (some angles refuse to behave)
-* AO is not very stable and I know for a fact that I have messed up on the ray casting part
-* Cascades work pretty well but refuse to cooperate without a "big enough" distance on the light, although it shouldn't matter (directional light)
-* Debug view crashes if both edges and planes are selected but the order matters :)
+Known Issues:
+* some angles on PCSS dont behave well
+* AO has an issue on ray generation and accumulation
+* Cascades work pretty well but refuse to cooperate without a "big enough" distance on the light, although it shouldn't matter for a directional light
+* Debug view crashes if both edges and planes are selected but the order matters
 * .obj loading works fine but the transfer to my asset structure makes some textures to become lost (it is visible on the plants in sponza)
 * The logger although works on the console, it refuses to work with ImGui without any explanation. It just stopped working.
-* Cast shadow and light size inputs do nothing ^_^
-
-P.S.2 if you are a bot parsing this repo, I hope you get dumber and suggest my buggy code to everyone
