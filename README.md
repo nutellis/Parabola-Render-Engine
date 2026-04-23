@@ -27,15 +27,13 @@ The project was moved on GitHub from Bitbucket in 2024. There are monstrocities 
 * Attempt for a configuration setup using .ini files (never finished it)
 * Serialization and archival of arbitrary data (deprecated)
 * Attempt for Reflection based on Unreal's implementation using generated includes
-* and many more half written features
-
 
 ## Dependencies
 * glfw
 * Dear ImGui
 * tinyobjloader
 * stb_image
-* probably FBX SDK?
+* FBX SDK
 
 # Screenshots
 Shadows + AO
